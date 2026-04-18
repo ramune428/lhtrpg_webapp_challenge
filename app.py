@@ -39,4 +39,6 @@ st.code(
     language=None,
     line_numbers=False,
     wrap_lines=True,
+    height=200,
+    width="stretch",
 )
