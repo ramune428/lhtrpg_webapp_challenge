@@ -1,5 +1,8 @@
 C:\python_fld\env\lhtrpg_web_app\Scripts\Activate.ps1
 streamlit run C:\Users\tanjo\OneDrive\ドキュメント\TRPG\01_ログ・ホライズン\ccfolia_駒作成\web_App\lhtrpg_webapp_challenge\app.py
 
+cd frontend
+npm run dev
+
 debug:
 https://lhrpg.com/lhz/pc?id=130760
