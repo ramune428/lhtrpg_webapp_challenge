@@ -17,3 +17,9 @@ npm run dev
 
 debug:
 https://lhrpg.com/lhz/pc?id=130760
+
+Render
+https://dashboard.render.com/project/prj-d7itfrlckfvc73fde020
+
+Vercel
+https://vercel.com/ramune428s-projects
