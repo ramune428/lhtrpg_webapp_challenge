@@ -1,12 +1,23 @@
+import { NextResponse } from "next/server";
+
 export async function GET() {
-  return Response.json({ status: "route ok" });
+  return NextResponse.json({ status: "route ok" });
 }
 
 export async function POST(req: Request) {
   try {
+    const apiBaseUrl = process.env.API_BASE_URL;
+
+    if (!apiBaseUrl) {
+      return NextResponse.json(
+        { detail: "API_BASE_URL is not set." },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
 
-    const res = await fetch("http://127.0.0.1:8000/create-piece", {
+    const res = await fetch(`${apiBaseUrl}/create-piece`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,12 +35,10 @@ export async function POST(req: Request) {
       },
     });
   } catch (error) {
-    return Response.json(
+    return NextResponse.json(
       {
         detail:
-          error instanceof Error
-            ? error.message
-            : "Frontend API route error",
+          error instanceof Error ? error.message : "Frontend API route error",
       },
       { status: 500 }
     );
