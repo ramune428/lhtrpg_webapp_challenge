@@ -38,7 +38,9 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         detail:
-          error instanceof Error ? error.message : "Frontend API route error",
+          error instanceof Error
+            ? error.message
+            : "Frontend API route error",
       },
       { status: 500 }
     );
