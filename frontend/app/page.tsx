@@ -41,16 +41,18 @@ export default function HomePage() {
     }
 
     setIsLoading(true);
-    setStatusMessage("生成中です...");
+    setStatusMessage("コマンドを生成中です...");
 
     try {
       const generated = await createPiece(characterId);
       setResult(String(generated ?? ""));
-      setStatusMessage("生成が完了しました。");
+      setStatusMessage("コマンドの生成が完了しました。");
     } catch (error) {
       console.error(error);
       setResult("");
-      setStatusMessage("生成に失敗しました。入力内容を確認してください。");
+      setStatusMessage(
+        "コマンドの生成に失敗しました。入力内容を確認してください。"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -70,10 +72,10 @@ export default function HomePage() {
 
     try {
       await navigator.clipboard.writeText(result);
-      setStatusMessage("生成結果をコピーしました。");
+      setStatusMessage("コマンドをコピーしました。");
     } catch (error) {
       console.error(error);
-      setStatusMessage("コピーに失敗しました。");
+      setStatusMessage("コマンドのコピーに失敗しました。");
     }
   };
 
@@ -96,72 +98,99 @@ export default function HomePage() {
             LHTRPG- キャラ駒作成ツール（CCFOLIA）
           </h1>
 
-          <p className="mb-3 text-sm leading-7 text-neutral-700">
-            ログ･ホライズンTRPG冒険窓口より提供されているJSONデータを利用し、
-            CCFOLIAへ貼り付けるための駒作成コマンドを生成するツールです。
-          </p>
-
-          <p className="text-sm leading-7 text-neutral-700">
-            現在はキャラ駒作成ツールをメインに公開しています。エネミーデータ側は
-            別ページから確認できます。
+          <p className="text-sm leading-8 text-neutral-800">
+            このキャラ駒作成ツールは
+            「
+            <a
+              href="https://lhrpg.com/lhz/top"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
+              ログ・ホライズンTRPG冒険者窓口
+            </a>
+            」
+            より提供されているJSONデータを利用しています。
           </p>
         </header>
 
-        <section className="mb-10 grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/character/subpages"
-            className="rounded-2xl border border-neutral-300 p-5 transition hover:bg-neutral-50"
-          >
-            <h2 className="mb-2 text-lg font-semibold">
-              キャラ駒作成ツール サブページ
-            </h2>
-            <p className="text-sm leading-7 text-neutral-700">
-              使い方（詳細）、コマンド内訳、アップデート情報をまとめています。
-            </p>
-          </Link>
+        <section className="mb-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+          <h2 className="mb-3 text-lg font-semibold">💡【重要なお知らせ】</h2>
+          <p className="text-sm leading-8 text-neutral-800">
+            「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックがついていても、
+            JSONデータを取得できず、エラーが発生する場合があります。
+            一度チェックを外して、「外部ツールからの&lt;冒険者&gt;データ参照を許可する」を更新してください。
+            <br />
+            ※ 古いキャラクターはエラーになる傾向があります。
+          </p>
+        </section>
 
-          <Link
-            href="/enemy"
-            className="rounded-2xl border border-neutral-300 p-5 transition hover:bg-neutral-50"
-          >
-            <h2 className="mb-2 text-lg font-semibold">
-              LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
-            </h2>
-            <p className="text-sm leading-7 text-neutral-700">
-              エネミー側のページです。現時点では準備中として案内する想定です。
+        {/*
+        <section className="mb-8">
+          <p className="text-sm font-semibold leading-8 text-neutral-900">
+            このページは検索エンジンに表示されない
+            （または、現在一時的に表示されている）ので、
+            ブックマークやショートカットを作成するなどしてください。
+          </p>
+        </section>
+        */}
+
+        <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
+          <p className="text-sm leading-8 text-neutral-800">
+            GM・ディベロッパー向けのエネミーデータ/駒作成ツールはこちら
+          </p>
+          <div className="mt-3">
+            <p className="text-sm leading-8 text-neutral-800">
+              →{" "}
+              <Link
+                href="/enemy"
+                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+              >
+                LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
+              </Link>
             </p>
-          </Link>
+          </div>
         </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
           <h2 className="mb-4 text-2xl font-semibold">使い方</h2>
+
           <div className="space-y-3 text-sm leading-8 text-neutral-800">
+            <p>1. ログ･ホライズンTRPG冒険者窓口でキャラクターページを開く。</p>
             <p>
-              1. ログ･ホライズンTRPG冒険窓口でキャラクターページを開きます。
+              2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
+              <br />
+              許可されていない場合は、&lt;基本情報を変更する&gt;を開き、
+              「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックを入れる。
             </p>
             <p>
-              2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認します。
+              3. キャラクターページのURLまたはキャラクターIDを入力する。
+              <br />
+              （例： https://lhrpg.com/lhz/pc?id=xxxxxx または xxxxxx）
             </p>
-            <p>
-              3. キャラクターページのURL、またはIDを入力します。
-            </p>
-            <p>
-              4. 「コマンドを生成する」を押します。
-            </p>
-            <p>
-              5. 生成結果をすべてコピーして、CCFOLIAへ貼り付けます。
-            </p>
+            <p>4. 下記 [コマンドを生成する] をクリック。</p>
+            <p>5. [コピー] をクリックしてコマンドをコピーする。</p>
+            <p>6. CCFOLIAに貼り付ける。</p>
           </div>
 
           <div className="mt-5">
-            <Link
-              href="/character/how-to"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
-              使い方（詳細）を見る
-            </Link>
+            <p className="text-sm leading-8 text-neutral-800">
+              詳しい使い方についてはこちら →{" "}
+              <Link
+                href="/character/how-to"
+                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+              >
+                使い方（詳細）
+              </Link>
+            </p>
           </div>
         </section>
+
+        {/* <section className="mb-4">
+          <h2 className="text-center text-2xl font-bold tracking-[0.2em]">
+            アプリ
+          </h2>
+        </section> */}
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
           <div className="mb-3">
@@ -169,7 +198,7 @@ export default function HomePage() {
               htmlFor="character-input"
               className="mb-2 block text-lg font-semibold"
             >
-              キャラクターURL / ID
+              キャラクターURL/キャラクターID
             </label>
 
             <input
@@ -178,14 +207,14 @@ export default function HomePage() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="https://lhrpg.com/lhz/pc?id=123456 または 123456"
+              placeholder="https://lhrpg.com/lhz/pc?id=123456 / 123456"
               className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none transition focus:border-neutral-500"
             />
           </div>
 
-          <p className="mb-5 text-sm leading-7 text-neutral-600">
-            URL全体でも、末尾のIDだけでも入力できます。Enterキーでも実行できます。
-          </p>
+          {/* <p className="mb-5 text-sm leading-7 text-neutral-600">
+            キャラクターURLまたはキャラクターIDを入力してください。
+          </p> */}
 
           <div className="mb-6 flex flex-wrap gap-3">
             <button
@@ -216,9 +245,13 @@ export default function HomePage() {
             </button>
           </div>
 
+          <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
+            {statusMessage}
+          </p>
+
           <div className="mb-2 flex items-center justify-between gap-3">
             <label htmlFor="result-area" className="block text-lg font-semibold">
-              生成結果
+              CCFOLIA用 キャラクター駒作成コマンド
             </label>
           </div>
 
@@ -226,66 +259,68 @@ export default function HomePage() {
             id="result-area"
             value={result}
             readOnly
-            placeholder="ここに生成結果が表示されます"
+            placeholder="ここに生成されたコマンドが表示されます"
             className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
           />
-
-          <p className="mt-3 min-h-[1.5rem] text-sm text-neutral-600">
-            {statusMessage}
-          </p>
-        </section>
-
-        <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">
-            作成される駒の内訳について
-          </h2>
-
-          <div className="space-y-3 text-sm leading-8 text-neutral-800">
-            <p>
-              名前、行動値などの基本情報、体力関係、特技に使用するステータスは
-              パラメータ欄・ステータス欄へ反映されます。
-            </p>
-            <p>
-              チャットパレットは、タイミングごとに分類してまとめる想定です。
-            </p>
-            <p>
-              詳しい内容は、コマンド内訳ページで整理して確認できるようにします。
-            </p>
-          </div>
-
-          <div className="mt-5">
-            <Link
-              href="/character/command-details"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
-              コマンド内訳を見る
-            </Link>
-          </div>
         </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
           <h2 className="mb-4 text-2xl font-semibold">お知らせ</h2>
 
           <div className="space-y-3 text-sm leading-8 text-neutral-800">
-            <p>
-              このツールは今後も調整・更新を行う予定です。表示や内容が変更される場合があります。
-            </p>
-            <p>
-              エネミーデータ/駒作成ツールは現在準備中です。先にキャラ側ページを中心に公開しています。
-            </p>
-            <p>
-              更新履歴はアップデート情報ページにまとめていく想定です。
-            </p>
+            <p>コマンド内訳やアップデート情報はこちら</p>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-3 flex flex-wrap gap-4">
+            <Link
+              href="/character/command-details"
+              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+            >
+              コマンド内訳
+            </Link>
             <Link
               href="/character/updates"
               className="text-sm font-medium text-neutral-700 underline underline-offset-4"
             >
-              アップデート情報を見る
+              アップデート情報
             </Link>
           </div>
+
+          <div className="mt-6 space-y-3 text-sm leading-8 text-neutral-800">
+            <p>
+              「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
+              下記Googleフォームにてご連絡ください。
+            </p>
+            <p>
+              Googleフォーム →
+              <a
+                href="https://forms.gle/76AvTAYyxM5DLQtL8"
+                target="_blank"
+                rel="noreferrer"
+                className="ml-2 underline underline-offset-4"
+              >
+                https://forms.gle/76AvTAYyxM5DLQtL8
+              </a>
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
+          <h2 className="mb-3 text-lg font-semibold">💡参考情報</h2>
+          <p className="text-sm leading-8 text-neutral-800">
+            このツールは「LHTRPGのチャットパレットを作るやつ」を参考に作成しています。
+          </p>
+          <p className="mt-2 text-sm leading-8 text-neutral-800">
+            「LHTRPGのチャットパレットを作るやつ」 →
+            <a
+              href="http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111"
+              target="_blank"
+              rel="noreferrer"
+              className="ml-2 underline underline-offset-4"
+            >
+              http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111
+            </a>
+          </p>
         </section>
       </div>
     </main>
