@@ -1,117 +1,69 @@
-"use client";
+import AppNav from "@/components/app-nav";
+import PageLinkCard from "@/components/page-link-card";
 
-import { useState, type ChangeEvent } from "react";
-
-export default function Page() {
-  const [characterUrl, setCharacterUrl] = useState("");
-  const [piece, setPiece] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setCharacterUrl(e.target.value);
-  };
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/create-piece", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          character_url: characterUrl,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setPiece(data.detail ?? "エラーが発生しました。");
-        return;
-      }
-
-      setPiece(data.piece ?? "");
-    } catch {
-      setPiece("通信エラーが発生しました。");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClear = () => {
-    setCharacterUrl("");
-    setPiece("");
-  };
-
+export default function HomePage() {
   return (
-    <main style={{ maxWidth: "900px", margin: "40px auto", padding: "0 16px" }}>
-      <h1 style={{ fontSize: "32px", marginBottom: "24px" }}>LHTRPG 駒生成</h1>
+    <main className="min-h-screen bg-white text-black">
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        <AppNav current="character" />
 
-      <div style={{ marginBottom: "16px" }}>
-        <label
-          htmlFor="characterUrl"
-          style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}
-        >
-          キャラクターURL
-        </label>
-        <input
-          id="characterUrl"
-          type="text"
-          value={characterUrl}
-          onChange={handleChange}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            fontSize: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-          }}
-        />
-      </div>
+        <h1 className="mb-4 text-3xl font-bold tracking-tight">
+          LHTRPG- キャラ駒作成ツール（CCFOLIA）
+        </h1>
 
-      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          style={{
-            padding: "10px 16px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            cursor: "pointer",
-          }}
-        >
-          {loading ? "生成中..." : "コマンドを生成する"}
-        </button>
+        <p className="mb-4 text-base leading-8 text-neutral-700">
+          このページを初期表示ページとして使う想定です。
+          既存のキャラ駒作成フォームをここへ組み込めば、そのままメインページになります。
+        </p>
 
-        <button
-          onClick={handleClear}
-          style={{
-            padding: "10px 16px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            cursor: "pointer",
-          }}
-        >
-          クリア
-        </button>
-      </div>
+        <p className="mb-10 text-sm leading-8 text-neutral-700">
+          今回の zip は「各ページの土台」を先に作る目的でまとめています。
+          そのため、メイン処理はまだ埋め込まず、ページ構成と導線を先に準備しています。
+        </p>
 
-      <div>
-        <p style={{ fontWeight: 700, marginBottom: "8px" }}>生成結果</p>
-        <textarea
-          value={piece}
-          readOnly
-          style={{
-            width: "100%",
-            height: "220px",
-            padding: "12px",
-            fontSize: "14px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            whiteSpace: "pre-wrap",
-          }}
-        />
+        <section className="mb-10 rounded-2xl border border-neutral-300 p-6">
+          <h2 className="mb-3 text-xl font-semibold">メインツール領域</h2>
+          <p className="text-sm leading-8 text-neutral-700">
+            ここに現在の character 用フォーム UI を移植してください。
+            既存の app/page.tsx の処理をこの領域に統合する想定です。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="mb-4 text-2xl font-semibold">関連ページ</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <PageLinkCard
+              href="/character/subpages"
+              title="キャラ駒作成ツール サブページ"
+              description="使い方（詳細）、コマンド内訳、アップデート情報への入口です。"
+            />
+            <PageLinkCard
+              href="/enemy"
+              title="エネミーデータ/駒作成ツール"
+              description="エネミー側のトップページです。現時点では準備中表示にしています。"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <div>
+            <h2 className="mb-2 text-xl font-semibold">使い方</h2>
+            <p className="text-sm leading-8 text-neutral-700">
+              1. ログ･ホライズンTRPG冒険窓口でキャラクターページを開く。
+              2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
+              3. キャラクターURLまたはIDを入力する。
+              4. コマンドを生成し、結果をコピーしてCCFOLIAへ貼り付ける。
+            </p>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-xl font-semibold">補足</h2>
+            <p className="text-sm leading-8 text-neutral-700">
+              詳細な手順や補足説明はサブページ側に分離しています。
+              Notion の構成を崩さず、そのまま Web 化しやすいように整理しています。
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );
