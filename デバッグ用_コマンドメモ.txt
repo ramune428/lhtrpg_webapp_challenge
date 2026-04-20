@@ -1,4 +1,6 @@
 C:\python_fld\env\lhtrpg_web_app\Scripts\Activate.ps1
+C:\Users\K.Housako\H_Python\00_python_env\lhtrpg_env\Scripts\Activate.ps1
+
 streamlit run C:\Users\tanjo\OneDrive\ドキュメント\TRPG\01_ログ・ホライズン\ccfolia_駒作成\web_App\lhtrpg_webapp_challenge\app.py
 
 cd backend
