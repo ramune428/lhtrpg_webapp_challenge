@@ -273,17 +273,6 @@ export default function EnemyPage() {
     }
   };
 
-  const addSkill = () => {
-    setSkills((prev) => [...prev, withSkillRowId(createEmptySkillInput())]);
-  };
-
-  const removeSkill = (id: string) => {
-    setSkills((prev) => {
-      const next = prev.filter((skill) => skill.id !== id);
-      return next.length > 0 ? next : [withSkillRowId(createEmptySkillInput())];
-    });
-  };
-
   const addItem = () => {
     setItems((prev) => [...prev, withDropRowId(createEmptyDropItemInput())]);
   };
@@ -292,6 +281,26 @@ export default function EnemyPage() {
     setItems((prev) => {
       const next = prev.filter((item) => item.id !== id);
       return next.length > 0 ? next : [withDropRowId(createEmptyDropItemInput())];
+    });
+  };
+
+  const handleSkillCountChange = (nextCountRaw: number) => {
+    const nextCount = Math.max(1, Math.min(99, nextCountRaw));
+
+    setSkills((prev) => {
+      if (nextCount === prev.length) {
+        return prev;
+      }
+
+      if (nextCount > prev.length) {
+        const additional = Array.from(
+          { length: nextCount - prev.length },
+          () => withSkillRowId(createEmptySkillInput())
+        );
+        return [...prev, ...additional];
+      }
+
+      return prev.slice(0, nextCount);
     });
   };
 
@@ -787,156 +796,142 @@ export default function EnemyPage() {
               </details>
             ) : null}
 
-            <div className="mb-4 flex items-center gap-3">
-              <span className="rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-                特技の数: {skills.length}
-              </span>
-              <button
-                type="button"
-                onClick={addSkill}
-                className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
-              >
-                追加
-              </button>
+            <div className="mb-6 flex flex-wrap items-end gap-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium">特技の数</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={skills.length}
+                  onChange={(e) => handleSkillCountChange(Number(e.target.value))}
+                  className="w-28 rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
             </div>
 
             <div className="space-y-4">
-              {skills.map((skill, index) => (
-                <details
-                  key={skill.id}
-                  className="rounded-2xl border border-neutral-300 p-4"
-                  open={index === 0}
-                >
-                  <summary className="cursor-pointer text-sm font-medium">
-                    特技{index + 1}
-                  </summary>
+              {skills.map((skill, index) => {
+                const summaryName = skill.name.trim() || "（未入力）";
 
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="sm:col-span-2">
-                      <label className="mb-2 block text-sm font-medium">
-                        特技名
-                      </label>
-                      <input
-                        type="text"
-                        value={skill.name}
-                        onChange={(e) => updateSkill(skill.id, "name", e.target.value)}
-                        placeholder={exampleSkill.name}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                return (
+                  <details
+                    key={skill.id}
+                    className="rounded-2xl border border-neutral-300 p-4"
+                  >
+                    <summary className="cursor-pointer text-sm font-medium">
+                      特技{index + 1}：{summaryName}
+                    </summary>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">タグ</label>
-                      <input
-                        type="text"
-                        value={skill.tags}
-                        onChange={(e) => updateSkill(skill.id, "tags", e.target.value)}
-                        placeholder={exampleSkill.tags}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="sm:col-span-2">
+                        <label className="mb-2 block text-sm font-medium">特技名</label>
+                        <input
+                          type="text"
+                          value={skill.name}
+                          onChange={(e) => updateSkill(skill.id, "name", e.target.value)}
+                          placeholder={exampleSkill.name}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">
-                        タイミング
-                      </label>
-                      <select
-                        value={skill.timing}
-                        onChange={(e) =>
-                          updateSkill(skill.id, "timing", e.target.value)
-                        }
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      >
-                        {skillTimings.map((value) => (
-                          <option key={value} value={value}>
-                            {value}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">タグ</label>
+                        <input
+                          type="text"
+                          value={skill.tags}
+                          onChange={(e) => updateSkill(skill.id, "tags", e.target.value)}
+                          placeholder={exampleSkill.tags}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">
-                        命中値
-                      </label>
-                      <input
-                        type="text"
-                        value={skill.roleAttack}
-                        onChange={(e) =>
-                          updateSkill(skill.id, "roleAttack", e.target.value)
-                        }
-                        placeholder={exampleSkill.roleAttack}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">タイミング</label>
+                        <select
+                          value={skill.timing}
+                          onChange={(e) => updateSkill(skill.id, "timing", e.target.value)}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        >
+                          {skillTimings.map((value) => (
+                            <option key={value} value={value}>
+                              {value}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">判定</label>
-                      <input
-                        type="text"
-                        value={skill.roleDefense}
-                        onChange={(e) =>
-                          updateSkill(skill.id, "roleDefense", e.target.value)
-                        }
-                        placeholder={exampleSkill.roleDefense}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">命中値</label>
+                        <input
+                          type="text"
+                          value={skill.roleAttack}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "roleAttack", e.target.value)
+                          }
+                          placeholder={exampleSkill.roleAttack}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">対象</label>
-                      <input
-                        type="text"
-                        value={skill.target}
-                        onChange={(e) => updateSkill(skill.id, "target", e.target.value)}
-                        placeholder={exampleSkill.target}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">判定</label>
+                        <input
+                          type="text"
+                          value={skill.roleDefense}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "roleDefense", e.target.value)
+                          }
+                          placeholder={exampleSkill.roleDefense}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">射程</label>
-                      <input
-                        type="text"
-                        value={skill.range}
-                        onChange={(e) => updateSkill(skill.id, "range", e.target.value)}
-                        placeholder={exampleSkill.range}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">対象</label>
+                        <input
+                          type="text"
+                          value={skill.target}
+                          onChange={(e) => updateSkill(skill.id, "target", e.target.value)}
+                          placeholder={exampleSkill.target}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3">
-                      <label className="mb-2 block text-sm font-medium">制限</label>
-                      <input
-                        type="text"
-                        value={skill.limit}
-                        onChange={(e) => updateSkill(skill.id, "limit", e.target.value)}
-                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">射程</label>
+                        <input
+                          type="text"
+                          value={skill.range}
+                          onChange={(e) => updateSkill(skill.id, "range", e.target.value)}
+                          placeholder={exampleSkill.range}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3">
-                      <label className="mb-2 block text-sm font-medium">効果</label>
-                      <textarea
-                        value={skill.effect}
-                        onChange={(e) => updateSkill(skill.id, "effect", e.target.value)}
-                        placeholder={exampleSkill.effect}
-                        className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                      />
-                    </div>
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <label className="mb-2 block text-sm font-medium">制限</label>
+                        <input
+                          type="text"
+                          value={skill.limit}
+                          onChange={(e) => updateSkill(skill.id, "limit", e.target.value)}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
 
-                    <div className="sm:col-span-2 lg:col-span-3">
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill.id)}
-                        className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-                      >
-                        削除
-                      </button>
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <label className="mb-2 block text-sm font-medium">効果</label>
+                        <textarea
+                          value={skill.effect}
+                          onChange={(e) => updateSkill(skill.id, "effect", e.target.value)}
+                          placeholder={exampleSkill.effect}
+                          className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </details>
-              ))}
+                  </details>
+                );
+              })}
             </div>
           </section>
         ) : null}
