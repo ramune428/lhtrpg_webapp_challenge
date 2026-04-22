@@ -1,207 +1,199 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import AppNav from "@/components/app-nav";
 import {
+  calculateEnemyValues,
+  calculateIdentification,
+  createEmptyDropItemInput,
+  createEmptySkillInput,
+  createEnemyCsv,
+  createEnemyJson,
   createEnemyPiece,
+  enemyRanks,
+  enemyRaces,
+  enemyTypes,
+  getDefaultEnemyForm,
+  getDefaultTags,
+  getEnemyTypeExplanation,
+  getGimmickSkill,
+  getSkillExample,
+  parseEnemyJson,
+  popularityList,
+  skillTimings,
   type EnemyDropItemInput,
   type EnemyFormData,
   type EnemySkillInput,
 } from "@/utils/createEnemyPiece";
 
-type EnemySkillRow = EnemySkillInput & {
-  id: string;
-};
+type EnemySkillRow = EnemySkillInput & { id: string };
+type EnemyDropItemRow = EnemyDropItemInput & { id: string };
 
-type EnemyDropItemRow = EnemyDropItemInput & {
-  id: string;
-};
-
-const enemyRanks = ["モブ", "ノーマル", "ボス", "レイド"];
-const enemyTypes = [
-  "アーマラー",
-  "フェンサー",
-  "グラップラー",
-  "サポーター",
-  "ヒーラー",
-  "スピア",
-  "アーチャー",
-  "シューター",
-  "ボマー",
-  "不明",
-];
-const enemyRaces = [
-  "人型",
-  "自然",
-  "精霊",
-  "幻獣",
-  "不死",
-  "人造",
-  "人間",
-  "ギミック",
-];
-const skillTimings = [
-  "常時",
-  "セットアップ",
-  "ムーブ",
-  "マイナー",
-  "メジャー",
-  "クリンナップ",
-  "インスタント",
-  "行動",
-  "ダメージロール",
-  "判定直前",
-  "判定直後",
-  "ダメージ適用直前",
-  "ダメージ適用直後",
-  "本文",
-  "EXパワー",
-];
+type TabKey = "basic" | "skills" | "output";
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function createEmptySkillRow(): EnemySkillRow {
+function withSkillRowId(skill: EnemySkillInput): EnemySkillRow {
+  return { id: makeId(), ...skill };
+}
+
+function withDropRowId(item: EnemyDropItemInput): EnemyDropItemRow {
+  return { id: makeId(), ...item };
+}
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function buildCurrentFormData(
+  form: EnemyFormData,
+  skills: EnemySkillRow[],
+  items: EnemyDropItemRow[]
+): EnemyFormData {
   return {
-    id: makeId(),
-    name: "",
-    tags: "",
-    timing: "メジャー",
-    roleAttack: "",
-    roleDefense: "",
-    target: "",
-    range: "",
-    limit: "",
-    effect: "",
+    ...form,
+    skills: skills.map(({ id, ...skill }) => skill),
+    items: items.map(({ id, ...item }) => item),
   };
 }
 
-function createEmptyDropItemRow(): EnemyDropItemRow {
-  return {
-    id: makeId(),
-    dice: "",
-    name: "",
-    description: "",
-  };
+function TabButton(props: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const { active, onClick, children } = props;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "border-b-2 px-3 py-2 text-sm transition",
+        active
+          ? "border-red-500 text-red-500"
+          : "border-transparent text-neutral-700 hover:text-neutral-900",
+      ].join(" ")}
+    >
+      {children}
+    </button>
+  );
 }
 
 export default function EnemyPage() {
-  const [name, setName] = useState("");
-  const [rank, setRank] = useState("ノーマル");
-  const [cr, setCr] = useState(1);
-  const [enemyType, setEnemyType] = useState("アーマラー");
-  const [race, setRace] = useState("人型");
-  const [tags, setTags] = useState("");
-  const [memo, setMemo] = useState("");
-
-  const [hitPoint, setHitPoint] = useState(0);
-  const [hate, setHate] = useState(0);
-  const [fate, setFate] = useState(0);
-  const [physicalDefense, setPhysicalDefense] = useState(0);
-  const [magicDefense, setMagicDefense] = useState(0);
-  const [action, setAction] = useState(0);
-
-  const [skills, setSkills] = useState<EnemySkillRow[]>([createEmptySkillRow()]);
-  const [items, setItems] = useState<EnemyDropItemRow[]>([createEmptyDropItemRow()]);
-
+  const initialForm = useMemo(() => getDefaultEnemyForm(), []);
+  const [activeTab, setActiveTab] = useState<TabKey>("basic");
+  const [form, setForm] = useState<EnemyFormData>(initialForm);
+  const [skills, setSkills] = useState<EnemySkillRow[]>(
+    initialForm.skills.map(withSkillRowId)
+  );
+  const [items, setItems] = useState<EnemyDropItemRow[]>(
+    initialForm.items.map(withDropRowId)
+  );
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
-  const updateSkill = (
+  const calculated = useMemo(
+    () =>
+      calculateEnemyValues({
+        enemyType: form.enemyType,
+        race: form.race,
+        rank: form.rank,
+        cr: form.cr,
+      }),
+    [form.enemyType, form.race, form.rank, form.cr]
+  );
+
+  const exampleSkill = useMemo(() => getSkillExample(calculated), [calculated]);
+  const gimmickSkill = useMemo(() => getGimmickSkill(), []);
+  const outputSkills = useMemo<EnemySkillRow[]>(() => {
+    if (form.race === "ギミック") {
+      return [{ id: "gimmick-auto-skill", ...gimmickSkill }, ...skills];
+    }
+    return skills;
+  }, [form.race, gimmickSkill, skills]);
+
+  const currentData = useMemo(
+    () => buildCurrentFormData(form, skills, items),
+    [form, skills, items]
+  );
+
+  const updateForm = <K extends keyof EnemyFormData>(
+    key: K,
+    value: EnemyFormData[K]
+  ) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateSkill = <K extends keyof Omit<EnemySkillRow, "id">>(
     id: string,
-    field: keyof Omit<EnemySkillRow, "id">,
-    value: string
+    key: K,
+    value: EnemySkillRow[K]
   ) => {
     setSkills((prev) =>
-      prev.map((skill) =>
-        skill.id === id ? { ...skill, [field]: value } : skill
-      )
+      prev.map((skill) => (skill.id === id ? { ...skill, [key]: value } : skill))
     );
   };
 
-  const updateItem = (
+  const updateItem = <K extends keyof Omit<EnemyDropItemRow, "id">>(
     id: string,
-    field: keyof Omit<EnemyDropItemRow, "id">,
-    value: string
+    key: K,
+    value: EnemyDropItemRow[K]
   ) => {
     setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
-      )
+      prev.map((item) => (item.id === id ? { ...item, [key]: value } : item))
     );
   };
 
-  const addSkill = () => {
-    setSkills((prev) => [...prev, createEmptySkillRow()]);
+  const handleApplyCalculatedValues = () => {
+    setForm((prev) => ({
+      ...prev,
+      strength: calculated.strength,
+      dexterity: calculated.dexterity,
+      power: calculated.power,
+      intelligence: calculated.intelligence,
+      avoid: calculated.avoid,
+      avoidDice: calculated.avoidDice,
+      resist: calculated.resist,
+      resistDice: calculated.resistDice,
+      physicalDefense: calculated.physicalDefense,
+      magicDefense: calculated.magicDefense,
+      hitPoint: calculated.hitPoint,
+      hate: calculated.hate,
+      action: calculated.action,
+      move: calculated.move,
+      fate: calculated.fate,
+    }));
+    setStatusMessage("推奨値を入力欄へ反映しました。");
   };
 
-  const removeSkill = (id: string) => {
-    setSkills((prev) => {
-      const next = prev.filter((skill) => skill.id !== id);
-      return next.length > 0 ? next : [createEmptySkillRow()];
-    });
-  };
-
-  const addItem = () => {
-    setItems((prev) => [...prev, createEmptyDropItemRow()]);
-  };
-
-  const removeItem = (id: string) => {
-    setItems((prev) => {
-      const next = prev.filter((item) => item.id !== id);
-      return next.length > 0 ? next : [createEmptyDropItemRow()];
-    });
+  const handleApplyDefaultTags = () => {
+    updateForm("tags", getDefaultTags(form.rank, form.race));
+    setStatusMessage("タグ初期値を反映しました。");
   };
 
   const handleGenerate = () => {
-    if (!name.trim()) {
+    if (!form.name.trim()) {
       setStatusMessage("名称を入力してください。");
+      setActiveTab("basic");
       return;
     }
 
-    const formData: EnemyFormData = {
-      name,
-      rank,
-      cr,
-      enemyType,
-      race,
-      tags,
-      memo,
-      hitPoint,
-      hate,
-      fate,
-      physicalDefense,
-      magicDefense,
-      action,
-      skills: skills.map(({ id, ...skill }) => skill),
-      items: items.map(({ id, ...item }) => item),
-    };
-
-    const piece = createEnemyPiece(formData);
+    const piece = createEnemyPiece(currentData);
     setResult(piece);
-    setStatusMessage("エネミー駒コマンドを生成しました。");
-  };
-
-  const handleClear = () => {
-    setName("");
-    setRank("ノーマル");
-    setCr(1);
-    setEnemyType("アーマラー");
-    setRace("人型");
-    setTags("");
-    setMemo("");
-    setHitPoint(0);
-    setHate(0);
-    setFate(0);
-    setPhysicalDefense(0);
-    setMagicDefense(0);
-    setAction(0);
-    setSkills([createEmptySkillRow()]);
-    setItems([createEmptyDropItemRow()]);
-    setResult("");
-    setStatusMessage("");
+    setStatusMessage("CCFOLIA用コマンドを生成しました。");
+    setActiveTab("output");
   };
 
   const handleCopy = async () => {
@@ -212,477 +204,887 @@ export default function EnemyPage() {
 
     try {
       await navigator.clipboard.writeText(result);
-      setStatusMessage("エネミー駒コマンドをコピーしました。");
+      setStatusMessage("CCFOLIA用コマンドをコピーしました。");
     } catch (error) {
       console.error(error);
       setStatusMessage("コピーに失敗しました。");
     }
   };
 
+  const handleClear = () => {
+    const next = getDefaultEnemyForm();
+    setForm(next);
+    setSkills(next.skills.map(withSkillRowId));
+    setItems(next.items.map(withDropRowId));
+    setResult("");
+    setStatusMessage("");
+    setActiveTab("basic");
+  };
+
+  const handleDownloadJson = () => {
+    if (!form.name.trim()) {
+      setStatusMessage("名称を入力してください。");
+      return;
+    }
+
+    downloadTextFile(
+      `${form.name || "enemy"}_CR${form.cr}.json`,
+      createEnemyJson(currentData),
+      "application/json;charset=utf-8"
+    );
+    setStatusMessage("JSONをダウンロードしました。");
+  };
+
+  const handleDownloadCsv = () => {
+    if (!form.name.trim()) {
+      setStatusMessage("名称を入力してください。");
+      return;
+    }
+
+    downloadTextFile(
+      `${form.name || "enemy"}_CR${form.cr}.csv`,
+      `\uFEFF${createEnemyCsv(currentData)}`,
+      "text/csv;charset=utf-8"
+    );
+    setStatusMessage("CSVをダウンロードしました。");
+  };
+
+  const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const imported = parseEnemyJson(text);
+      setForm(imported);
+      setSkills(imported.skills.map(withSkillRowId));
+      setItems(imported.items.map(withDropRowId));
+      setResult("");
+      setStatusMessage("JSONを読み込みました。");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage(
+        error instanceof Error ? error.message : "JSONの読み込みに失敗しました。"
+      );
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const addSkill = () => {
+    setSkills((prev) => [...prev, withSkillRowId(createEmptySkillInput())]);
+  };
+
+  const removeSkill = (id: string) => {
+    setSkills((prev) => {
+      const next = prev.filter((skill) => skill.id !== id);
+      return next.length > 0 ? next : [withSkillRowId(createEmptySkillInput())];
+    });
+  };
+
+  const addItem = () => {
+    setItems((prev) => [...prev, withDropRowId(createEmptyDropItemInput())]);
+  };
+
+  const removeItem = (id: string) => {
+    setItems((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      return next.length > 0 ? next : [withDropRowId(createEmptyDropItemInput())];
+    });
+  };
+
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="enemy" />
 
-        <header className="mb-10">
+        <header className="mb-8">
           <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
             LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
           </h1>
 
           <p className="text-sm leading-8 text-neutral-800">
-            エネミーデータを入力し、CCFOLIA に貼り付けるための駒コマンドを生成します。
-          </p>
-          <p className="mt-2 text-sm leading-8 text-neutral-700">
-            まずは CCFOLIA 用の出力を優先した版です。CSV / JSON の出力は後で追加しやすい構成にしています。
+            Notion版の
+            「エネミー情報入力」
+            「特技情報入力」
+            「エネミーデータ出力」
+            を、1ページ内のタブ切り替えで再構成しています。
           </p>
 
           <div className="mt-4 text-sm text-neutral-600">
-            <Link href="/" className="underline underline-offset-4">
-              ← キャラ駒作成ツールへ戻る
+            <Link href="/enemy/subpages" className="underline underline-offset-4">
+              ← エネミー側サブページへ戻る
             </Link>
           </div>
         </header>
 
-        <section className="mb-10 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">基本情報</h2>
+        <section className="mb-6 border-b border-neutral-300">
+          <div className="flex flex-wrap gap-2">
+            <TabButton
+              active={activeTab === "basic"}
+              onClick={() => setActiveTab("basic")}
+            >
+              エネミー情報入力
+            </TabButton>
+            <TabButton
+              active={activeTab === "skills"}
+              onClick={() => setActiveTab("skills")}
+            >
+              特技情報入力
+            </TabButton>
+            <TabButton
+              active={activeTab === "output"}
+              onClick={() => setActiveTab("output")}
+            >
+              エネミーデータ出力
+            </TabButton>
+          </div>
+        </section>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-medium">名称</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="例：鉄躯緑鬼"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
+        <p className="mb-6 min-h-[1.5rem] text-sm text-neutral-600">{statusMessage}</p>
+
+        {activeTab === "basic" ? (
+          <section className="rounded-2xl border border-neutral-300 p-6">
+            <div className="mb-8">
+              <label className="inline-block cursor-pointer rounded-xl border border-neutral-300 px-4 py-3 text-sm font-medium transition hover:bg-neutral-50">
+                Upload JSON
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleJsonImport}
+                />
+              </label>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">ランク</label>
-              <select
-                value={rank}
-                onChange={(e) => setRank(e.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              >
-                {enemyRanks.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="lg:col-span-2">
+                <label className="mb-2 block text-sm font-medium">名称</label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => updateForm("name", e.target.value)}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">ランク</label>
+                <select
+                  value={form.rank}
+                  onChange={(e) =>
+                    updateForm("rank", e.target.value as EnemyFormData["rank"])
+                  }
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                >
+                  {enemyRanks.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">CR</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={form.cr}
+                  onChange={(e) => {
+                    const nextCr = Number(e.target.value);
+                    setForm((prev) => ({
+                      ...prev,
+                      cr: nextCr,
+                      identification: calculateIdentification(prev.popularity, nextCr),
+                    }));
+                  }}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">タイプ</label>
+                <select
+                  value={form.enemyType}
+                  onChange={(e) =>
+                    updateForm("enemyType", e.target.value as EnemyFormData["enemyType"])
+                  }
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                >
+                  {enemyTypes.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">大種族</label>
+                <select
+                  value={form.race}
+                  onChange={(e) =>
+                    updateForm("race", e.target.value as EnemyFormData["race"])
+                  }
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                >
+                  {enemyRaces.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">知名度</label>
+                <select
+                  value={form.popularity}
+                  onChange={(e) => {
+                    const popularity = e.target.value as EnemyFormData["popularity"];
+                    setForm((prev) => ({
+                      ...prev,
+                      popularity,
+                      identification: calculateIdentification(popularity, prev.cr),
+                    }));
+                  }}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                >
+                  {popularityList.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">識別難易度</label>
+                <input
+                  type="text"
+                  value={form.identification}
+                  onChange={(e) => updateForm("identification", e.target.value)}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2 lg:col-span-4">
+                <label className="mb-2 block text-sm font-medium">タグ</label>
+                <div className="flex flex-wrap gap-3">
+                  <input
+                    type="text"
+                    value={form.tags}
+                    onChange={(e) => updateForm("tags", e.target.value)}
+                    className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyDefaultTags}
+                    className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
+                  >
+                    タグ初期値を反映
+                  </button>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2 lg:col-span-4">
+                <label className="mb-2 block text-sm font-medium">メモ</label>
+                <textarea
+                  value={form.memo}
+                  onChange={(e) => updateForm("memo", e.target.value)}
+                  className="min-h-[160px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+            </div>
+
+            {getEnemyTypeExplanation(form.enemyType) ? (
+              <div className="mt-6 text-sm leading-8 text-neutral-800">
+                {form.enemyType}：{getEnemyTypeExplanation(form.enemyType)}
+              </div>
+            ) : null}
+
+            <hr className="my-8 border-neutral-300" />
+
+            <div className="mb-6">
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <h2 className="text-lg font-semibold">推奨ドロップ品</h2>
+                <button
+                  type="button"
+                  onClick={handleApplyCalculatedValues}
+                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+                >
+                  推奨値を入力欄へ反映
+                </button>
+              </div>
+
+              <div className="grid gap-3 text-sm leading-8 text-neutral-800 sm:grid-cols-3">
+                <p>{calculated.gold}</p>
+                <p>{calculated.dropCore}</p>
+                <p>{calculated.dropCatalyst}</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="mb-2 block text-sm font-medium">ドロップ品の数</label>
+              <div className="mb-4 flex items-center gap-3">
+                <span className="rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+                  {items.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
+                >
+                  追加
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <details
+                    key={item.id}
+                    className="rounded-2xl border border-neutral-300 p-4"
+                  >
+                    <summary className="cursor-pointer text-sm font-medium">
+                      ドロップ品{index + 1}
+                    </summary>
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          ダイス
+                        </label>
+                        <input
+                          type="text"
+                          value={item.dice}
+                          onChange={(e) => updateItem(item.id, "dice", e.target.value)}
+                          placeholder="固定 / 1,2,3 / 1～6"
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          アイテム名
+                        </label>
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="mb-2 block text-sm font-medium">
+                          解説
+                        </label>
+                        <textarea
+                          value={item.description}
+                          onChange={(e) =>
+                            updateItem(item.id, "description", e.target.value)
+                          }
+                          className="min-h-[100px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+                        >
+                          削除
+                        </button>
+                      </div>
+                    </div>
+                  </details>
                 ))}
-              </select>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">CR</label>
-              <input
-                type="number"
-                min={1}
-                value={cr}
-                onChange={(e) => setCr(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
+            <hr className="my-8 border-neutral-300" />
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">タイプ</label>
-              <select
-                value={enemyType}
-                onChange={(e) => setEnemyType(e.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="mb-2 block text-sm font-medium">STR</label>
+                <input
+                  type="number"
+                  value={form.strength}
+                  onChange={(e) => updateForm("strength", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">DEX</label>
+                <input
+                  type="number"
+                  value={form.dexterity}
+                  onChange={(e) => updateForm("dexterity", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">POW</label>
+                <input
+                  type="number"
+                  value={form.power}
+                  onChange={(e) => updateForm("power", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">INT</label>
+                <input
+                  type="number"
+                  value={form.intelligence}
+                  onChange={(e) => updateForm("intelligence", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">回避(固定値)</label>
+                <input
+                  type="number"
+                  value={form.avoid}
+                  onChange={(e) => updateForm("avoid", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">回避(Dice)</label>
+                <input
+                  type="number"
+                  value={form.avoidDice}
+                  onChange={(e) => updateForm("avoidDice", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">抵抗(固定値)</label>
+                <input
+                  type="number"
+                  value={form.resist}
+                  onChange={(e) => updateForm("resist", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">抵抗(Dice)</label>
+                <input
+                  type="number"
+                  value={form.resistDice}
+                  onChange={(e) => updateForm("resistDice", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">物理防御力</label>
+                <input
+                  type="number"
+                  value={form.physicalDefense}
+                  onChange={(e) =>
+                    updateForm("physicalDefense", Number(e.target.value))
+                  }
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">魔法防御力</label>
+                <input
+                  type="number"
+                  value={form.magicDefense}
+                  onChange={(e) => updateForm("magicDefense", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">最大HP</label>
+                <input
+                  type="number"
+                  value={form.hitPoint}
+                  onChange={(e) => updateForm("hitPoint", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">ヘイト倍率</label>
+                <input
+                  type="number"
+                  value={form.hate}
+                  onChange={(e) => updateForm("hate", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">行動力</label>
+                <input
+                  type="number"
+                  value={form.action}
+                  onChange={(e) => updateForm("action", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">移動力</label>
+                <input
+                  type="number"
+                  value={form.move}
+                  onChange={(e) => updateForm("move", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">因果力</label>
+                <input
+                  type="number"
+                  value={form.fate}
+                  onChange={(e) => updateForm("fate", Number(e.target.value))}
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "skills" ? (
+          <section className="rounded-2xl border border-neutral-300 p-6">
+            <details className="mb-6 rounded-2xl border border-neutral-300 p-4" open>
+              <summary className="cursor-pointer text-sm font-medium">例</summary>
+              <div className="mt-4 grid gap-4 text-sm leading-8 text-neutral-800 sm:grid-cols-2 lg:grid-cols-3">
+                <p>特技名: {exampleSkill.name}</p>
+                <p>タグ: {exampleSkill.tags}</p>
+                <p>タイミング: {exampleSkill.timing}</p>
+                <p>命中値: {exampleSkill.roleAttack}</p>
+                <p>判定: {exampleSkill.roleDefense}</p>
+                <p>対象: {exampleSkill.target}</p>
+                <p>射程: {exampleSkill.range}</p>
+                <p>制限: {exampleSkill.limit || "-"}</p>
+                <p className="lg:col-span-3">効果: {exampleSkill.effect}</p>
+              </div>
+            </details>
+
+            {form.race === "ギミック" ? (
+              <details className="mb-6 rounded-2xl border border-neutral-300 p-4" open>
+                <summary className="cursor-pointer text-sm font-medium">
+                  ギミック専用特技
+                </summary>
+                <div className="mt-4 space-y-2 text-sm leading-8 text-neutral-800">
+                  <p>特技名: {gimmickSkill.name}</p>
+                  <p>タグ: {gimmickSkill.tags}</p>
+                  <p>タイミング: {gimmickSkill.timing}</p>
+                  <p>対象: {gimmickSkill.target}</p>
+                  <p>射程: {gimmickSkill.range}</p>
+                  <p>効果: {gimmickSkill.effect}</p>
+                </div>
+              </details>
+            ) : null}
+
+            <div className="mb-4 flex items-center gap-3">
+              <span className="rounded-xl border border-neutral-300 px-4 py-3 text-sm">
+                特技の数: {skills.length}
+              </span>
+              <button
+                type="button"
+                onClick={addSkill}
+                className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
               >
-                {enemyTypes.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
+                追加
+              </button>
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">大種族</label>
-              <select
-                value={race}
-                onChange={(e) => setRace(e.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              >
-                {enemyRaces.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="space-y-4">
+              {skills.map((skill, index) => (
+                <details
+                  key={skill.id}
+                  className="rounded-2xl border border-neutral-300 p-4"
+                  open={index === 0}
+                >
+                  <summary className="cursor-pointer text-sm font-medium">
+                    特技{index + 1}
+                  </summary>
 
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="mb-2 block text-sm font-medium">タグ</label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="例：ボス, 人型"
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="sm:col-span-2">
+                      <label className="mb-2 block text-sm font-medium">
+                        特技名
+                      </label>
+                      <input
+                        type="text"
+                        value={skill.name}
+                        onChange={(e) => updateSkill(skill.id, "name", e.target.value)}
+                        placeholder={exampleSkill.name}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
 
-            <div className="sm:col-span-2 lg:col-span-3">
-              <label className="mb-2 block text-sm font-medium">メモ</label>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">タグ</label>
+                      <input
+                        type="text"
+                        value={skill.tags}
+                        onChange={(e) => updateSkill(skill.id, "tags", e.target.value)}
+                        placeholder={exampleSkill.tags}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">
+                        タイミング
+                      </label>
+                      <select
+                        value={skill.timing}
+                        onChange={(e) =>
+                          updateSkill(skill.id, "timing", e.target.value)
+                        }
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      >
+                        {skillTimings.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">
+                        命中値
+                      </label>
+                      <input
+                        type="text"
+                        value={skill.roleAttack}
+                        onChange={(e) =>
+                          updateSkill(skill.id, "roleAttack", e.target.value)
+                        }
+                        placeholder={exampleSkill.roleAttack}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">判定</label>
+                      <input
+                        type="text"
+                        value={skill.roleDefense}
+                        onChange={(e) =>
+                          updateSkill(skill.id, "roleDefense", e.target.value)
+                        }
+                        placeholder={exampleSkill.roleDefense}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">対象</label>
+                      <input
+                        type="text"
+                        value={skill.target}
+                        onChange={(e) => updateSkill(skill.id, "target", e.target.value)}
+                        placeholder={exampleSkill.target}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">射程</label>
+                      <input
+                        type="text"
+                        value={skill.range}
+                        onChange={(e) => updateSkill(skill.id, "range", e.target.value)}
+                        placeholder={exampleSkill.range}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 lg:col-span-3">
+                      <label className="mb-2 block text-sm font-medium">制限</label>
+                      <input
+                        type="text"
+                        value={skill.limit}
+                        onChange={(e) => updateSkill(skill.id, "limit", e.target.value)}
+                        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 lg:col-span-3">
+                      <label className="mb-2 block text-sm font-medium">効果</label>
+                      <textarea
+                        value={skill.effect}
+                        onChange={(e) => updateSkill(skill.id, "effect", e.target.value)}
+                        placeholder={exampleSkill.effect}
+                        className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 lg:col-span-3">
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill.id)}
+                        className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {activeTab === "output" ? (
+          <section className="rounded-2xl border border-neutral-300 p-6">
+            <div className="space-y-6 text-sm leading-8 text-neutral-800">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <p>名称: {form.name || "-"}</p>
+                <p>ランク: {form.rank}</p>
+                <p>CR: {form.cr}</p>
+                <p>タイプ: {form.enemyType}</p>
+                <p>大種族: {form.race}</p>
+                <p>知名度: {form.popularity}</p>
+                <p>識別難易度: {form.identification}</p>
+                <p>タグ: [{form.tags}]</p>
+              </div>
+
+              <div>
+                <p className="mb-1 font-medium">メモ:</p>
+                <p className="whitespace-pre-wrap">{form.memo || "-"}</p>
+              </div>
+
+              <hr className="border-neutral-300" />
+
+              <div>
+                <p className="mb-2 font-medium">ドロップ品:</p>
+                <div className="space-y-2">
+                  {items.filter((item) => item.name.trim() || item.dice.trim()).length ===
+                  0 ? (
+                    <p>-</p>
+                  ) : (
+                    items
+                      .filter((item) => item.name.trim() || item.dice.trim())
+                      .map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-xl border border-neutral-200 p-3"
+                        >
+                          <p>ダイス: {item.dice || "-"}</p>
+                          <p>アイテム名: {item.name || "-"}</p>
+                          <p>解説: {item.description || "-"}</p>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+
+              <hr className="border-neutral-300" />
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <p>STR: {form.strength}</p>
+                <p>DEX: {form.dexterity}</p>
+                <p>POW: {form.power}</p>
+                <p>INT: {form.intelligence}</p>
+                <p>回避: {form.avoid} + {form.avoidDice} D</p>
+                <p>抵抗: {form.resist} + {form.resistDice} D</p>
+                <p>物理防御力: {form.physicalDefense}</p>
+                <p>魔法防御力: {form.magicDefense}</p>
+                <p>最大HP: {form.hitPoint}</p>
+                <p>ヘイト倍率: {form.hate}</p>
+                <p>行動力: {form.action}</p>
+                <p>移動力: {form.move}</p>
+                <p>因果力: {form.fate}</p>
+              </div>
+
+              <hr className="border-neutral-300" />
+
+              <div>
+                <p className="mb-2 font-medium">特技:</p>
+                <div className="space-y-3">
+                  {outputSkills
+                    .filter((skill) => skill.name.trim() || skill.effect.trim())
+                    .map((skill) => (
+                      <div
+                        key={skill.id}
+                        className="rounded-xl border border-neutral-200 p-3"
+                      >
+                        <p>特技名: {skill.name || "-"}</p>
+                        <p>タグ: {skill.tags || "-"}</p>
+                        <p>タイミング: {skill.timing || "-"}</p>
+                        <p>
+                          対決:{" "}
+                          {skill.roleAttack && skill.roleDefense
+                            ? `${skill.roleAttack}／${skill.roleDefense}`
+                            : "-"}
+                        </p>
+                        <p>対象: {skill.target || "-"}</p>
+                        <p>射程: {skill.range || "-"}</p>
+                        <p>制限: {skill.limit || "-"}</p>
+                        <p className="whitespace-pre-wrap">効果: {skill.effect || "-"}</p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
+                >
+                  コマンドを生成する
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
+                >
+                  コピー
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
+                >
+                  クリア
+                </button>
+              </div>
+
               <textarea
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder="解説や備考を入力"
-                className="min-h-[140px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                value={result}
+                readOnly
+                className="min-h-[180px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
               />
-            </div>
-          </div>
-        </section>
 
-        <section className="mb-10 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">CCFOLIA用ステータス</h2>
+              <div className="flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleDownloadCsv}
+                  className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
+                >
+                  Download CSV
+                </button>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-sm font-medium">HP</label>
-              <input
-                type="number"
-                value={hitPoint}
-                onChange={(e) => setHitPoint(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">ヘイト倍率</label>
-              <input
-                type="number"
-                value={hate}
-                onChange={(e) => setHate(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">因果力</label>
-              <input
-                type="number"
-                value={fate}
-                onChange={(e) => setFate(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">物防</label>
-              <input
-                type="number"
-                value={physicalDefense}
-                onChange={(e) => setPhysicalDefense(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">魔防</label>
-              <input
-                type="number"
-                value={magicDefense}
-                onChange={(e) => setMagicDefense(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">行動力</label>
-              <input
-                type="number"
-                value={action}
-                onChange={(e) => setAction(Number(e.target.value))}
-                className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="mb-10 rounded-2xl border border-neutral-300 p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-semibold">ドロップ品</h2>
-            <button
-              type="button"
-              onClick={addItem}
-              className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-            >
-              ドロップ品を追加
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {items.map((item, index) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-neutral-200 p-4"
-              >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="font-medium">ドロップ品 {index + 1}</h3>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="rounded-lg border border-neutral-300 px-3 py-1 text-sm transition hover:bg-neutral-50"
-                  >
-                    削除
-                  </button>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">ダイス</label>
-                    <input
-                      type="text"
-                      value={item.dice}
-                      onChange={(e) =>
-                        updateItem(item.id, "dice", e.target.value)
-                      }
-                      placeholder="例：固定 / 1,2,3 / 1～6"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      アイテム名
-                    </label>
-                    <input
-                      type="text"
-                      value={item.name}
-                      onChange={(e) =>
-                        updateItem(item.id, "name", e.target.value)
-                      }
-                      placeholder="例：コア素材[CR10]"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-sm font-medium">解説</label>
-                    <textarea
-                      value={item.description}
-                      onChange={(e) =>
-                        updateItem(item.id, "description", e.target.value)
-                      }
-                      placeholder="任意"
-                      className="min-h-[100px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadJson}
+                  className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
+                >
+                  Download JSON
+                </button>
               </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-10 rounded-2xl border border-neutral-300 p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-2xl font-semibold">特技</h2>
-            <button
-              type="button"
-              onClick={addSkill}
-              className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-            >
-              特技を追加
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {skills.map((skill, index) => (
-              <div
-                key={skill.id}
-                className="rounded-2xl border border-neutral-200 p-4"
-              >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h3 className="font-medium">特技 {index + 1}</h3>
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill.id)}
-                    className="rounded-lg border border-neutral-300 px-3 py-1 text-sm transition hover:bg-neutral-50"
-                  >
-                    削除
-                  </button>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="sm:col-span-2">
-                    <label className="mb-2 block text-sm font-medium">特技名</label>
-                    <input
-                      type="text"
-                      value={skill.name}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "name", e.target.value)
-                      }
-                      placeholder="例：《基本攻撃手段》"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">タグ</label>
-                    <input
-                      type="text"
-                      value={skill.tags}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "tags", e.target.value)
-                      }
-                      placeholder="例：白兵攻撃"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      タイミング
-                    </label>
-                    <select
-                      value={skill.timing}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "timing", e.target.value)
-                      }
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    >
-                      {skillTimings.map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">命中値</label>
-                    <input
-                      type="text"
-                      value={skill.roleAttack}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "roleAttack", e.target.value)
-                      }
-                      placeholder="例：12 + 2 D"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">判定</label>
-                    <input
-                      type="text"
-                      value={skill.roleDefense}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "roleDefense", e.target.value)
-                      }
-                      placeholder="例：回避"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">対象</label>
-                    <input
-                      type="text"
-                      value={skill.target}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "target", e.target.value)
-                      }
-                      placeholder="例：単体"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">射程</label>
-                    <input
-                      type="text"
-                      value={skill.range}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "range", e.target.value)
-                      }
-                      placeholder="例：至近 / 4Sq"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="mb-2 block text-sm font-medium">制限</label>
-                    <input
-                      type="text"
-                      value={skill.limit}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "limit", e.target.value)
-                      }
-                      placeholder="任意"
-                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="mb-2 block text-sm font-medium">効果</label>
-                    <textarea
-                      value={skill.effect}
-                      onChange={(e) =>
-                        updateSkill(skill.id, "effect", e.target.value)
-                      }
-                      placeholder="例：対象に[20 + 2D]の物理ダメージを与える。"
-                      className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">出力</h2>
-
-          <div className="mb-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-            >
-              コマンドを生成する
-            </button>
-
-            <button
-              type="button"
-              onClick={handleClear}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-            >
-              クリア
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-            >
-              コピー
-            </button>
-          </div>
-
-          <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
-            {statusMessage}
-          </p>
-
-          <label
-            htmlFor="enemy-result"
-            className="mb-2 block text-lg font-semibold"
-          >
-            CCFOLIA用 エネミー駒作成コマンド
-          </label>
-
-          <textarea
-            id="enemy-result"
-            value={result}
-            readOnly
-            placeholder="ここに生成されたコマンドが表示されます"
-            className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
-          />
-        </section>
+            </div>
+          </section>
+        ) : null}
       </div>
     </main>
   );
