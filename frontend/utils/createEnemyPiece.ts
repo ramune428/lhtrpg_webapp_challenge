@@ -902,12 +902,11 @@ function buildSkillCommand(skills: EnemySkillInput[]): string {
   return skills
     .filter((skill) => skill.name.trim())
     .map((skill) => {
-      const lines: string[] = [];
-      lines.push(skill.name.trim());
-      lines.push(normalizeText(skill.effect));
-      return lines.join("\n");
+      const name = skill.name.trim();
+      const effect = skill.effect.trim() ? normalizeText(skill.effect) : "";
+      return `${name}\n${effect}\n`;
     })
-    .join("\n");
+    .join("");
 }
 
 function buildSkillMemo(skills: EnemySkillInput[]): string {
