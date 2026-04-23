@@ -1,3 +1,5 @@
+import * as XLSX from "xlsx";
+
 export const enemyRanks = ["モブ", "ノーマル", "ボス", "レイド"] as const;
 export type EnemyRank = (typeof enemyRanks)[number];
 
@@ -19,7 +21,7 @@ export const enemyRaces = [
   "人型",
   "自然",
   "精霊",
-  "幻獣",  
+  "幻獣",
   "不死",
   "人造",
   "人間",
@@ -800,34 +802,37 @@ export function parseEnemyJson(text: string): EnemyFormData {
     "人型") as EnemyRace;
 
   const popularity = sanitizeImportedPopularity(parsed.identification, cr);
-  const initialTags = splitTags(getDefaultTags(rank, race));
-  const customTags = rawTags.filter((tag) => !initialTags.includes(tag));
 
   const ruby = asString(parsed.ruby);
   const displayName =
     ruby && ruby !== "null" ? `${asString(parsed.name)}${ruby}` : asString(parsed.name);
 
+  const initialTagSet = new Set(splitTags(getDefaultTags(rank, race)));
+  const customTags = rawTags.filter((tag) => !initialTagSet.has(tag));
+
   const skillsRaw = Array.isArray(parsed.skills) ? parsed.skills : [];
   const itemsRaw = Array.isArray(parsed.items) ? parsed.items : [];
 
-  const skills = skillsRaw.map((entry) => {
-    const skill = entry as Record<string, unknown>;
-    const role = parseRole(skill.role);
+  const skills = skillsRaw
+    .map((entry) => {
+      const skill = entry as Record<string, unknown>;
+      const role = parseRole(skill.role);
 
-    return {
-      name: asString(skill.name),
-      tags: Array.isArray(skill.tags)
-        ? (skill.tags as unknown[]).map((tag) => asString(tag)).join("、")
-        : "",
-      timing: asString(skill.timing) || "メジャー",
-      roleAttack: role.roleAttack,
-      roleDefense: role.roleDefense,
-      target: asString(skill.target),
-      range: asString(skill.range),
-      limit: asString(skill.limit),
-      effect: asString(skill.function),
-    } satisfies EnemySkillInput;
-  });
+      return {
+        name: asString(skill.name),
+        tags: Array.isArray(skill.tags)
+          ? (skill.tags as unknown[]).map((tag) => asString(tag)).join("、")
+          : "",
+        timing: asString(skill.timing) || "メジャー",
+        roleAttack: role.roleAttack,
+        roleDefense: role.roleDefense,
+        target: asString(skill.target),
+        range: asString(skill.range),
+        limit: asString(skill.limit),
+        effect: asString(skill.function),
+      } satisfies EnemySkillInput;
+    })
+    .filter((skill) => !(race === "ギミック" && skill.name.trim() === "《意志なき機構》"));
 
   const items = itemsRaw.map((entry) => {
     const item = entry as Record<string, unknown>;
@@ -867,6 +872,169 @@ export function parseEnemyJson(text: string): EnemyFormData {
     fate: asNumber(parsed.fate),
     skills: skills.length > 0 ? skills : [createEmptySkillInput()],
     items: items.length > 0 ? items : [createEmptyDropItemInput()],
+  };
+}
+
+function parseCellText(value: unknown): string {
+  return asString(value).trim();
+}
+
+function parseCellNumber(value: unknown, fallback = 0): number {
+  const text = parseCellText(value);
+  if (text === "") {
+    return fallback;
+  }
+  return asNumber(text, fallback);
+}
+
+export function parseEnemyXlsx(buffer: ArrayBuffer): EnemyFormData {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const displaySheetName = workbook.SheetNames.includes("エネミー")
+    ? "エネミー"
+    : workbook.SheetNames[0];
+
+  if (!displaySheetName) {
+    throw new Error("XLSXのシートが見つかりません。");
+  }
+
+  let baseData: EnemyFormData | null = null;
+  const rawSheetName = workbook.SheetNames.find((name) => name === "再読込用");
+  if (rawSheetName) {
+    const rawSheet = workbook.Sheets[rawSheetName];
+    const rawRows = XLSX.utils.sheet_to_json(rawSheet, { header: 1, blankrows: false, defval: "" }) as unknown[][];
+    const rawText = parseCellText(rawRows?.[0]?.[0]);
+    if (rawText) {
+      try {
+        baseData = parseEnemyJson(rawText);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+
+  const sheet = workbook.Sheets[displaySheetName];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: true, defval: "" }) as unknown[][];
+
+  if (rows.length < 6) {
+    throw new Error("XLSXの内容が不足しています。");
+  }
+
+  const name = parseCellText(rows[0]?.[1]);
+  const cr = Math.max(1, parseCellNumber(rows[0]?.[4], 1));
+  const raceText = parseCellText(rows[0]?.[7]);
+  const enemyTypeText = parseCellText(rows[0]?.[10]);
+  const popularityText = parseCellText(rows[1]?.[4]);
+  const identificationText = parseCellText(rows[1]?.[7]);
+  const rankText = parseCellText(rows[1]?.[10]);
+  const combinedTagText = parseCellText(rows[1]?.[1]);
+
+  const rank = enemyRanks.includes(rankText as EnemyRank)
+    ? (rankText as EnemyRank)
+    : (baseData?.rank ?? "ノーマル");
+  const race = enemyRaces.includes(raceText as EnemyRace)
+    ? (raceText as EnemyRace)
+    : (baseData?.race ?? "人型");
+  const enemyType = enemyTypes.includes(enemyTypeText as EnemyType)
+    ? (enemyTypeText as EnemyType)
+    : (baseData?.enemyType ?? "不明");
+  const popularity = popularityList.includes(popularityText as EnemyPopularity)
+    ? (popularityText as EnemyPopularity)
+    : (baseData?.popularity ?? "一般的");
+
+  const initialTagSet = new Set(splitTags(getDefaultTags(rank, race)));
+  const customTags = splitTags(combinedTagText).filter((tag) => !initialTagSet.has(tag)).join("、");
+
+  const defaultValues = calculateEnemyValues({ enemyType, race, rank, cr });
+
+  const parsedItems: EnemyDropItemInput[] = [];
+  const parsedSkills: EnemySkillInput[] = [];
+
+  let rowIndex = 6;
+  while (rowIndex < rows.length) {
+    const label = parseCellText(rows[rowIndex]?.[0]);
+
+    if (label === "ダイス") {
+      parsedItems.push({
+        dice: parseCellText(rows[rowIndex]?.[1]),
+        name: parseCellText(rows[rowIndex]?.[4]),
+        description: parseCellText(rows[rowIndex]?.[7]),
+      });
+      rowIndex += 1;
+      continue;
+    }
+
+    if (label === "特技名") {
+      const timingRow = rows[rowIndex + 1] ?? [];
+      const targetRow = rows[rowIndex + 2] ?? [];
+      const effectRow = rows[rowIndex + 3] ?? [];
+      const roleText = parseCellText(timingRow[4]);
+      const roleMatch = roleText.match(/^\((.*)／(.*)\)$/);
+
+      const skill: EnemySkillInput = {
+        name: parseCellText(rows[rowIndex]?.[1]),
+        tags: parseCellText(rows[rowIndex]?.[4]).replace(/,/g, "、"),
+        timing: parseCellText(timingRow[1]) || "メジャー",
+        roleAttack: roleMatch?.[1]?.trim() ?? "",
+        roleDefense: roleMatch?.[2]?.trim() ?? "",
+        target: parseCellText(targetRow[1]),
+        range: parseCellText(targetRow[4]),
+        limit: parseCellText(targetRow[7]),
+        effect: parseCellText(effectRow[1]),
+      };
+
+      if (!(race === "ギミック" && skill.name === "《意志なき機構》")) {
+        parsedSkills.push(skill);
+      }
+
+      rowIndex += 4;
+      continue;
+    }
+
+    rowIndex += 1;
+  }
+
+  const fallbackSkills = baseData?.skills?.filter(
+    (skill) => !(race === "ギミック" && skill.name.trim() === "《意志なき機構》")
+  );
+
+  const mergedSkills = parsedSkills.length > 0
+    ? parsedSkills.map((skill, index) => ({
+        ...skill,
+        limit: fallbackSkills?.[index]?.limit ?? skill.limit,
+      }))
+    : (fallbackSkills && fallbackSkills.length > 0 ? fallbackSkills : [createEmptySkillInput()]);
+
+  const mergedItems = parsedItems.length > 0
+    ? parsedItems
+    : (baseData?.items && baseData.items.length > 0 ? baseData.items : [createEmptyDropItemInput()]);
+
+  return {
+    name,
+    rank,
+    cr,
+    enemyType,
+    race,
+    popularity,
+    identification: identificationText || calculateIdentification(popularity, cr),
+    tags: customTags,
+    memo: baseData?.memo ?? "",
+    strength: parseCellNumber(rows[3]?.[1], baseData?.strength ?? defaultValues.strength),
+    dexterity: parseCellNumber(rows[3]?.[4], baseData?.dexterity ?? defaultValues.dexterity),
+    power: parseCellNumber(rows[3]?.[7], baseData?.power ?? defaultValues.power),
+    intelligence: parseCellNumber(rows[3]?.[10], baseData?.intelligence ?? defaultValues.intelligence),
+    avoid: parseCellNumber(rows[4]?.[1], baseData?.avoid ?? defaultValues.avoid),
+    avoidDice: baseData?.avoidDice ?? defaultValues.avoidDice,
+    resist: parseCellNumber(rows[4]?.[4], baseData?.resist ?? defaultValues.resist),
+    resistDice: baseData?.resistDice ?? defaultValues.resistDice,
+    physicalDefense: parseCellNumber(rows[4]?.[7], baseData?.physicalDefense ?? defaultValues.physicalDefense),
+    magicDefense: parseCellNumber(rows[4]?.[10], baseData?.magicDefense ?? defaultValues.magicDefense),
+    hitPoint: parseCellNumber(rows[5]?.[1], baseData?.hitPoint ?? defaultValues.hitPoint),
+    hate: parseCellNumber(rows[5]?.[4], baseData?.hate ?? defaultValues.hate),
+    action: parseCellNumber(rows[5]?.[7], baseData?.action ?? defaultValues.action),
+    move: parseCellNumber(rows[5]?.[10], baseData?.move ?? defaultValues.move),
+    fate: parseCellNumber(rows[5]?.[13], baseData?.fate ?? defaultValues.fate),
+    skills: mergedSkills,
+    items: mergedItems,
   };
 }
 
@@ -1052,20 +1220,7 @@ export function createEnemyJson(data: EnemyFormData): string {
   );
 }
 
-function csvEscape(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  const text = String(value);
-  if (/[",\n]/.test(text)) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-
-  return text;
-}
-
-export function createEnemyCsv(data: EnemyFormData): string {
+function buildEnemySheetRows(data: EnemyFormData): Array<Array<string | number | null>> {
   const rows: Array<Array<string | number | null>> = [
     [
       "名称",
@@ -1079,10 +1234,13 @@ export function createEnemyCsv(data: EnemyFormData): string {
       null,
       "タイプ",
       data.enemyType,
+      null,
+      null,
+      null,
     ],
     [
       "タグ",
-      getCombinedTagText(data).replace(/－/g, "-"),
+      getCombinedTagText(data, ",").replace(/－/g, "-"),
       null,
       "知名度",
       data.popularity,
@@ -1092,8 +1250,11 @@ export function createEnemyCsv(data: EnemyFormData): string {
       null,
       "ランク",
       data.rank,
+      null,
+      null,
+      null,
     ],
-    [],
+    [null, null, null, null, null, null, null, null, null, null, null, null, null, null],
     [
       "STR",
       data.strength,
@@ -1106,19 +1267,25 @@ export function createEnemyCsv(data: EnemyFormData): string {
       null,
       "INT",
       data.intelligence,
+      null,
+      null,
+      null,
     ],
     [
       "回避",
-      `${data.avoid} + ${data.avoidDice}D`,
+      data.avoid,
       null,
       "抵抗",
-      `${data.resist} + ${data.resistDice}D`,
+      data.resist,
       null,
       "物防",
       data.physicalDefense,
       null,
       "魔防",
       data.magicDefense,
+      null,
+      null,
+      null,
     ],
     [
       "最大HP",
@@ -1139,50 +1306,186 @@ export function createEnemyCsv(data: EnemyFormData): string {
   ];
 
   for (const item of data.items) {
-    if (!item.name.trim() && !item.dice.trim()) {
-      continue;
-    }
+    let diceText = "";
 
-    rows.push([]);
-    rows.push([
-      "ダイス",
-      normalizeDice(item.dice),
-      null,
-      "アイテム名",
-      item.name.replace(/－/g, "-"),
-      null,
-      item.description.trim() ? "解説" : null,
-      item.description.trim() ? item.description.replace(/－/g, "-") : null,
-    ]);
+    if (item.dice.trim() !== "" && item.name.trim() !== "") {
+      const itemName = item.name.trim();
+      const itemDescription = item.description.trim() === "" ? "" : item.description.trim();
+
+      for (const dice of item.dice.split(/[、，,]/).map((v) => v.trim()).filter(Boolean)) {
+        if (diceText !== "") {
+          diceText += "," + String(dice);
+        } else {
+          diceText = String(dice);
+        }
+      }
+
+      rows.push([null, null, null, null, null, null, null, null, null, null, null, null, null, null]);
+
+      if (itemDescription === "") {
+        rows.push([
+          "ダイス",
+          diceText,
+          null,
+          "アイテム名",
+          itemName.replace(/－/g, "-"),
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]);
+      } else {
+        rows.push([
+          "ダイス",
+          diceText,
+          null,
+          "アイテム名",
+          itemName.replace(/－/g, "-"),
+          null,
+          "解説",
+          itemDescription.replace(/－/g, "-"),
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+        ]);
+      }
+    }
   }
 
   for (const skill of withAutomaticSkills(data)) {
-    if (!skill.name.trim() && !skill.effect.trim()) {
-      continue;
-    }
+    const skillName = skill.name.trim() === "" ? "" : skill.name.trim();
+    const skillTag = skill.tags.trim() === "" ? "" : skill.tags.trim();
+    const skillTiming = skill.timing.trim() === "" ? "" : skill.timing.trim();
+    const skillRollE = skill.roleAttack.trim() === "" ? "" : skill.roleAttack.trim();
+    const skillRollP = skill.roleDefense.trim() === "" ? "" : skill.roleDefense.trim();
+    const skillTarget = skill.target.trim() === "" ? "" : skill.target.trim();
+    const skillRange = skill.range.trim() === "" ? "" : skill.range.trim();
+    const skillDescription = skill.effect.trim() === "" ? "" : skill.effect.trim();
 
-    rows.push([]);
+    rows.push([null, null, null, null, null, null, null, null, null, null, null, null, null, null]);
     rows.push([
       "特技名",
-      skill.name.replace(/－/g, "-"),
+      skillName.replace(/－/g, "-"),
       null,
       "タグ",
-      skill.tags.replace(/－/g, "-"),
+      skillTag.replace(/－/g, "-"),
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ]);
+
+    if (skillRollE === "") {
+      rows.push([
+        "タイミング",
+        skillTiming,
+        null,
+        "判定",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
+    } else {
+      rows.push([
+        "タイミング",
+        skillTiming,
+        null,
+        "判定",
+        `(${skillRollE}／${skillRollP})`,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ]);
+    }
+    rows.push([
+      "対象",
+      skillTarget,
+      null,
+      "射程",
+      skillRange,
+      null,
+      "制限",
+      skill.limit.replace(/－/g, "-"),
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
     ]);
     rows.push([
-      "タイミング",
-      skill.timing,
+      "効果",
+      skillDescription.replace(/－/g, "-"),
       null,
-      "判定",
-      skill.roleAttack.trim() && skill.roleDefense.trim()
-        ? `(${skill.roleAttack}／${skill.roleDefense})`
-        : null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
     ]);
-    rows.push(["対象", skill.target, null, "射程", skill.range, null, "制限", skill.limit]);
-    rows.push(["効果", skill.effect.replace(/－/g, "-")]);
   }
 
-  return rows
-    .map((row) => row.map((cell) => csvEscape(cell)).join(","))
-    .join("\r\n");
+  return rows;
+}
+
+export function createEnemyXlsx(data: EnemyFormData): Blob {
+  const rows = buildEnemySheetRows(data).map((row) => row.map((cell) => (cell === null ? "" : cell)));
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  worksheet["!cols"] = [
+    { wch: 12 }, { wch: 28 }, { wch: 4 }, { wch: 12 }, { wch: 22 }, { wch: 4 },
+    { wch: 12 }, { wch: 28 }, { wch: 4 }, { wch: 12 }, { wch: 22 }, { wch: 4 },
+    { wch: 12 }, { wch: 22 },
+  ];
+
+  const rawSheet = XLSX.utils.aoa_to_sheet([[createEnemyJson(data)]]);
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "エネミー");
+  XLSX.utils.book_append_sheet(workbook, rawSheet, "再読込用");
+  workbook.Workbook = {
+    Sheets: [
+      { name: "エネミー", Hidden: 0 },
+      { name: "再読込用", Hidden: 1 },
+    ],
+  };
+
+  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  return new Blob(
+    [buffer],
+    {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+  );
 }

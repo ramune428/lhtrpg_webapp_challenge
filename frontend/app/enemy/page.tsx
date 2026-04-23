@@ -8,9 +8,10 @@ import {
   calculateIdentification,
   createEmptyDropItemInput,
   createEmptySkillInput,
-  createEnemyCsv,
+  createEnemyXlsx,
   createEnemyJson,
   createEnemyPiece,
+  parseEnemyXlsx,
   enemyRanks,
   enemyRaces,
   enemyTypes,
@@ -47,6 +48,17 @@ function withDropRowId(item: EnemyDropItemInput): EnemyDropItemRow {
 
 function downloadTextFile(filename: string, content: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadBlobFile(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -232,38 +244,44 @@ export default function EnemyPage() {
     setStatusMessage("JSONをダウンロードしました。");
   };
 
-  const handleDownloadCsv = () => {
+  const handleDownloadXlsx = () => {
     if (!form.name.trim()) {
       setStatusMessage("名称を入力してください。");
       return;
     }
 
-    downloadTextFile(
-      `${form.name || "enemy"}_CR${form.cr}.csv`,
-      `\uFEFF${createEnemyCsv(currentData)}`,
-      "text/csv;charset=utf-8"
+    downloadBlobFile(
+      `${form.name || "enemy"}_CR${form.cr}.xlsx`,
+      createEnemyXlsx(currentData)
     );
-    setStatusMessage("CSVをダウンロードしました。");
+    setStatusMessage("XLSXをダウンロードしました。");
   };
 
-  const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
     try {
-      const text = await file.text();
-      const imported = parseEnemyJson(text);
+      const lowerName = file.name.toLowerCase();
+      const imported = lowerName.endsWith(".json")
+        ? parseEnemyJson(await file.text())
+        : lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")
+          ? parseEnemyXlsx(await file.arrayBuffer())
+          : (() => {
+              throw new Error("対応している入力ファイルは JSON / XLSX です。");
+            })();
+
       setForm(imported);
       setSkills(imported.skills.map(withSkillRowId));
       setItems(imported.items.map(withDropRowId));
       setResult("");
-      setStatusMessage("JSONを読み込みました。");
+      setStatusMessage(lowerName.endsWith(".json") ? "JSONを読み込みました。" : "XLSXを読み込みました。");
     } catch (error) {
       console.error(error);
       setStatusMessage(
-        error instanceof Error ? error.message : "JSONの読み込みに失敗しました。"
+        error instanceof Error ? error.message : "入力ファイルの読み込みに失敗しました。"
       );
     } finally {
       event.target.value = "";
@@ -355,12 +373,12 @@ export default function EnemyPage() {
           <section className="rounded-2xl border border-neutral-300 p-6">
             <div className="mb-8">
               <label className="inline-block cursor-pointer rounded-xl border border-neutral-300 px-4 py-3 text-sm font-medium transition hover:bg-neutral-50">
-                Upload JSON
+                入力ファイル読込
                 <input
                   type="file"
-                  accept="application/json,.json"
+                  accept="application/json,.json,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                   className="hidden"
-                  onChange={handleJsonImport}
+                  onChange={handleImportFile}
                 />
               </label>
             </div>
@@ -1064,10 +1082,10 @@ export default function EnemyPage() {
               <div className="flex flex-wrap justify-end gap-3">
                 <button
                   type="button"
-                  onClick={handleDownloadCsv}
+                  onClick={handleDownloadXlsx}
                   className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
                 >
-                  Download CSV
+Download XLSX
                 </button>
 
                 <button
