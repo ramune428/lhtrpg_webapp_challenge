@@ -19,7 +19,7 @@ export const enemyRaces = [
   "人型",
   "自然",
   "精霊",
-  "幻獣",
+  "幻獣",  
   "不死",
   "人造",
   "人間",
@@ -121,6 +121,8 @@ type EnemyDataDefinition = {
   base_action_fix: number;
   base_hateCr: number;
   base_hate_fix: number;
+  base_damageAll_coefficient: number;
+  base_aggression_coefficient: number;
   base_basicAttackType: "melee" | "shooting" | "magical";
   base_basicAttackRole_fix: number;
   base_basicAttackRoleDice: number;
@@ -148,13 +150,15 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_action_fix: -2,
     base_hateCr: 0,
     base_hate_fix: 1,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.55,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 2,
     base_basicAttackRoleDice: 2,
     base_basicTarget: "single",
     base_basicRange: 0,
     explanation:
-      "【物理防御力】と【最大ＨＰ】に秀でる反面【行動力】は低いエネミーです。クラスで言うと〈守護戦士〉にちかいでしょう。仲間を守る特技やＰＣの移動を阻害する特技を与えるべきです。",
+      "【物理防御力】と【最大ＨＰ】に秀でる反面【行動力】は低いエネミーです。クラスで言うと〈守護戦士〉にちかいでしょう。仲間を守る特技やＰＣの移動を阻害する特技を与えるべきです。このＥタイプのエネミーは倒しにくい反面、ＰＣに脅威を感じさせることには向いていません。過剰に出すとセッションが停滞します。またソロボスにも向きません。『ＬＨＺ』記載の代表的なエネミーは〈鉄躯緑鬼〉（P４４４）です。",
   },
   フェンサー: {
     base_str: 7,
@@ -174,13 +178,15 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_action_fix: -2,
     base_hateCr: 2,
     base_hate_fix: 1,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.55,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 2,
     base_basicAttackRoleDice: 2,
     base_basicTarget: "single",
     base_basicRange: 0,
     explanation:
-      "アーマラーほどではありませんが、【物理防御力】と【最大ＨＰ】に秀で、【行動力】は低いエネミーです。クラスで言うと〈武士〉にちかいでしょう。",
+      "アーマラーほどではありませんが、【物理防御力】と【最大ＨＰ】に秀で、【行動力】は低いエネミーです。クラスで言うと〈武士〉にちかいでしょう。仲間を守る特技や反撃する特技を与えるべきです。このＥタイプのエネミーはＰＣに先に倒してしまおうと思わせることに向いています。比較的ソロボスにむいています。『ＬＨＺ』記載の代表的なエネミーは〈吸血鬼〉（P４５７）です。",
   },
   グラップラー: {
     base_str: 7,
@@ -200,13 +206,15 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_action_fix: 0,
     base_hateCr: 0,
     base_hate_fix: 1,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.55,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 2,
     base_basicAttackRoleDice: 2,
     base_basicTarget: "single",
     base_basicRange: 0,
     explanation:
-      "【最大ＨＰ】と［防御判定］に秀でる反面、【防御力】が低いエネミーです。妨害役や前衛向けの設計に向いています。",
+      "【最大ＨＰ】と［防御判定］に秀でる反面、【防御力】が低いエネミーです。仲間を守る特技やＰＣの妨害、反撃をする特技を与えるべきです。このＥタイプのエネミーはかなり倒しにくい反面、ＰＣに脅威を感じさせることには向いていません。過剰に出すとセッションが停滞します。〈武闘家〉と似た特性をもっていますが、ヘイトルールの存在もありエネミーの役割やデザインは〈武闘家〉からはなれ、ある種の妨害役と考えるべきです。またボスそのものにも向いていません。『ＬＨＺ』記載の代表的なエネミーは〈屍食少女〉（P４３６）です。",
   },
   サポーター: {
     base_str: 4,
@@ -221,18 +229,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 3,
     base_md_coefficient: 1.8,
     base_md_fix: 5,
-    base_hp_coefficient: 5,
+    base_hp_coefficient: 5.0,
     base_hp_fix: 35,
     base_action_fix: 2,
     base_hateCr: 0,
     base_hate_fix: 1,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.55,
     base_basicAttackType: "magical",
     base_basicAttackRole_fix: 2,
     base_basicAttackRoleDice: 2,
     base_basicTarget: "single",
     base_basicRange: 4,
     explanation:
-      "【抵抗値】と【行動力】に秀でる反面、物理的な攻撃に弱いエネミーです。支援や妨害向けです。",
+      "【抵抗値】と【行動力】に秀でる反面、物理的な攻撃に弱いエネミーです。クラスで言うと〈吟遊詩人〉〈付与術師〉にちかいでしょう。仲間をサポートする特技やＰＣにさまざまな妨害を行なう特技を与えるべきです。CR３以上の環境では、強力なBSや地形支配の要素をもつこともあります。このＥタイプのエネミーは、単体でＰＣに脅威を感じさせることは難しいでしょう。群れボスに向いています。『ＬＨＺ』記載の代表的なエネミーは〈棘茨イタチ〉（P４２４）です。",
   },
   ヒーラー: {
     base_str: 3,
@@ -247,18 +257,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 8,
     base_md_coefficient: 1.7,
     base_md_fix: 1,
-    base_hp_coefficient: 6,
+    base_hp_coefficient: 6.0,
     base_hp_fix: 30,
     base_action_fix: -2,
     base_hateCr: 0,
     base_hate_fix: 1,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.55,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 2,
     base_basicAttackRoleDice: 2,
     base_basicTarget: "single",
     base_basicRange: 2,
     explanation:
-      "【抵抗値】に秀で、【防御力】もやや高いものの、トータルではあまり打たれづよくないエネミーです。回復や防御補助向けです。",
+      "【抵抗値】に秀で、【防御力】もやや高いものの、トータルではあまり打たれづよくないエネミーです。仲間を守る特技を中心に与えるべきです。このＥタイプのエネミーは攻撃が得意ではないため、単体でＰＣに脅威を感じさせることは難しいでしょう。〈施療神官〉〈森呪使い〉〈神祇官〉にちかいEタイプですが過剰な回復能力は戦闘に停滞をもたらす可能性もあります。支援系の能力に切り替えるなどの工夫が必要でしょう。群れボスに向いています。『ＬＨＺ』記載の代表的なエネミーは〈一角獣〉（P４４９）です。",
   },
   スピア: {
     base_str: 4,
@@ -273,18 +285,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 5,
     base_md_coefficient: 1.5,
     base_md_fix: 3,
-    base_hp_coefficient: 6,
+    base_hp_coefficient: 6.0,
     base_hp_fix: 30,
     base_action_fix: 0,
     base_hateCr: 0,
     base_hate_fix: 2,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.85,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 1,
     base_basicAttackRoleDice: 3,
     base_basicTarget: "single",
     base_basicRange: 0,
     explanation:
-      "【回避値】が高く、強い物理ダメージを与えやすいエネミーです。前衛アタッカー向けです。",
+      "【回避値】が高く、もっとも高い物理ダメージを与えることができるエネミーです。クラスで言うと〈暗殺者〉〈盗剣士〉にちかいでしょう。ＢＳや追加ダメージを与える特技、自身の移動を強化する特技を与えるべきです。このＥタイプのエネミーは、ＰＣに脅威を感じさせることに向いていて、低ＣＲからつかいやすく高ＣＲまでエネミーアタッカーの主力として活躍できます。ソロボスおよび群れボスのどちらにも向いています。『ＬＨＺ』記載の代表的なエネミーは〈刃のマスカルウィン〉（P４６７）です。",
   },
   アーチャー: {
     base_str: 3,
@@ -299,18 +313,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 6,
     base_md_coefficient: 1.9,
     base_md_fix: 5,
-    base_hp_coefficient: 5,
+    base_hp_coefficient: 5.0,
     base_hp_fix: 26,
     base_action_fix: 0,
     base_hateCr: 2,
     base_hate_fix: 2,
+    base_damageAll_coefficient: 0.9,
+    base_aggression_coefficient: 0.85,
     base_basicAttackType: "shooting",
     base_basicAttackRole_fix: 0,
     base_basicAttackRoleDice: 3,
     base_basicTarget: "single",
     base_basicRange: 3,
     explanation:
-      "射程の長い物理攻撃を得意とするエネミーです。他のエネミーとの連携を意識した設計に向きます。",
+      "［射撃攻撃］を用い、射程３～４の距離から物理ダメージを与えてくるエネミーです。【魔法防御力】にもやや秀でますが、同一Ｓｑを対象とした攻撃は苦手です。クラスで言うと〈暗殺者〉にちかいでしょう。ＰＣを強制的に移動させる特技や、ダメージ追加特技を与えるべきです。このＥタイプのエネミーは、他のエネミーとの連携をイメージしてデザインするとよいでしょう。スピアタイプと比較した場合、移動の必要なく、集中攻撃が可能であるという特徴があります。作成には注意が必要です。ソロボスおよび群れボスのどちらにも向いています。『ＬＨＺ』記載の代表的なエネミーは〈時計仕掛の蜻蛉〉（P４３３）です。",
   },
   シューター: {
     base_str: 3,
@@ -325,18 +341,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 3,
     base_md_coefficient: 1.9,
     base_md_fix: 5,
-    base_hp_coefficient: 4,
+    base_hp_coefficient: 4.0,
     base_hp_fix: 26,
     base_action_fix: 1,
     base_hateCr: 2,
     base_hate_fix: 2,
+    base_damageAll_coefficient: 1,
+    base_aggression_coefficient: 0.85,
     base_basicAttackType: "magical",
     base_basicAttackRole_fix: 0,
     base_basicAttackRoleDice: 3,
     base_basicTarget: "single",
     base_basicRange: 4,
     explanation:
-      "遠距離の単体魔法攻撃を得意とするエネミーです。攻撃向けですが打たれ弱い傾向があります。",
+      "単体に対する［魔法攻撃］を用い、遠くから魔法ダメージを与えてくるエネミーです。「攻撃判定」や【行動力】に秀でる反面、【ＨＰ】や【物理防御力】は低くなっています。クラスで言うと〈妖術師〉〈召喚術師〉にちかく、アーチャーに似た特性を持っています。ＢＳや追加ダメージを与える特技を与えるべきです。このＥタイプのエネミーは攻撃を得意とする反面打たれ弱いので、他のエネミーとの連携をイメージしてデザインするとよいでしょう。『ＬＨＺ』記載の代表的なエネミーは〈小牙竜鬼の詠唱師〉（P４２２）です。",
   },
   ボマー: {
     base_str: 3,
@@ -351,18 +369,20 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_pd_fix: 3,
     base_md_coefficient: 1.9,
     base_md_fix: 5,
-    base_hp_coefficient: 4,
+    base_hp_coefficient: 4.0,
     base_hp_fix: 26,
     base_action_fix: -2,
     base_hateCr: 2,
     base_hate_fix: 2,
+    base_damageAll_coefficient: 0.85,
+    base_aggression_coefficient: 0.85,
     base_basicAttackType: "magical",
     base_basicAttackRole_fix: 0,
     base_basicAttackRoleDice: 3,
     base_basicTarget: "multi",
     base_basicRange: 4,
     explanation:
-      "範囲に対する魔法攻撃を得意とするエネミーです。戦局を左右しやすいので弱点も含めて設計すると扱いやすいです。",
+      "範囲に対する［魔法攻撃］を用い、遠くから魔法ダメージを与えてくるエネミーです。シューターと同様、「攻撃判定」に秀でる反面【ＨＰ】や【物理防御力】は相応に低くなっています。クラスで言うと〈妖術師〉にちかいでしょう。広範囲（選択）に魔法攻撃を行う特技やBSを与える特技を与えるべきです。このＥタイプのエネミーは戦局を左右する能力がありますから弱点なども含めて設計するとよいでしょう。『ＬＨＺ』記載の代表的なエネミーは〈白姫のヘイグロト〉（P４６５）です。",
   },
   不明: {
     base_str: 0,
@@ -382,6 +402,8 @@ const enemyDataMap: Record<EnemyType, EnemyDataDefinition> = {
     base_action_fix: 0,
     base_hateCr: 0,
     base_hate_fix: 0,
+    base_damageAll_coefficient: 0,
+    base_aggression_coefficient: 0,
     base_basicAttackType: "melee",
     base_basicAttackRole_fix: 0,
     base_basicAttackRoleDice: 0,
@@ -402,17 +424,14 @@ const popularityDiffMap: Record<EnemyPopularity, "自動" | number> = {
 };
 
 const corePriceList = [
-  30, 40, 50, 60, 80, 100, 120, 140, 180, 220,
-  240, 300, 340, 380, 440, 500, 560, 620, 680, 740,
-  820, 900, 980, 1060, 1160, 1240, 1340, 1440, 1540, 1640,
+  30, 40, 50, 60, 80, 100, 120, 140, 180, 220, 240, 300, 340, 380, 440, 500,
+  560, 620, 680, 740, 820, 900, 980, 1060, 1160, 1240, 1340, 1440, 1540, 1640,
   1760,
 ];
 
 const catalystPriceList = [
-  15, 20, 25, 30, 40, 50, 60, 70, 90, 110,
-  120, 150, 170, 190, 220, 250, 280, 310, 340, 370,
-  410, 450, 490, 530, 580, 620, 670, 720, 770, 820,
-  880,
+  15, 20, 25, 30, 40, 50, 60, 70, 90, 110, 120, 150, 170, 190, 220, 250, 280,
+  310, 340, 370, 410, 450, 490, 530, 580, 620, 670, 720, 770, 820, 880,
 ];
 
 export type EnemyCalculatedValues = {
@@ -476,7 +495,20 @@ export function createEmptyDropItemInput(): EnemyDropItemInput {
 }
 
 export function getDefaultTags(rank: EnemyRank, race: EnemyRace): string {
-  return rank === "ノーマル" ? race : `${rank}, ${race}`;
+  return rank === "ノーマル" ? race : `${rank}、${race}`;
+}
+
+function getCombinedTags(data: Pick<EnemyFormData, "rank" | "race" | "tags">): string[] {
+  const initialTags = splitTags(getDefaultTags(data.rank, data.race));
+  const customTags = splitTags(data.tags);
+  return [...new Set([...initialTags, ...customTags])];
+}
+
+function getCombinedTagText(
+  data: Pick<EnemyFormData, "rank" | "race" | "tags">,
+  delimiter = ","
+): string {
+  return getCombinedTags(data).join(delimiter);
 }
 
 export function calculateIdentification(
@@ -677,7 +709,7 @@ export function getDefaultEnemyForm(): EnemyFormData {
     race,
     popularity,
     identification: calculateIdentification(popularity, cr),
-    tags: getDefaultTags(rank, race),
+    tags: "",
     memo: "",
     strength: values.strength,
     dexterity: values.dexterity,
@@ -768,6 +800,8 @@ export function parseEnemyJson(text: string): EnemyFormData {
     "人型") as EnemyRace;
 
   const popularity = sanitizeImportedPopularity(parsed.identification, cr);
+  const initialTags = splitTags(getDefaultTags(rank, race));
+  const customTags = rawTags.filter((tag) => !initialTags.includes(tag));
 
   const ruby = asString(parsed.ruby);
   const displayName =
@@ -783,7 +817,7 @@ export function parseEnemyJson(text: string): EnemyFormData {
     return {
       name: asString(skill.name),
       tags: Array.isArray(skill.tags)
-        ? (skill.tags as unknown[]).map((tag) => asString(tag)).join(", ")
+        ? (skill.tags as unknown[]).map((tag) => asString(tag)).join("、")
         : "",
       timing: asString(skill.timing) || "メジャー",
       roleAttack: role.roleAttack,
@@ -814,7 +848,7 @@ export function parseEnemyJson(text: string): EnemyFormData {
     popularity,
     identification:
       parsed.identification === "自動" ? "自動成功" : asString(parsed.identification),
-    tags: rawTags.join(", "),
+    tags: customTags.join("、"),
     memo: asString(parsed.contents).replace(/\r\n/g, "\n"),
     strength: asNumber(parsed.strength),
     dexterity: asNumber(parsed.dexterity),
@@ -866,21 +900,13 @@ function withAutomaticSkills(data: EnemyFormData): EnemySkillInput[] {
 
 function buildSkillCommand(skills: EnemySkillInput[]): string {
   return skills
-    .filter((skill) => skill.name.trim() || skill.effect.trim())
+    .filter((skill) => skill.name.trim())
     .map((skill) => {
       const lines: string[] = [];
-
-      if (skill.name.trim()) {
-        lines.push(skill.name.trim());
-      }
-
-      if (skill.effect.trim()) {
-        lines.push(normalizeText(skill.effect));
-      }
-
+      lines.push(skill.name.trim());
+      lines.push(normalizeText(skill.effect));
       return lines.join("\n");
     })
-    .filter(Boolean)
     .join("\n");
 }
 
@@ -941,7 +967,7 @@ export function createEnemyPiece(data: EnemyFormData): string {
       name: data.name.trim(),
       initiative: data.action,
       memo:
-        `<タグ>\n[${data.tags.trim()}]\n\n` +
+        `<タグ>\n[${getCombinedTagText(data, ", ")}]\n\n` +
         `<解説>\n${normalizeText(data.memo) || ""}\n\n` +
         `<ドロップ品>\n${buildItemCommand(data.items) || ""}\n\n` +
         `<特技>\n${buildSkillMemo(skills) || ""}`,
@@ -1018,7 +1044,7 @@ export function createEnemyJson(data: EnemyFormData): string {
       move: data.move,
       fate: data.fate,
       contents: normalizeText(data.memo),
-      tags: splitTags(data.tags),
+      tags: getCombinedTags(data),
       skills,
       items,
     },
@@ -1057,7 +1083,7 @@ export function createEnemyCsv(data: EnemyFormData): string {
     ],
     [
       "タグ",
-      data.tags.replace(/－/g, "-"),
+      getCombinedTagText(data).replace(/－/g, "-"),
       null,
       "知名度",
       data.popularity,

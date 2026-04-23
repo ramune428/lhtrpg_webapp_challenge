@@ -117,6 +117,7 @@ export default function EnemyPage() {
 
   const exampleSkill = useMemo(() => getSkillExample(calculated), [calculated]);
   const gimmickSkill = useMemo(() => getGimmickSkill(), []);
+  const initialTags = useMemo(() => getDefaultTags(form.rank, form.race), [form.rank, form.race]);
   const outputSkills = useMemo<EnemySkillRow[]>(() => {
     if (form.race === "ギミック") {
       return [{ id: "gimmick-auto-skill", ...gimmickSkill }, ...skills];
@@ -176,11 +177,6 @@ export default function EnemyPage() {
       fate: calculated.fate,
     }));
     setStatusMessage("推奨値を入力欄へ反映しました。");
-  };
-
-  const handleApplyDefaultTags = () => {
-    updateForm("tags", getDefaultTags(form.rank, form.race));
-    setStatusMessage("タグ初期値を反映しました。");
   };
 
   const handleGenerate = () => {
@@ -383,9 +379,10 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">ランク</label>
                 <select
                   value={form.rank}
-                  onChange={(e) =>
-                    updateForm("rank", e.target.value as EnemyFormData["rank"])
-                  }
+                  onChange={(e) => {
+                    const nextRank = e.target.value as EnemyFormData["rank"];
+                    updateForm("rank", nextRank);
+                  }}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 >
                   {enemyRanks.map((value) => (
@@ -436,9 +433,10 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">大種族</label>
                 <select
                   value={form.race}
-                  onChange={(e) =>
-                    updateForm("race", e.target.value as EnemyFormData["race"])
-                  }
+                  onChange={(e) => {
+                    const nextRace = e.target.value as EnemyFormData["race"];
+                    updateForm("race", nextRace);
+                  }}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 >
                   {enemyRaces.map((value) => (
@@ -481,23 +479,25 @@ export default function EnemyPage() {
                 />
               </div>
 
-              <div className="sm:col-span-2 lg:col-span-4">
+              <div className="sm:col-span-2 lg:col-span-2">
+                <label className="mb-2 block text-sm font-medium">初期タグ</label>
+                <input
+                  type="text"
+                  value={initialTags}
+                  readOnly
+                  className="w-full rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2 lg:col-span-2">
                 <label className="mb-2 block text-sm font-medium">タグ</label>
-                <div className="flex flex-wrap gap-3">
-                  <input
-                    type="text"
-                    value={form.tags}
-                    onChange={(e) => updateForm("tags", e.target.value)}
-                    className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyDefaultTags}
-                    className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
-                  >
-                    タグ初期値を反映
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  value={form.tags}
+                  onChange={(e) => updateForm("tags", e.target.value)}
+                  placeholder="追加タグを入力（、 と , のどちらでも可）"
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                />
               </div>
 
               <div className="sm:col-span-2 lg:col-span-4">
@@ -947,7 +947,8 @@ export default function EnemyPage() {
                 <p>大種族: {form.race}</p>
                 <p>知名度: {form.popularity}</p>
                 <p>識別難易度: {form.identification}</p>
-                <p>タグ: [{form.tags}]</p>
+                <p>初期タグ: [{initialTags}]</p>
+                <p>タグ: [{form.tags || "-"}]</p>
               </div>
 
               <div>
