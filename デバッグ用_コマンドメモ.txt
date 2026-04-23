@@ -26,3 +26,6 @@ https://vercel.com/ramune428s-projects
 
 WebApp
 https://lhtrpg-webapp-challenge.vercel.app/
+
+Notion_enemy
+{"kind":"character","data":{"name":"エネミーNAME","initiative":7,"memo":"<タグ>\n[ボス, 人造, タグ１, タグ２]\n\n<解説>\nmemo@train\n\n<ドロップ品>\nダイス: 固定_アイテム名: アイテム１_解説: あああああ\nダイス: 1_アイテム名: アイテム２_解説: いいいいい\n\n<特技>\n特技です_[白兵攻撃]_メジャー_対決（1+2D／回避）_単体_至近_ゲーム中１回_対象に[55 + 2 D]の物理ダメージを与える。","status":[{"label":"HP", "value":264, "max":264},{"label":"ヘイト倍率", "value":6, "max":6},{"label":"因果力", "value":0, "max":0}],"params":[{"label":"CR", "value":"6"},{"label":"物防", "value":"15"},{"label":"魔防", "value":"12"}],"commands":"特技です\n対象に[55 + 2 D]の物理ダメージを与える。\n"}}
