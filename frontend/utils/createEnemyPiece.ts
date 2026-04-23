@@ -504,7 +504,7 @@ function getCombinedTags(data: Pick<EnemyFormData, "rank" | "race" | "tags">): s
   return [...new Set([...initialTags, ...customTags])];
 }
 
-function getCombinedTagText(
+export function getCombinedTagText(
   data: Pick<EnemyFormData, "rank" | "race" | "tags">,
   delimiter = ","
 ): string {
@@ -967,7 +967,7 @@ export function createEnemyPiece(data: EnemyFormData): string {
       name: data.name.trim(),
       initiative: data.action,
       memo:
-        `<タグ>\n[${getCombinedTagText(data, ", ")}]\n\n` +
+        `<タグ>\n[${getCombinedTagText(data, ",")}]\n\n` +
         `<解説>\n${normalizeText(data.memo) || ""}\n\n` +
         `<ドロップ品>\n${buildItemCommand(data.items) || ""}\n\n` +
         `<特技>\n${buildSkillMemo(skills) || ""}`,

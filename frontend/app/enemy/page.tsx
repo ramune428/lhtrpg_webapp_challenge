@@ -14,6 +14,7 @@ import {
   enemyRanks,
   enemyRaces,
   enemyTypes,
+  getCombinedTagText,
   getDefaultEnemyForm,
   getDefaultTags,
   getEnemyTypeExplanation,
@@ -947,8 +948,7 @@ export default function EnemyPage() {
                 <p>大種族: {form.race}</p>
                 <p>知名度: {form.popularity}</p>
                 <p>識別難易度: {form.identification}</p>
-                <p>初期タグ: [{initialTags}]</p>
-                <p>タグ: [{form.tags || "-"}]</p>
+                <p>タグ: [{getCombinedTagText(form, ",")}]</p>
               </div>
 
               <div>
