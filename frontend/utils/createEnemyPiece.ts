@@ -998,10 +998,15 @@ export function parseEnemyXlsx(buffer: ArrayBuffer): EnemyFormData {
   );
 
   const mergedSkills = parsedSkills.length > 0
-    ? parsedSkills.map((skill, index) => ({
-        ...skill,
-        limit: fallbackSkills?.[index]?.limit ?? skill.limit,
-      }))
+    ? parsedSkills.map((skill, index) => {
+        const parsedLimit = skill.limit.trim();
+        const fallbackLimit = fallbackSkills?.[index]?.limit?.trim() ?? "";
+
+        return {
+          ...skill,
+          limit: parsedLimit || fallbackLimit,
+        };
+      })
     : (fallbackSkills && fallbackSkills.length > 0 ? fallbackSkills : [createEmptySkillInput()]);
 
   const mergedItems = parsedItems.length > 0
