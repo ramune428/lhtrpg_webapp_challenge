@@ -592,10 +592,13 @@ export function calculateEnemyValues(args: {
         ? 0
         : Math.floor((cr + data.base_hateCr) / 6 + data.base_hate_fix);
 
+  const actionValue1 = Math.floor((cr * 1.1 + 7) / 3);
+  const actionValue2 = Math.floor((cr * 1.1 + 3) / 3);
+
   const action =
     race === "ギミック"
       ? 0
-      : Math.floor((cr * 1.1 + 7) / 3 + (cr * 1.1 + 3) / 3 + data.base_action_fix);
+      : actionValue1 + actionValue2 + data.base_action_fix;
 
   const move = race === "ギミック" ? 0 : 2;
   const fate = 0;
@@ -620,7 +623,7 @@ export function calculateEnemyValues(args: {
   const dropCore =
     rank === "ボス" || rank === "レイド"
       ? `コア素材[CR${cr}] (${corePriceList[cr - 1] ?? corePriceList[corePriceList.length - 1]} G)`
-      : "なし";
+      : "コア素材 なし";
 
   const catalystIndex = rank === "ボス" || rank === "レイド" ? cr : cr - 1;
   const catalystStrength = rank === "ボス" || rank === "レイド" ? cr + 1 : cr;

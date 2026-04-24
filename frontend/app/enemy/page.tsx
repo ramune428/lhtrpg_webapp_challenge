@@ -34,6 +34,98 @@ type EnemyDropItemRow = EnemyDropItemInput & { id: string };
 
 type TabKey = "basic" | "skills" | "output";
 
+const diceButtonValues = ["固定", "1", "2", "3", "4", "5", "6"] as const;
+type DiceButtonValue = (typeof diceButtonValues)[number];
+
+function normalizeDropDiceText(dice: string): string {
+  return dice
+    .replace(/[０-９]/g, (value) =>
+      String.fromCharCode(value.charCodeAt(0) - 0xfee0),
+    )
+    .replace(/[，、]/g, ",")
+    .replace(/[～〜－―ー−]/g, "~");
+}
+
+function getSelectedDiceValues(dice: string): Set<string> {
+  const selected = new Set<string>();
+  const normalized = normalizeDropDiceText(dice);
+
+  for (const match of normalized.matchAll(/([1-6])\s*[~-]\s*([1-6])/g)) {
+    const start = Number(match[1]);
+    const end = Number(match[2]);
+    const min = Math.min(start, end);
+    const max = Math.max(start, end);
+
+    for (let value = min; value <= max; value += 1) {
+      selected.add(String(value));
+    }
+  }
+
+  for (const match of normalized.matchAll(/[1-6]/g)) {
+    selected.add(match[0]);
+  }
+
+  return selected;
+}
+
+function getDiceRangeBoundaryValues(selected: Set<string>): Set<string> {
+  const sortedValues = Array.from(selected)
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value >= 1 && value <= 6)
+    .sort((a, b) => a - b);
+
+  const boundaries = new Set<string>();
+
+  if (sortedValues.length === 0) {
+    return boundaries;
+  }
+
+  boundaries.add(String(sortedValues[0]));
+
+  if (sortedValues.length >= 2) {
+    boundaries.add(String(sortedValues[sortedValues.length - 1]));
+  }
+
+  return boundaries;
+}
+
+function toFullWidthDiceValue(value: number): string {
+  return String.fromCharCode("０".charCodeAt(0) + value);
+}
+
+function normalizeDiceRangeSelection(selected: Set<string>): string {
+  const sortedValues = Array.from(selected)
+    .map((value) => Number(value))
+    .filter((value) => Number.isInteger(value) && value >= 1 && value <= 6)
+    .sort((a, b) => a - b);
+
+  if (sortedValues.length === 0) {
+    return "";
+  }
+
+  if (sortedValues.length === 1) {
+    return toFullWidthDiceValue(sortedValues[0]);
+  }
+
+  const min = sortedValues[0];
+  const max = sortedValues[sortedValues.length - 1];
+
+  return `${toFullWidthDiceValue(min)}～${toFullWidthDiceValue(max)}`;
+}
+
+function formatDropDiceForOutput(dice: string): string {
+  const trimmedDice = dice.trim();
+
+  if (trimmedDice === "固定") {
+    return "固定";
+  }
+
+  const selected = getSelectedDiceValues(trimmedDice);
+  const formattedDice = normalizeDiceRangeSelection(selected);
+
+  return formattedDice || trimmedDice;
+}
+
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -77,12 +169,15 @@ function downloadBlobFile(filename: string, blob: Blob) {
 function buildCurrentFormData(
   form: EnemyFormData,
   skills: EnemySkillRow[],
-  items: EnemyDropItemRow[]
+  items: EnemyDropItemRow[],
 ): EnemyFormData {
   return {
     ...form,
     skills: skills.map(({ id, ...skill }) => skill),
-    items: items.map(({ id, ...item }) => item),
+    items: items.map(({ id, ...item }) => ({
+      ...item,
+      dice: formatDropDiceForOutput(item.dice),
+    })),
   };
 }
 
@@ -114,10 +209,10 @@ export default function EnemyPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("basic");
   const [form, setForm] = useState<EnemyFormData>(initialForm);
   const [skills, setSkills] = useState<EnemySkillRow[]>(
-    initialForm.skills.map(withSkillRowId)
+    initialForm.skills.map(withSkillRowId),
   );
   const [items, setItems] = useState<EnemyDropItemRow[]>(
-    initialForm.items.map(withDropRowId)
+    initialForm.items.map(withDropRowId),
   );
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -130,12 +225,15 @@ export default function EnemyPage() {
         rank: form.rank,
         cr: form.cr,
       }),
-    [form.enemyType, form.race, form.rank, form.cr]
+    [form.enemyType, form.race, form.rank, form.cr],
   );
 
   const exampleSkill = useMemo(() => getSkillExample(calculated), [calculated]);
   const gimmickSkill = useMemo(() => getGimmickSkill(), []);
-  const initialTags = useMemo(() => getDefaultTags(form.rank, form.race), [form.rank, form.race]);
+  const initialTags = useMemo(
+    () => getDefaultTags(form.rank, form.race),
+    [form.rank, form.race],
+  );
   const outputSkills = useMemo<EnemySkillRow[]>(() => {
     if (form.race === "ギミック") {
       return [{ id: "gimmick-auto-skill", ...gimmickSkill }, ...skills];
@@ -145,12 +243,12 @@ export default function EnemyPage() {
 
   const currentData = useMemo(
     () => buildCurrentFormData(form, skills, items),
-    [form, skills, items]
+    [form, skills, items],
   );
 
   const updateForm = <K extends keyof EnemyFormData>(
     key: K,
-    value: EnemyFormData[K]
+    value: EnemyFormData[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -158,20 +256,22 @@ export default function EnemyPage() {
   const updateSkill = <K extends keyof Omit<EnemySkillRow, "id">>(
     id: string,
     key: K,
-    value: EnemySkillRow[K]
+    value: EnemySkillRow[K],
   ) => {
     setSkills((prev) =>
-      prev.map((skill) => (skill.id === id ? { ...skill, [key]: value } : skill))
+      prev.map((skill) =>
+        skill.id === id ? { ...skill, [key]: value } : skill,
+      ),
     );
   };
 
   const updateItem = <K extends keyof Omit<EnemyDropItemRow, "id">>(
     id: string,
     key: K,
-    value: EnemyDropItemRow[K]
+    value: EnemyDropItemRow[K],
   ) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+      prev.map((item) => (item.id === id ? { ...item, [key]: value } : item)),
     );
   };
 
@@ -226,12 +326,18 @@ export default function EnemyPage() {
   };
 
   const handleClear = () => {
+    const confirmed = window.confirm("入力内容をすべてクリアします。よろしいですか？");
+
+    if (!confirmed) {
+      return;
+    }
+
     const next = getDefaultEnemyForm();
     setForm(next);
     setSkills(next.skills.map(withSkillRowId));
     setItems(next.items.map(withDropRowId));
     setResult("");
-    setStatusMessage("");
+    setStatusMessage("入力内容をクリアしました。");
     setActiveTab("basic");
   };
 
@@ -244,7 +350,7 @@ export default function EnemyPage() {
     downloadTextFile(
       `${form.name || "enemy"}_CR${form.cr}.json`,
       createEnemyJson(currentData),
-      "application/json;charset=utf-8"
+      "application/json;charset=utf-8",
     );
     setStatusMessage("JSONをダウンロードしました。");
   };
@@ -257,7 +363,7 @@ export default function EnemyPage() {
 
     downloadBlobFile(
       `${form.name || "enemy"}_CR${form.cr}.xlsx`,
-      createEnemyXlsx(currentData)
+      createEnemyXlsx(currentData),
     );
     setStatusMessage("XLSXをダウンロードしました。");
   };
@@ -282,11 +388,17 @@ export default function EnemyPage() {
       setSkills(imported.skills.map(withSkillRowId));
       setItems(imported.items.map(withDropRowId));
       setResult("");
-      setStatusMessage(lowerName.endsWith(".json") ? "JSONを読み込みました。" : "XLSXを読み込みました。");
+      setStatusMessage(
+        lowerName.endsWith(".json")
+          ? "JSONを読み込みました。"
+          : "XLSXを読み込みました。",
+      );
     } catch (error) {
       console.error(error);
       setStatusMessage(
-        error instanceof Error ? error.message : "入力ファイルの読み込みに失敗しました。"
+        error instanceof Error
+          ? error.message
+          : "入力ファイルの読み込みに失敗しました。",
       );
     } finally {
       event.target.value = "";
@@ -296,7 +408,9 @@ export default function EnemyPage() {
   const removeItem = (id: string) => {
     setItems((prev) => {
       const next = prev.filter((item) => item.id !== id);
-      return next.length > 0 ? next : [withDropRowId(createEmptyDropItemInput())];
+      return next.length > 0
+        ? next
+        : [withDropRowId(createEmptyDropItemInput())];
     });
   };
 
@@ -309,9 +423,8 @@ export default function EnemyPage() {
       }
 
       if (nextCount > prev.length) {
-        const additional = Array.from(
-          { length: nextCount - prev.length },
-          () => withDropRowId(createEmptyDropItemInput())
+        const additional = Array.from({ length: nextCount - prev.length }, () =>
+          withDropRowId(createEmptyDropItemInput()),
         );
         return [...prev, ...additional];
       }
@@ -329,9 +442,8 @@ export default function EnemyPage() {
       }
 
       if (nextCount > prev.length) {
-        const additional = Array.from(
-          { length: nextCount - prev.length },
-          () => withSkillRowId(createEmptySkillInput())
+        const additional = Array.from({ length: nextCount - prev.length }, () =>
+          withSkillRowId(createEmptySkillInput()),
         );
         return [...prev, ...additional];
       }
@@ -417,71 +529,107 @@ export default function EnemyPage() {
           <h2 className="text-2xl font-semibold text-neutral-950">使い方</h2>
 
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-neutral-950">1. エネミー情報入力欄について</h3>
+            <h3 className="text-lg font-bold text-neutral-950">
+              1. エネミー情報入力欄について
+            </h3>
             <ol className="list-decimal space-y-2 pl-6">
               <li>
                 「名称」「ランク」「CR」「タイプ」「大種族」「知名度」「タグ」「メモ」を入力してください。
-                <br />※「因果力」を除く能力値は自動的に計算されます。
+                <br />
+                ※「因果力」を除く能力値は自動的に計算されます。
               </li>
               <li>
                 ドロップ品を入力してください。ドロップ品の数を決定し、推奨ドロップ品を参考に「ダイス」「アイテム名」を入力してください。
-                <br />※「解説」は入力しなくても問題ありません。
+                <br />
+                ※「解説」は入力しなくても問題ありません。
               </li>
               <li>各能力値について修正したい箇所があれば修正してください。</li>
             </ol>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-neutral-950">2. 特技情報入力欄について</h3>
+            <h3 className="text-lg font-bold text-neutral-950">
+              2. 特技情報入力欄について
+            </h3>
             <ol className="list-decimal space-y-2 pl-6">
-              <li>「大種族」が「ギミック」の時は専用の特技《意志なき機構》が自動で追加されます。</li>
+              <li>
+                「大種族」が「ギミック」の時は専用の特技《意志なき機構》が自動で追加されます。
+              </li>
               <li>「特技の数」を決定してください。</li>
               <li>
                 各特技の情報を入力してください。
-                <br />※「特技名」「効果」を記入していない場合は反映されません。
+                <br />
+                ※「特技名」「効果」を記入していない場合は反映されません。
               </li>
             </ol>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-neutral-950">3. エネミーデータ出力欄について</h3>
-            <p>エネミーデータの確認ページです。このページに表示されていない場合は反映されていません。</p>
+            <h3 className="text-lg font-bold text-neutral-950">
+              3. エネミーデータ出力欄について
+            </h3>
+            <p>
+              エネミーデータの確認ページです。このページに表示されていない場合は反映されていません。
+            </p>
             <ul className="list-disc space-y-2 pl-6">
-              <li>「コマンドを生成する」→ CCFOLIA用のコマンドが表示されます。CCFOLIAに貼り付けると「キャラクター駒」が作成できます。</li>
-              <li>「Download XLSX」→ XLSXファイルで保存されます。出力したファイルは読み込むことができます。</li>
-              <li>「Download JSON」→ JSONファイルで保存されます。出力したファイルは読み込むことができます。</li>
+              <li>
+                「コマンドを生成する」→
+                CCFOLIA用のコマンドが表示されます。CCFOLIAに貼り付けると「キャラクター駒」が作成できます。
+              </li>
+              <li>
+                「Download XLSX」→
+                XLSXファイルで保存されます。出力したファイルは読み込むことができます。
+              </li>
+              <li>
+                「Download JSON」→
+                JSONファイルで保存されます。出力したファイルは読み込むことができます。
+              </li>
             </ul>
           </div>
         </section>
 
         <section className="mb-4">
-          <h2 className="text-2xl font-semibold">エネミーデータ/駒作成ツール</h2>
+          <h2 className="text-2xl font-semibold">
+            エネミーデータ/駒作成ツール
+          </h2>
         </section>
 
         <section className="mb-6 border-b border-neutral-300">
-          <div className="flex flex-wrap gap-2">
-            <TabButton
-              active={activeTab === "basic"}
-              onClick={() => setActiveTab("basic")}
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              <TabButton
+                active={activeTab === "basic"}
+                onClick={() => setActiveTab("basic")}
+              >
+                エネミー情報
+              </TabButton>
+              <TabButton
+                active={activeTab === "skills"}
+                onClick={() => setActiveTab("skills")}
+              >
+                特技情報
+              </TabButton>
+              <TabButton
+                active={activeTab === "output"}
+                onClick={() => setActiveTab("output")}
+              >
+                データ出力
+              </TabButton>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              className="mb-1 rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
             >
-              エネミー情報入力
-            </TabButton>
-            <TabButton
-              active={activeTab === "skills"}
-              onClick={() => setActiveTab("skills")}
-            >
-              特技情報入力
-            </TabButton>
-            <TabButton
-              active={activeTab === "output"}
-              onClick={() => setActiveTab("output")}
-            >
-              エネミーデータ出力
-            </TabButton>
+              入力内容をクリア
+            </button>
           </div>
         </section>
 
-        <p className="mb-6 min-h-[1.5rem] text-sm text-neutral-600">{statusMessage}</p>
+        <p className="mb-6 min-h-[1.5rem] text-sm text-neutral-600">
+          {statusMessage}
+        </p>
 
         {activeTab === "basic" ? (
           <section className="rounded-2xl border border-neutral-300 p-6">
@@ -538,7 +686,10 @@ export default function EnemyPage() {
                     setForm((prev) => ({
                       ...prev,
                       cr: nextCr,
-                      identification: calculateIdentification(prev.popularity, nextCr),
+                      identification: calculateIdentification(
+                        prev.popularity,
+                        nextCr,
+                      ),
                     }));
                   }}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
@@ -550,7 +701,10 @@ export default function EnemyPage() {
                 <select
                   value={form.enemyType}
                   onChange={(e) =>
-                    updateForm("enemyType", e.target.value as EnemyFormData["enemyType"])
+                    updateForm(
+                      "enemyType",
+                      e.target.value as EnemyFormData["enemyType"],
+                    )
                   }
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 >
@@ -585,11 +739,15 @@ export default function EnemyPage() {
                 <select
                   value={form.popularity}
                   onChange={(e) => {
-                    const popularity = e.target.value as EnemyFormData["popularity"];
+                    const popularity = e.target
+                      .value as EnemyFormData["popularity"];
                     setForm((prev) => ({
                       ...prev,
                       popularity,
-                      identification: calculateIdentification(popularity, prev.cr),
+                      identification: calculateIdentification(
+                        popularity,
+                        prev.cr,
+                      ),
                     }));
                   }}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
@@ -603,7 +761,9 @@ export default function EnemyPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">識別難易度</label>
+                <label className="mb-2 block text-sm font-medium">
+                  識別難易度
+                </label>
                 <input
                   type="text"
                   value={form.identification}
@@ -613,7 +773,9 @@ export default function EnemyPage() {
               </div>
 
               <div className="sm:col-span-2 lg:col-span-2">
-                <label className="mb-2 block text-sm font-medium">初期タグ</label>
+                <label className="mb-2 block text-sm font-medium">
+                  初期タグ
+                </label>
                 <input
                   type="text"
                   value={initialTags}
@@ -662,7 +824,9 @@ export default function EnemyPage() {
             </div>
 
             <div className="mb-6">
-              <label className="mb-2 block text-sm font-medium">ドロップ品の数</label>
+              <label className="mb-2 block text-sm font-medium">
+                ドロップ品の数
+              </label>
               <input
                 type="number"
                 min={1}
@@ -673,66 +837,131 @@ export default function EnemyPage() {
               />
 
               <div className="space-y-4">
-                {items.map((item, index) => (
-                  <details
-                    key={item.id}
-                    className="rounded-2xl border border-neutral-300 p-4"
-                  >
-                    <summary className="cursor-pointer text-sm font-medium">
-                      ドロップ品{index + 1}
-                    </summary>
+                {items.map((item, index) => {
+                  const summaryName = item.name.trim() || "（未入力）";
 
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          ダイス
-                        </label>
-                        <input
-                          type="text"
-                          value={item.dice}
-                          onChange={(e) => updateItem(item.id, "dice", e.target.value)}
-                          placeholder="固定 / 1,2,3 / 1～6"
-                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                        />
-                      </div>
+                  return (
+                    <details
+                      key={item.id}
+                      className="rounded-2xl border border-neutral-300 p-4"
+                    >
+                      <summary className="cursor-pointer text-sm font-medium">
+                        ドロップ品{index + 1}：{summaryName}
+                      </summary>
 
-                      <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          アイテム名
-                        </label>
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                          className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                        />
-                      </div>
+                      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-2 block text-sm font-medium">
+                            ダイス
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {diceButtonValues.map((diceValue) => {
+                              const selected = getSelectedDiceValues(item.dice);
+                              const boundaryValues =
+                                getDiceRangeBoundaryValues(selected);
+                              const isFixedActive = item.dice.trim() === "固定";
+                              const isActive =
+                                diceValue === "固定"
+                                  ? isFixedActive
+                                  : selected.has(diceValue);
+                              const isAutoFilled =
+                                diceValue !== "固定" &&
+                                isActive &&
+                                !boundaryValues.has(diceValue);
 
-                      <div className="sm:col-span-2">
-                        <label className="mb-2 block text-sm font-medium">
-                          解説
-                        </label>
-                        <textarea
-                          value={item.description}
-                          onChange={(e) =>
-                            updateItem(item.id, "description", e.target.value)
-                          }
-                          className="min-h-[100px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                        />
-                      </div>
+                              return (
+                                <button
+                                  key={diceValue}
+                                  type="button"
+                                  disabled={isAutoFilled}
+                                  title={
+                                    isAutoFilled
+                                      ? "両端の値から自動で選択されています"
+                                      : undefined
+                                  }
+                                  onClick={() => {
+                                    if (isAutoFilled) {
+                                      return;
+                                    }
 
-                      <div className="sm:col-span-2">
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-                        >
-                          削除
-                        </button>
+                                    if (diceValue === "固定") {
+                                      updateItem(item.id, "dice", "固定");
+                                      return;
+                                    }
+
+                                    const nextSelected = getSelectedDiceValues(
+                                      item.dice,
+                                    );
+                                    if (nextSelected.has(diceValue)) {
+                                      nextSelected.delete(diceValue);
+                                    } else {
+                                      nextSelected.add(diceValue);
+                                    }
+
+                                    const nextDice =
+                                      normalizeDiceRangeSelection(nextSelected);
+                                    updateItem(item.id, "dice", nextDice);
+                                  }}
+                                  className={[
+                                    "min-w-12 rounded-xl border px-4 py-3 text-sm transition",
+                                    isAutoFilled
+                                      ? "border-red-300 bg-red-100 text-red-700 cursor-default"
+                                      : isActive
+                                        ? "border-red-500 bg-red-50 text-red-600 hover:bg-red-100"
+                                        : "border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50",
+                                  ].join(" ")}
+                                >
+                                  {diceValue}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className="mt-2 text-xs text-neutral-500">
+                            ※
+                            1〜6は複数選択が可能です。2つの数字を選択すると、間の数字は自動で選択されます。
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium">
+                            アイテム名
+                          </label>
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) =>
+                              updateItem(item.id, "name", e.target.value)
+                            }
+                            className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="mb-2 block text-sm font-medium">
+                            解説
+                          </label>
+                          <textarea
+                            value={item.description}
+                            onChange={(e) =>
+                              updateItem(item.id, "description", e.target.value)
+                            }
+                            className="min-h-[100px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+                          >
+                            削除
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </details>
-                ))}
+                    </details>
+                  );
+                })}
               </div>
             </div>
 
@@ -749,161 +978,293 @@ export default function EnemyPage() {
               </button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-6">
               <div>
-                <label className="mb-2 block text-sm font-medium">STR</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.strength}
-                  onChange={(e) => updateForm("strength", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">DEX</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.dexterity}
-                  onChange={(e) => updateForm("dexterity", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">POW</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.power}
-                  onChange={(e) => updateForm("power", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">INT</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.intelligence}
-                  onChange={(e) => updateForm("intelligence", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">回避(固定値)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.avoid}
-                  onChange={(e) => updateForm("avoid", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">回避(Dice)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.avoidDice}
-                  onChange={(e) => updateForm("avoidDice", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">抵抗(固定値)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.resist}
-                  onChange={(e) => updateForm("resist", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">抵抗(Dice)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.resistDice}
-                  onChange={(e) => updateForm("resistDice", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
+                <h3 className="mb-3 text-sm font-semibold text-neutral-700">
+                  基本能力値
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">STR</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.strength}
+                      onChange={(e) =>
+                        updateForm(
+                          "strength",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">DEX</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.dexterity}
+                      onChange={(e) =>
+                        updateForm(
+                          "dexterity",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">POW</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.power}
+                      onChange={(e) =>
+                        updateForm("power", toNonNegativeNumber(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">INT</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.intelligence}
+                      onChange={(e) =>
+                        updateForm(
+                          "intelligence",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">物理防御力</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.physicalDefense}
-                  onChange={(e) =>
-                    updateForm("physicalDefense", toNonNegativeNumber(e.target.value))
-                  }
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">魔法防御力</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.magicDefense}
-                  onChange={(e) => updateForm("magicDefense", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">最大HP</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.hitPoint}
-                  onChange={(e) => updateForm("hitPoint", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">ヘイト倍率</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.hate}
-                  onChange={(e) => updateForm("hate", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
+                <h3 className="mb-3 text-sm font-semibold text-neutral-700">
+                  判定値
+                </h3>
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
+                    <div className="mb-3 text-sm font-semibold text-neutral-700">
+                      回避
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          回避(固定値)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.avoid}
+                          onChange={(e) =>
+                            updateForm(
+                              "avoid",
+                              toNonNegativeNumber(e.target.value),
+                            )
+                          }
+                          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          回避(ダイス)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.avoidDice}
+                          onChange={(e) =>
+                            updateForm(
+                              "avoidDice",
+                              toNonNegativeNumber(e.target.value),
+                            )
+                          }
+                          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          回避(判定)
+                        </label>
+                        <input
+                          type="text"
+                          value={`${form.avoid} + ${form.avoidDice} D`}
+                          readOnly
+                          className="w-full cursor-default rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 font-medium text-neutral-700 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
+                    <div className="mb-3 text-sm font-semibold text-neutral-700">
+                      抵抗
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          抵抗(固定値)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.resist}
+                          onChange={(e) =>
+                            updateForm(
+                              "resist",
+                              toNonNegativeNumber(e.target.value),
+                            )
+                          }
+                          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          抵抗(ダイス)
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.resistDice}
+                          onChange={(e) =>
+                            updateForm(
+                              "resistDice",
+                              toNonNegativeNumber(e.target.value),
+                            )
+                          }
+                          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-medium">
+                          抵抗(判定)
+                        </label>
+                        <input
+                          type="text"
+                          value={`${form.resist} + ${form.resistDice} D`}
+                          readOnly
+                          className="w-full cursor-default rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 font-medium text-neutral-700 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">行動力</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.action}
-                  onChange={(e) => updateForm("action", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">移動力</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.move}
-                  onChange={(e) => updateForm("move", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">因果力</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.fate}
-                  onChange={(e) => updateForm("fate", toNonNegativeNumber(e.target.value))}
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
-                />
+                <h3 className="mb-3 text-sm font-semibold text-neutral-700">
+                  その他
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">
+                      物理防御力
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.physicalDefense}
+                      onChange={(e) =>
+                        updateForm(
+                          "physicalDefense",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">
+                      魔法防御力
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.magicDefense}
+                      onChange={(e) =>
+                        updateForm(
+                          "magicDefense",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">最大HP</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.hitPoint}
+                      onChange={(e) =>
+                        updateForm(
+                          "hitPoint",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">
+                      ヘイト倍率
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.hate}
+                      onChange={(e) =>
+                        updateForm("hate", toNonNegativeNumber(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">行動力</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.action}
+                      onChange={(e) =>
+                        updateForm(
+                          "action",
+                          toNonNegativeNumber(e.target.value),
+                        )
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">移動力</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.move}
+                      onChange={(e) =>
+                        updateForm("move", toNonNegativeNumber(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">因果力</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={form.fate}
+                      onChange={(e) =>
+                        updateForm("fate", toNonNegativeNumber(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -911,8 +1272,13 @@ export default function EnemyPage() {
 
         {activeTab === "skills" ? (
           <section className="rounded-2xl border border-neutral-300 p-6">
-            <details className="mb-6 rounded-2xl border border-neutral-300 p-4" open>
-              <summary className="cursor-pointer text-sm font-medium">例</summary>
+            <details
+              className="mb-6 rounded-2xl border border-neutral-300 p-4"
+              open
+            >
+              <summary className="cursor-pointer text-sm font-medium">
+                例
+              </summary>
               <div className="mt-4 grid gap-4 text-sm leading-8 text-neutral-800 sm:grid-cols-2 lg:grid-cols-3">
                 <p>特技名: {exampleSkill.name}</p>
                 <p>タグ: {exampleSkill.tags}</p>
@@ -927,7 +1293,10 @@ export default function EnemyPage() {
             </details>
 
             {form.race === "ギミック" ? (
-              <details className="mb-6 rounded-2xl border border-neutral-300 p-4" open>
+              <details
+                className="mb-6 rounded-2xl border border-neutral-300 p-4"
+                open
+              >
                 <summary className="cursor-pointer text-sm font-medium">
                   ギミック専用特技
                 </summary>
@@ -944,13 +1313,17 @@ export default function EnemyPage() {
 
             <div className="mb-6 flex flex-wrap items-end gap-4">
               <div>
-                <label className="mb-2 block text-sm font-medium">特技の数</label>
+                <label className="mb-2 block text-sm font-medium">
+                  特技の数
+                </label>
                 <input
                   type="number"
                   min={1}
                   max={99}
                   value={skills.length}
-                  onChange={(e) => handleSkillCountChange(Number(e.target.value))}
+                  onChange={(e) =>
+                    handleSkillCountChange(Number(e.target.value))
+                  }
                   className="w-28 rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -971,32 +1344,44 @@ export default function EnemyPage() {
 
                     <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       <div className="sm:col-span-2">
-                        <label className="mb-2 block text-sm font-medium">特技名</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          特技名
+                        </label>
                         <input
                           type="text"
                           value={skill.name}
-                          onChange={(e) => updateSkill(skill.id, "name", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "name", e.target.value)
+                          }
                           placeholder={exampleSkill.name}
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">タグ</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          タグ
+                        </label>
                         <input
                           type="text"
                           value={skill.tags}
-                          onChange={(e) => updateSkill(skill.id, "tags", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "tags", e.target.value)
+                          }
                           placeholder={exampleSkill.tags}
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">タイミング</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          タイミング
+                        </label>
                         <select
                           value={skill.timing}
-                          onChange={(e) => updateSkill(skill.id, "timing", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "timing", e.target.value)
+                          }
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         >
                           {skillTimings.map((value) => (
@@ -1008,7 +1393,9 @@ export default function EnemyPage() {
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">命中値</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          命中値
+                        </label>
                         <input
                           type="text"
                           value={skill.roleAttack}
@@ -1021,7 +1408,9 @@ export default function EnemyPage() {
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">判定</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          判定
+                        </label>
                         <input
                           type="text"
                           value={skill.roleDefense}
@@ -1034,42 +1423,58 @@ export default function EnemyPage() {
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">対象</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          対象
+                        </label>
                         <input
                           type="text"
                           value={skill.target}
-                          onChange={(e) => updateSkill(skill.id, "target", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "target", e.target.value)
+                          }
                           placeholder={exampleSkill.target}
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium">射程</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          射程
+                        </label>
                         <input
                           type="text"
                           value={skill.range}
-                          onChange={(e) => updateSkill(skill.id, "range", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "range", e.target.value)
+                          }
                           placeholder={exampleSkill.range}
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
                       </div>
 
                       <div className="sm:col-span-2 lg:col-span-3">
-                        <label className="mb-2 block text-sm font-medium">制限</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          制限
+                        </label>
                         <input
                           type="text"
                           value={skill.limit}
-                          onChange={(e) => updateSkill(skill.id, "limit", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "limit", e.target.value)
+                          }
                           className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
                       </div>
 
                       <div className="sm:col-span-2 lg:col-span-3">
-                        <label className="mb-2 block text-sm font-medium">効果</label>
+                        <label className="mb-2 block text-sm font-medium">
+                          効果
+                        </label>
                         <textarea
                           value={skill.effect}
-                          onChange={(e) => updateSkill(skill.id, "effect", e.target.value)}
+                          onChange={(e) =>
+                            updateSkill(skill.id, "effect", e.target.value)
+                          }
                           placeholder={exampleSkill.effect}
                           className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
@@ -1106,8 +1511,8 @@ export default function EnemyPage() {
               <div>
                 <p className="mb-2 font-medium">ドロップ品:</p>
                 <div className="space-y-2">
-                  {items.filter((item) => item.name.trim() || item.dice.trim()).length ===
-                  0 ? (
+                  {items.filter((item) => item.name.trim() || item.dice.trim())
+                    .length === 0 ? (
                     <p>-</p>
                   ) : (
                     items
@@ -1133,8 +1538,12 @@ export default function EnemyPage() {
                 <p>DEX: {form.dexterity}</p>
                 <p>POW: {form.power}</p>
                 <p>INT: {form.intelligence}</p>
-                <p>回避: {form.avoid} + {form.avoidDice} D</p>
-                <p>抵抗: {form.resist} + {form.resistDice} D</p>
+                <p>
+                  回避: {form.avoid} + {form.avoidDice} D
+                </p>
+                <p>
+                  抵抗: {form.resist} + {form.resistDice} D
+                </p>
                 <p>物理防御力: {form.physicalDefense}</p>
                 <p>魔法防御力: {form.magicDefense}</p>
                 <p>最大HP: {form.hitPoint}</p>
@@ -1168,7 +1577,9 @@ export default function EnemyPage() {
                         <p>対象: {skill.target || "-"}</p>
                         <p>射程: {skill.range || "-"}</p>
                         <p>制限: {skill.limit || "-"}</p>
-                        <p className="whitespace-pre-wrap">効果: {skill.effect || "-"}</p>
+                        <p className="whitespace-pre-wrap">
+                          効果: {skill.effect || "-"}
+                        </p>
                       </div>
                     ))}
                 </div>
@@ -1189,14 +1600,6 @@ export default function EnemyPage() {
                   className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
                 >
                   コピー
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-                >
-                  クリア
                 </button>
               </div>
 
