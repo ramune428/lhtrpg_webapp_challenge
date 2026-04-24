@@ -38,6 +38,11 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function toNonNegativeNumber(value: string) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
+}
+
 function withSkillRowId(skill: EnemySkillInput): EnemySkillRow {
   return { id: makeId(), ...skill };
 }
@@ -189,7 +194,7 @@ export default function EnemyPage() {
       move: calculated.move,
       fate: calculated.fate,
     }));
-    setStatusMessage("推奨値を入力欄へ反映しました。");
+    setStatusMessage("推奨能力値を反映しました。");
   };
 
   const handleGenerate = () => {
@@ -288,14 +293,30 @@ export default function EnemyPage() {
     }
   };
 
-  const addItem = () => {
-    setItems((prev) => [...prev, withDropRowId(createEmptyDropItemInput())]);
-  };
-
   const removeItem = (id: string) => {
     setItems((prev) => {
       const next = prev.filter((item) => item.id !== id);
       return next.length > 0 ? next : [withDropRowId(createEmptyDropItemInput())];
+    });
+  };
+
+  const handleItemCountChange = (nextCountRaw: number) => {
+    const nextCount = Math.max(1, Math.min(99, nextCountRaw));
+
+    setItems((prev) => {
+      if (nextCount === prev.length) {
+        return prev;
+      }
+
+      if (nextCount > prev.length) {
+        const additional = Array.from(
+          { length: nextCount - prev.length },
+          () => withDropRowId(createEmptyDropItemInput())
+        );
+        return [...prev, ...additional];
+      }
+
+      return prev.slice(0, nextCount);
     });
   };
 
@@ -324,25 +345,118 @@ export default function EnemyPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="enemy" />
 
-        <header className="mb-8">
+        <header className="mb-10">
           <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
+            -LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
           </h1>
 
           <p className="text-sm leading-8 text-neutral-800">
-            Notion版の
-            「エネミー情報入力」
-            「特技情報入力」
-            「エネミーデータ出力」
-            を、1ページ内のタブ切り替えで再構成しています。
+            このエネミーデータ/駒作成ツールは
+            <Link
+              href="https://lhrpg.com/data/enemy_data_guide2.html"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
+              「ログ・ホライズンTRPGエネミーデータガイド（高CR対応拡張版）」
+            </Link>
+            より提供されている支援資料を基に作成しています。
+          </p>
+        </header>
+
+        <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
+          <p className="text-sm leading-8 text-neutral-800">
+            PL向けのキャラ駒作成ツール（CCFOLIA）はこちら
+          </p>
+          <div className="mt-3">
+            <p className="text-sm leading-8 text-neutral-800">
+              →{" "}
+              <Link
+                href="/"
+                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+              >
+                -LHTRPG- キャラ駒作成ツール（CCFOLIA）
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <section className="mb-12 rounded-2xl border border-neutral-300 p-6 space-y-5 text-sm leading-8 text-neutral-800">
+          <h2 className="text-2xl font-semibold text-neutral-950">
+            エネミーデータ/駒作成ツールを使用する前に
+          </h2>
+
+          <p>
+            このツールは「ログ・ホライズンTRPGエネミーデータガイド（高CR対応拡張版）」を参考に作成しており、各能力値、推奨ドロップ品、推奨特技ダメージを自動的に計算します。対応しているCRは
+            <strong>1〜30</strong>です。
           </p>
 
-          <div className="mt-4 text-sm text-neutral-600">
-            <Link href="/enemy/subpages" className="underline underline-offset-4">
-              ← エネミー側サブページへ戻る
+          <p>
+            作成したエネミーデータは「CCFOLIA」、「XLSX」、「JSON」の3種類の形式で出力できます。XLSXファイルおよびJSONファイルを読み込むことでエネミーデータを編集できます。
+          </p>
+
+          <p>
+            また、
+            <Link
+              href="https://lhrpg.com/lhz/database"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
+              「ログ・ホライズンTRPG冒険者窓口 -データベース-」
             </Link>
+            のエネミーデータも読み込むことができますが、読み込む前に一手間必要です。使用する前に、詳細（JSON読み込みについて）をご確認ください。一部のエネミーに関してエラーの発生を確認しています。大抵の原因は文字コードの相違です。発見した場合は、お問い合わせフォームまでご一報ください。
+          </p>
+
+          <p>
+            詳しいエネミーデータの自作方法については「ログ・ホライズンTRPGエネミーデータガイド（高CR対応拡張版）」やルールブックをご確認ください。
+          </p>
+        </section>
+
+        <section className="mb-12 rounded-2xl border border-neutral-300 p-6 space-y-6 text-sm leading-8 text-neutral-800">
+          <h2 className="text-2xl font-semibold text-neutral-950">使い方</h2>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-neutral-950">1. エネミー情報入力欄について</h3>
+            <ol className="list-decimal space-y-2 pl-6">
+              <li>
+                「名称」「ランク」「CR」「タイプ」「大種族」「知名度」「タグ」「メモ」を入力してください。
+                <br />※「因果力」を除く能力値は自動的に計算されます。
+              </li>
+              <li>
+                ドロップ品を入力してください。ドロップ品の数を決定し、推奨ドロップ品を参考に「ダイス」「アイテム名」を入力してください。
+                <br />※「解説」は入力しなくても問題ありません。
+              </li>
+              <li>各能力値について修正したい箇所があれば修正してください。</li>
+            </ol>
           </div>
-        </header>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-neutral-950">2. 特技情報入力欄について</h3>
+            <ol className="list-decimal space-y-2 pl-6">
+              <li>「大種族」が「ギミック」の時は専用の特技《意志なき機構》が自動で追加されます。</li>
+              <li>「特技の数」を決定してください。</li>
+              <li>
+                各特技の情報を入力してください。
+                <br />※「特技名」「効果」を記入していない場合は反映されません。
+              </li>
+            </ol>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-lg font-bold text-neutral-950">3. エネミーデータ出力欄について</h3>
+            <p>エネミーデータの確認ページです。このページに表示されていない場合は反映されていません。</p>
+            <ul className="list-disc space-y-2 pl-6">
+              <li>「コマンドを生成する」→ CCFOLIA用のコマンドが表示されます。CCFOLIAに貼り付けると「キャラクター駒」が作成できます。</li>
+              <li>「Download XLSX」→ XLSXファイルで保存されます。出力したファイルは読み込むことができます。</li>
+              <li>「Download JSON」→ JSONファイルで保存されます。出力したファイルは読み込むことができます。</li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="mb-4">
+          <h2 className="text-2xl font-semibold">エネミーデータ/駒作成ツール</h2>
+        </section>
 
         <section className="mb-6 border-b border-neutral-300">
           <div className="flex flex-wrap gap-2">
@@ -538,16 +652,7 @@ export default function EnemyPage() {
             <hr className="my-8 border-neutral-300" />
 
             <div className="mb-6">
-              <div className="mb-3 flex flex-wrap items-center gap-3">
-                <h2 className="text-lg font-semibold">推奨ドロップ品</h2>
-                <button
-                  type="button"
-                  onClick={handleApplyCalculatedValues}
-                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-                >
-                  推奨値を入力欄へ反映
-                </button>
-              </div>
+              <h2 className="mb-3 text-lg font-semibold">推奨ドロップ品</h2>
 
               <div className="grid gap-3 text-sm leading-8 text-neutral-800 sm:grid-cols-3">
                 <p>{calculated.gold}</p>
@@ -558,18 +663,14 @@ export default function EnemyPage() {
 
             <div className="mb-6">
               <label className="mb-2 block text-sm font-medium">ドロップ品の数</label>
-              <div className="mb-4 flex items-center gap-3">
-                <span className="rounded-xl border border-neutral-300 px-4 py-3 text-sm">
-                  {items.length}
-                </span>
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="rounded-xl border border-neutral-300 px-4 py-3 text-sm transition hover:bg-neutral-50"
-                >
-                  追加
-                </button>
-              </div>
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={items.length}
+                onChange={(e) => handleItemCountChange(e.target.valueAsNumber)}
+                className="mb-4 w-24 rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-500"
+              />
 
               <div className="space-y-4">
                 {items.map((item, index) => (
@@ -637,13 +738,25 @@ export default function EnemyPage() {
 
             <hr className="my-8 border-neutral-300" />
 
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">能力値</h2>
+              <button
+                type="button"
+                onClick={handleApplyCalculatedValues}
+                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+              >
+                推奨能力値を反映
+              </button>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="mb-2 block text-sm font-medium">STR</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.strength}
-                  onChange={(e) => updateForm("strength", Number(e.target.value))}
+                  onChange={(e) => updateForm("strength", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -651,8 +764,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">DEX</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.dexterity}
-                  onChange={(e) => updateForm("dexterity", Number(e.target.value))}
+                  onChange={(e) => updateForm("dexterity", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -660,8 +774,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">POW</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.power}
-                  onChange={(e) => updateForm("power", Number(e.target.value))}
+                  onChange={(e) => updateForm("power", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -669,8 +784,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">INT</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.intelligence}
-                  onChange={(e) => updateForm("intelligence", Number(e.target.value))}
+                  onChange={(e) => updateForm("intelligence", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -679,8 +795,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">回避(固定値)</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.avoid}
-                  onChange={(e) => updateForm("avoid", Number(e.target.value))}
+                  onChange={(e) => updateForm("avoid", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -688,8 +805,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">回避(Dice)</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.avoidDice}
-                  onChange={(e) => updateForm("avoidDice", Number(e.target.value))}
+                  onChange={(e) => updateForm("avoidDice", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -697,8 +815,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">抵抗(固定値)</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.resist}
-                  onChange={(e) => updateForm("resist", Number(e.target.value))}
+                  onChange={(e) => updateForm("resist", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -706,8 +825,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">抵抗(Dice)</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.resistDice}
-                  onChange={(e) => updateForm("resistDice", Number(e.target.value))}
+                  onChange={(e) => updateForm("resistDice", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -716,9 +836,10 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">物理防御力</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.physicalDefense}
                   onChange={(e) =>
-                    updateForm("physicalDefense", Number(e.target.value))
+                    updateForm("physicalDefense", toNonNegativeNumber(e.target.value))
                   }
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
@@ -727,8 +848,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">魔法防御力</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.magicDefense}
-                  onChange={(e) => updateForm("magicDefense", Number(e.target.value))}
+                  onChange={(e) => updateForm("magicDefense", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -736,8 +858,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">最大HP</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.hitPoint}
-                  onChange={(e) => updateForm("hitPoint", Number(e.target.value))}
+                  onChange={(e) => updateForm("hitPoint", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -745,8 +868,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">ヘイト倍率</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.hate}
-                  onChange={(e) => updateForm("hate", Number(e.target.value))}
+                  onChange={(e) => updateForm("hate", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -755,8 +879,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">行動力</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.action}
-                  onChange={(e) => updateForm("action", Number(e.target.value))}
+                  onChange={(e) => updateForm("action", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -764,8 +889,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">移動力</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.move}
-                  onChange={(e) => updateForm("move", Number(e.target.value))}
+                  onChange={(e) => updateForm("move", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -773,8 +899,9 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">因果力</label>
                 <input
                   type="number"
+                  min={0}
                   value={form.fate}
-                  onChange={(e) => updateForm("fate", Number(e.target.value))}
+                  onChange={(e) => updateForm("fate", toNonNegativeNumber(e.target.value))}
                   className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                 />
               </div>
@@ -1085,7 +1212,7 @@ export default function EnemyPage() {
                   onClick={handleDownloadXlsx}
                   className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
                 >
-Download XLSX
+                  Download XLSX
                 </button>
 
                 <button
@@ -1099,6 +1226,26 @@ Download XLSX
             </div>
           </section>
         ) : null}
+
+        <section className="mt-12 rounded-2xl border border-neutral-300 p-6 space-y-4 text-sm leading-8 text-neutral-800">
+          <h2 className="text-2xl font-semibold text-neutral-950">お知らせ</h2>
+          <p>
+            「コマンドが表示されない」「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
+            下記Googleフォームにてご連絡ください。
+            ご意見・ご要望をお送りいただけますと、今後の改善や機能追加の参考にさせていただきます。
+          </p>
+          <p>
+            Googleフォーム →{" "}
+            <Link
+              href="https://forms.gle/76AvTAYyxM5DLQtL8"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
+              https://forms.gle/76AvTAYyxM5DLQtL8
+            </Link>
+          </p>
+        </section>
       </div>
     </main>
   );
