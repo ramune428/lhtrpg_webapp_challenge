@@ -1,0 +1,70 @@
+{
+  "id": null,
+  "index_type": "エネミー",
+  "name": "エネミーNAME",
+  "ruby": "null",
+  "rank": "ボス",
+  "type": "スピア",
+  "character_rank": 6,
+  "identification": 4,
+  "strength": 3,
+  "dexterity": 4,
+  "power": 2,
+  "intelligence": 3,
+  "avoid": 4,
+  "avoid_dice": 2,
+  "resist": 2,
+  "resist_dice": 2,
+  "physical_defense": 15,
+  "magic_defense": 12,
+  "hit_point": 264,
+  "hate": 6,
+  "action": 7,
+  "move": 2,
+  "fate": 0,
+  "contents": "memo@train",
+  "tags": [
+    "ボス",
+    "人造",
+    "タグ１",
+    "タグ２"
+  ],
+  "skills": [
+    {
+      "name": "特技１です",
+      "timing": "メジャー",
+      "role": "対決（1+2D／回避）",
+      "target": "単体",
+      "range": "至近",
+      "limit": "ゲーム中１回",
+      "function": "対象に[55 + 2 D]の物理ダメージを与える。",
+      "tags": [
+        "白兵攻撃"
+      ]
+    },
+    {
+      "name": "特技２です",
+      "timing": "メジャー",
+      "role": "対決（12（固定）／回避）",
+      "target": "単体",
+      "range": "2Sq",
+      "limit": "ラウンド３回",
+      "function": "対象に[10]の魔法ダメージを与える。\nその後、衰弱[80]を与える。",
+      "tags": [
+        "射撃攻撃"
+      ]
+    }
+  ],
+  "items": [
+    {
+      "dice": "固定",
+      "item": "アイテム１",
+      "exp": "あああああ"
+    },
+    {
+      "dice": "1",
+      "item": "アイテム２",
+      "exp": "いいいいい"
+    }
+  ]
+}
