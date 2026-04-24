@@ -186,11 +186,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* <section className="mb-4">
-          <h2 className="text-center text-2xl font-bold tracking-[0.2em]">
-            アプリ
-          </h2>
-        </section> */}
+        <section className="mb-4">
+          <h2 className="text-2xl font-semibold">キャラ駒作成ツール</h2>
+        </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
           <div className="mb-3">
@@ -290,6 +288,7 @@ export default function HomePage() {
             <p>
               「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
               下記Googleフォームにてご連絡ください。
+              ご意見・ご要望をお送りいただけますと、今後の改善や機能追加の参考にさせていただきます。
             </p>
             <p>
               Googleフォーム →
