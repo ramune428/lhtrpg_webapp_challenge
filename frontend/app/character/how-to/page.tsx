@@ -32,8 +32,8 @@ const steps: Step[] = [
     ),
     images: [
       {
-        src: "/character/how-to/1.キャラクターページ.png",
-        alt: "キャラクターページ",
+        src: "/character/how-to/CharacterHowTo-01-CharacterPage.png",
+        alt: "ログ・ホライズンTRPG冒険者窓口のキャラクターページ",
       },
     ],
   },
@@ -42,17 +42,17 @@ const steps: Step[] = [
     text: (
       <>
         外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
-        許可されている場合、キャラクター情報の下部に記載されている。
+        許可されている場合は、キャラクター情報の下部にその旨が表示される。
       </>
     ),
     images: [
       {
-        src: "/character/how-to/2.外部ツール許可.png",
-        alt: "外部ツールからデータ参照が許可されている場合",
+        src: "/character/how-to/CharacterHowTo-02-ExternalToolAllowed.png",
+        alt: "外部ツールからの冒険者データ参照が許可されている状態",
       },
       {
-        src: "/character/how-to/3.外部ツール未許可.png",
-        alt: "外部ツールからデータ参照が許可されていない場合",
+        src: "/character/how-to/CharacterHowTo-03-ExternalToolNotAllowed.png",
+        alt: "外部ツールからの冒険者データ参照が許可されていない状態",
       },
     ],
   },
@@ -60,76 +60,101 @@ const steps: Step[] = [
     number: "3",
     text: (
       <>
-        外部ツールからデータ参照が許可されていない場合は
-        [基本情報を変更する] を開いて変更する。
-        [外部ツールからの〈冒険者〉データ参照を許可する] にチェックをつける。
+        外部ツールからのデータ参照が許可されていない場合は、
+        [基本情報を変更する] をクリックする。
       </>
     ),
     images: [
       {
-        src: "/character/how-to/4.基本情報変更.png",
-        alt: "基本情報変更",
+        src: "/character/how-to/CharacterHowTo-04-BasicInfoButton.png",
+        alt: "基本情報を変更するボタン",
       },
     ],
   },
   {
     number: "4",
-    text: <>URLの末尾のID（id=○○○○）をコピーする。</>,
+    text: (
+      <>
+        [外部ツールからの〈冒険者〉データ参照を許可する]
+        にチェックを付けて、変更内容を確定する。
+      </>
+    ),
     images: [
       {
-        src: "/character/how-to/5.ID.png",
-        alt: "IDをコピー",
+        src: "/character/how-to/CharacterHowTo-05-EnableExternalTool.png",
+        alt: "外部ツールからの冒険者データ参照を許可する設定",
       },
     ],
   },
   {
     number: "5",
-    text: <>キャラクターIDを入力し、[コマンドを生成する] をクリックする。</>,
+    text: <>キャラクターページのURL、またはURL末尾のIDをコピーする。</>,
     images: [
       {
-        src: "/character/how-to/6.ID入力&実行.png",
-        alt: "IDの入力と実行",
+        src: "/character/how-to/CharacterHowTo-06-CopyCharacterUrl.png",
+        alt: "キャラクターページのURLまたはキャラクターIDをコピーする画面",
       },
     ],
   },
   {
     number: "6",
-    text: <>出力されたコマンドをすべてコピーする。</>,
+    text: (
+      <>
+        キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力し、
+        [コマンドを生成する] をクリックする。
+      </>
+    ),
     images: [
       {
-        src: "/character/how-to/7.出力.png",
-        alt: "出力されたコマンドをコピー",
+        src: "/character/how-to/CharacterHowTo-07-InputCharacterId.png",
+        alt: "キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力する画面",
       },
     ],
   },
   {
     number: "7",
-    text: (
-      <>
-        CCFOLIAを開き、オブジェクトがない場所で右クリックし、
-        [貼り付け] を選択する。
-      </>
-    ),
+    text: <>コマンドの生成が完了したら、出力されたコマンドをコピーする。</>,
     images: [
       {
-        src: "/character/how-to/8.貼り付け.png",
-        alt: "コマンドの貼り付け",
-        narrow: true,
+        src: "/character/how-to/CharacterHowTo-08-CopyCommand.png",
+        alt: "出力されたCCFOLIA用キャラクター駒作成コマンドをコピーする画面",
       },
     ],
   },
   {
     number: "8",
-    text: <>駒生成完了。立ち絵を変更して完成。</>,
+    text: (
+      <>
+        CCFOLIAを開き、オブジェクトがない場所で右クリックして
+        [貼り付け] を選択する。
+      </>
+    ),
     images: [
       {
-        src: "/character/how-to/9.出力.png",
-        alt: "完成イメージ1",
+        src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
+        alt: "CCFOLIAで右クリックして貼り付けを選択する画面",
         narrow: true,
       },
+    ],
+  },
+  {
+    number: "9",
+    text: <>キャラクター駒が作成されたことを確認する。</>,
+    images: [
       {
-        src: "/character/how-to/10.立ち絵変更.png",
-        alt: "完成イメージ2",
+        src: "/character/how-to/CharacterHowTo-10-CreatedPiece.png",
+        alt: "CCFOLIAに作成されたキャラクター駒",
+        narrow: true,
+      },
+    ],
+  },
+  {
+    number: "10",
+    text: <>必要に応じて立ち絵を変更する。</>,
+    images: [
+      {
+        src: "/character/how-to/CharacterHowTo-11-ChangeStandee.png",
+        alt: "立ち絵を変更したキャラクター駒",
         narrow: true,
       },
     ],
