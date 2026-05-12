@@ -98,12 +98,7 @@ const steps: Step[] = [
   },
   {
     number: "6",
-    text: (
-      <>
-        キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力し、
-        [コマンドを生成する] をクリックする。
-      </>
-    ),
+    text: <>キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力する。</>,
     images: [
       {
         src: "/character/how-to/CharacterHowTo-07-InputCharacterId.png",
@@ -113,7 +108,12 @@ const steps: Step[] = [
   },
   {
     number: "7",
-    text: <>コマンドの生成が完了したら、出力されたコマンドをコピーする。</>,
+    text: (
+      <>
+        [コマンドを生成する] をクリックする。
+        コマンドの生成が完了したら、[コピー] をクリックして出力されたコマンドをコピーする。
+      </>
+    ),
     images: [
       {
         src: "/character/how-to/CharacterHowTo-08-CopyCommand.png",
@@ -122,20 +122,15 @@ const steps: Step[] = [
     ],
   },
   {
-    number: "8",
-    text: (
-      <>
-        CCFOLIAを開き、オブジェクトがない場所で右クリックして
-        [貼り付け] を選択する。
-      </>
-    ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
-        alt: "CCFOLIAで右クリックして貼り付けを選択する画面",
-        narrow: true,
-      },
-    ],
+  number: "8",
+  text: <>CCFOLIAの盤面に、コピーしたコマンドを貼り付ける。</>,
+  images: [
+    {
+      src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
+      alt: "CCFOLIAにコピーしたコマンドを貼り付ける画面",
+      narrow: true,
+    },
+  ],
   },
   {
     number: "9",
@@ -150,7 +145,7 @@ const steps: Step[] = [
   },
   {
     number: "10",
-    text: <>必要に応じて立ち絵を変更する。</>,
+    text: <>必要に応じて、作成された駒の立ち絵を変更する。</>,
     images: [
       {
         src: "/character/how-to/CharacterHowTo-11-ChangeStandee.png",
