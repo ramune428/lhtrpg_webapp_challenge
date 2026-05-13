@@ -181,7 +181,7 @@ export default function StaticPage({
 }: StaticPageProps) {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-4xl px-6 py-12">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current={current} />
 
         {backHref && backLabel ? (
