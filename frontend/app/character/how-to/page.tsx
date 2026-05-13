@@ -164,10 +164,10 @@ export default function CharacterHowToPage() {
 
         <div className="mb-6">
           <Link
-            href="/character/subpages"
+            href="/"
             className="text-sm text-neutral-600 underline underline-offset-4"
           >
-            ← キャラ駒作成ツール サブページへ戻る
+            ← キャラ駒作成ツールに戻る
           </Link>
         </div>
 
@@ -181,42 +181,50 @@ export default function CharacterHowToPage() {
         </header>
 
         <div className="space-y-12">
-          {steps.map((step) => (
-            <section
-              key={step.number}
-              className="rounded-2xl border border-neutral-300 p-6"
-            >
-              <h2 className="mb-4 text-2xl font-semibold">-{step.number}-</h2>
+          {steps.map((step, stepIndex) => {
+            const figureOffset = steps
+              .slice(0, stepIndex)
+              .reduce((total, currentStep) => total + currentStep.images.length, 0);
 
-              <p className="mb-6 text-sm leading-8 text-neutral-800">
-                {step.text}
-              </p>
+            return (
+              <section
+                key={step.number}
+                className="rounded-2xl border border-neutral-300 p-6"
+              >
+                <h2 className="mb-4 text-2xl font-semibold">-{step.number}-</h2>
 
-              <div className="flex flex-wrap justify-center gap-8">
-                {step.images.map((image) => (
-                  <figure
-                    key={image.src}
-                    className="flex flex-col items-center space-y-2"
-                  >
-                    <img
-                      src={image.src}
-                      alt={image.alt}
-                      className={
-                        image.narrow
-                          ? "h-auto w-full max-w-[320px] rounded-xl border border-neutral-200"
-                          : "h-auto w-full max-w-3xl rounded-xl border border-neutral-200"
-                      }
-                    />
-                    {image.caption ? (
-                      <figcaption className="text-center text-sm text-neutral-600">
-                        {image.caption}
-                      </figcaption>
-                    ) : null}
-                  </figure>
-                ))}
-              </div>
-            </section>
-          ))}
+                <p className="mb-6 text-sm leading-8 text-neutral-800">
+                  {step.text}
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-8">
+                  {step.images.map((image, imageIndex) => {
+                    const figureNumber = figureOffset + imageIndex + 1;
+
+                    return (
+                      <figure
+                        key={image.src}
+                        className="flex flex-col items-center space-y-2"
+                      >
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className={
+                            image.narrow
+                              ? "h-auto w-full max-w-[320px] rounded-xl border border-neutral-200"
+                              : "h-auto w-full max-w-3xl rounded-xl border border-neutral-200"
+                          }
+                        />
+                        <figcaption className="max-w-3xl text-center text-sm leading-6 text-neutral-600">
+                          図{figureNumber}：{image.caption ?? image.alt}
+                        </figcaption>
+                      </figure>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
         </div>
       </div>
     </main>
