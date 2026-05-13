@@ -4,7 +4,7 @@ import AppNav from "@/components/app-nav";
 export default function CharacterCommandDetailsPage() {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-5xl px-6 py-12 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="character" />
         
         <div className="mb-6 text-sm leading-8 text-neutral-800">
@@ -39,7 +39,7 @@ export default function CharacterCommandDetailsPage() {
                 </ol>
 
                 <div className="mt-6 flex justify-center">
-                  <div className="w-full max-w-4xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
+                  <div className="w-full max-w-6xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
                     基本情報の画像を後で追加
                   </div>
                 </div>
@@ -49,7 +49,7 @@ export default function CharacterCommandDetailsPage() {
                   <img
                     src="/character/command-details/basic-info.png"
                     alt="基本情報"
-                    className="h-auto w-full max-w-4xl rounded-xl border border-neutral-200"
+                    className="h-auto w-full max-w-6xl rounded-xl border border-neutral-200"
                   />
                 </div>
                 */}
@@ -68,7 +68,7 @@ export default function CharacterCommandDetailsPage() {
                 </ol>
 
                 <div className="mt-6 flex justify-center">
-                  <div className="w-full max-w-4xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
+                  <div className="w-full max-w-6xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
                     ステータスの画像を後で追加
                   </div>
                 </div>
@@ -78,7 +78,7 @@ export default function CharacterCommandDetailsPage() {
                   <img
                     src="/character/command-details/status.png"
                     alt="ステータス"
-                    className="h-auto w-full max-w-4xl rounded-xl border border-neutral-200"
+                    className="h-auto w-full max-w-6xl rounded-xl border border-neutral-200"
                   />
                 </div>
                 */}

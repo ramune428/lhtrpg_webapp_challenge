@@ -118,7 +118,7 @@ function VersionCard({ item }: { item: VersionItem }) {
 export default function CharacterUpdatesPage() {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-4xl px-6 py-12 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="character" />
 
         <div className="mb-6 text-sm leading-8 text-neutral-800">

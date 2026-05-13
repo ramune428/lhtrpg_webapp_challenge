@@ -4,7 +4,7 @@ import PageLinkCard from "@/components/page-link-card";
 export default function CharacterSubpagesPage() {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-4xl px-6 py-12">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="character" />
 
         <h1 className="mb-4 text-3xl font-bold tracking-tight">
