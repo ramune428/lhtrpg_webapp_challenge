@@ -2,11 +2,14 @@ import Link from "next/link";
 import AppNav from "@/components/app-nav";
 
 export default function CharacterCommandDetailsPage() {
+  const imageClass =
+    "h-auto w-full rounded-xl border border-neutral-200 shadow-sm";
+
   return (
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="character" />
-        
+
         <div className="mb-6 text-sm leading-8 text-neutral-800">
           <span>← </span>
           <Link href="/" className="underline underline-offset-4">
@@ -39,20 +42,12 @@ export default function CharacterCommandDetailsPage() {
                 </ol>
 
                 <div className="mt-6 flex justify-center">
-                  <div className="w-full max-w-6xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
-                    基本情報の画像を後で追加
-                  </div>
-                </div>
-
-                {/*
-                <div className="mt-6 flex justify-center">
                   <img
-                    src="/character/command-details/basic-info.png"
-                    alt="基本情報"
-                    className="h-auto w-full max-w-6xl rounded-xl border border-neutral-200"
+                    src="/character/command-details/CharacterCommandDetails-01-CharacterData.png"
+                    alt="CCFOLIAのキャラクター編集画面の基本情報"
+                    className={`${imageClass} max-w-[720px]`}
                   />
                 </div>
-                */}
               </section>
 
               <section>
@@ -68,20 +63,12 @@ export default function CharacterCommandDetailsPage() {
                 </ol>
 
                 <div className="mt-6 flex justify-center">
-                  <div className="w-full max-w-6xl rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
-                    ステータスの画像を後で追加
-                  </div>
-                </div>
-
-                {/*
-                <div className="mt-6 flex justify-center">
                   <img
-                    src="/character/command-details/status.png"
-                    alt="ステータス"
-                    className="h-auto w-full max-w-6xl rounded-xl border border-neutral-200"
+                    src="/character/command-details/CharacterCommandDetails-02-Status.png"
+                    alt="CCFOLIAのキャラクター編集画面のステータス"
+                    className={`${imageClass} max-w-[720px]`}
                   />
                 </div>
-                */}
               </section>
 
               <section>
@@ -98,33 +85,25 @@ export default function CharacterCommandDetailsPage() {
                   <li>各能力値</li>
                 </ol>
 
-                <div className="mt-6 flex flex-wrap justify-center gap-8">
-                  <div className="w-full max-w-[420px] rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
-                    パラメータ画像①を後で追加
-                  </div>
-                  <div className="w-full max-w-[420px] rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-16 text-center text-sm text-neutral-500">
-                    パラメータ画像②を後で追加
-                  </div>
-                </div>
-
-                {/*
-                <div className="mt-6 flex flex-wrap justify-center gap-8">
+                <div className="mt-6 flex justify-center">
                   <img
-                    src="/character/command-details/params-1.png"
-                    alt="パラメータ1"
-                    className="h-auto w-full max-w-[420px] rounded-xl border border-neutral-200"
-                  />
-                  <img
-                    src="/character/command-details/params-2.png"
-                    alt="パラメータ2"
-                    className="h-auto w-full max-w-[420px] rounded-xl border border-neutral-200"
+                    src="/character/command-details/CharacterCommandDetails-03-Parameters.png"
+                    alt="CCFOLIAのキャラクター編集画面のパラメータ"
+                    className={`${imageClass} max-w-[720px]`}
                   />
                 </div>
-                */}
               </section>
 
               <section>
                 <h3 className="mb-4 text-2xl font-bold">チャットパレット</h3>
+
+                <div className="mb-8 flex justify-center">
+                  <img
+                    src="/character/command-details/CharacterCommandDetails-04-ChatPalette.png"
+                    alt="CCFOLIAのキャラクター編集画面のチャットパレット"
+                    className={`${imageClass} max-w-[720px]`}
+                  />
+                </div>
 
                 <ul className="list-disc space-y-8 pl-8 text-sm leading-8 text-neutral-900">
                   <li>
@@ -146,7 +125,7 @@ export default function CharacterCommandDetailsPage() {
                         <div>被物理ダメージ計算</div>
 
                         <p className="mt-1">
-                            ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その場の数値を入力して使用してください。
                         </p>
 
                         <p className="mt-1">
@@ -165,23 +144,16 @@ export default function CharacterCommandDetailsPage() {
                           <li>
                             エネミーのダメージ：エネミーの物理ダメージの値
                           </li>
-                          <li>
-                            軽減：軽減値
-                          </li>
+                          <li>軽減：軽減値</li>
                         </ul>
 
                         <p className="mt-2">
                           例：60点の物理ダメージを受け、軽減が15ある場合
-                          <br/>
+                          <br />
                           C(
-                          <span className="font-bold text-red-500">
-                            60
-                          </span>
+                          <span className="font-bold text-red-500">60</span>
                           {" "}- {"{物防}"} -{" "}
-                          <span className="font-bold text-red-500">
-                            15
-                          </span>
-                          )
+                          <span className="font-bold text-red-500">15</span>)
                           と入力する。
                         </p>
                       </li>
@@ -190,7 +162,7 @@ export default function CharacterCommandDetailsPage() {
                         <div>被魔法ダメージ計算</div>
 
                         <p className="mt-1">
-                            ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その場の数値を入力して使用してください。
                         </p>
 
                         <p className="mt-1">
@@ -209,23 +181,16 @@ export default function CharacterCommandDetailsPage() {
                           <li>
                             エネミーのダメージ：エネミーの魔法ダメージの値
                           </li>
-                          <li>
-                            軽減：軽減値
-                          </li>
+                          <li>軽減：軽減値</li>
                         </ul>
 
                         <p className="mt-2">
                           例：40点の魔法ダメージを受け、軽減が10ある場合
-                          <br/>
+                          <br />
                           C(
-                          <span className="font-bold text-red-500">
-                            40
-                          </span>
-                          {" "}- {"{物防}"} -{" "}
-                          <span className="font-bold text-red-500">
-                            10
-                          </span>
-                          )
+                          <span className="font-bold text-red-500">40</span>
+                          {" "}- {"{魔防}"} -{" "}
+                          <span className="font-bold text-red-500">10</span>)
                           と入力する。
                         </p>
                       </li>
@@ -234,10 +199,10 @@ export default function CharacterCommandDetailsPage() {
                         <div>残HP計算</div>
 
                         <p className="mt-1">
-                            ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その場の数値を入力して使用してください。
                         </p>
 
-                        <p className="mt-1">                          
+                        <p className="mt-1">
                           コマンド： C(({"{HP}"} + {"{障壁}"}) -{" "}
                           <span className="font-bold text-red-500">
                             ダメージ
@@ -246,23 +211,16 @@ export default function CharacterCommandDetailsPage() {
                           <span className="font-bold text-red-500">
                             ヘイト倍率
                           </span>
-                            {" "}-{" "}
-                          <span className="font-bold text-red-500">
-                            その他
-                          </span>
-                          )
+                          {" "}-{" "}
+                          <span className="font-bold text-red-500">その他</span>)
                         </p>
 
                         <ul className="mt-2 list-disc space-y-1 pl-6">
-                          <li>
-                            ダメージ：実際に受けたダメージ量
-                          </li>
+                          <li>ダメージ：実際に受けたダメージ量</li>
                           <li>
                             ヘイト倍率：エネミーのヘイト倍率（ヘイトアンダーの場合は 0）
                           </li>
-                          <li>
-                            その他：追撃や弱点などの強度
-                          </li>
+                          <li>その他：追撃や弱点などの強度</li>
                         </ul>
 
                         <p className="mt-2">
@@ -273,25 +231,20 @@ export default function CharacterCommandDetailsPage() {
                           でOK。
                         </p>
 
-                        <p className="mt-2">
-                          例：30点のダメージを受け、ヘイトアンダーで、追加の補正がない場合
-                          <p className="mt-1">                          
-                          コマンド： C(({"{HP}"} + {"{障壁}"}) -{" "}
-                          <span className="font-bold text-red-500">
-                            30
-                          </span>
-                          {" "}- {"{ヘイト}"} *{" "}
-                          <span className="font-bold text-red-500">
-                            0
-                          </span>
+                        <div className="mt-2">
+                          <p>
+                            例：30点のダメージを受け、ヘイトアンダーで、追加の補正がない場合
+                          </p>
+                          <p className="mt-1">
+                            コマンド： C(({"{HP}"} + {"{障壁}"}) -{" "}
+                            <span className="font-bold text-red-500">30</span>
+                            {" "}- {"{ヘイト}"} *{" "}
+                            <span className="font-bold text-red-500">0</span>
                             {" "}-{" "}
-                          <span className="font-bold text-red-500">
-                            0
-                          </span>
-                          )
-                        </p>
-                          と入力する。
-                        </p>
+                            <span className="font-bold text-red-500">0</span>)
+                          </p>
+                          <p className="mt-1">と入力する。</p>
+                        </div>
                       </li>
                     </ol>
                   </li>
@@ -334,10 +287,8 @@ export default function CharacterCommandDetailsPage() {
                         </p>
                         <p>
                           現在、表示できるダメージロールは
-                          [直接攻撃を除くダメージ]、
-                          [HP回復]、
-                          [弱点、軽減を除く強度が存在するBSとCS]
-                          となっています。
+                          [直接攻撃を除くダメージ]、[HP回復]、
+                          [弱点、軽減を除く強度が存在するBSとCS]となっています。
                         </p>
                         <p>
                           ただし、追加効果（〔因果力〕、〔CR11〕、〔マイナー〕など）は反映されません。
