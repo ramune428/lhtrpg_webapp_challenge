@@ -1,10 +1,15 @@
 import StaticPage from "@/components/static-page";
 import type { ReactNode } from "react";
 
+const OFFICIAL_ENEMY_GUIDE_URL =
+  "https://lhrpg.com/data/enemy_data_guide2.html";
+
+type BaseDataValue = string | number;
+
 type BaseDataRow = {
-  content: string;
+  itemName: string;
   keyName: string;
-  value: string | number;
+  value: BaseDataValue;
 };
 
 type CoreMaterialRow = {
@@ -12,6 +17,9 @@ type CoreMaterialRow = {
   core: number;
   catalyst: number;
 };
+
+type BasicAttackType = "melee" | "shooting" | "magical";
+type BasicTarget = "single" | "multi";
 
 type EnemyBaseData = {
   base_str: number;
@@ -33,127 +41,125 @@ type EnemyBaseData = {
   base_hate_fix: number;
   base_damageAll_coefficient: number;
   base_aggression_coefficient: number;
-  base_basicAttackType: "melee" | "shooting" | "magical";
+  base_basicAttackType: BasicAttackType;
   base_basicAttackRole_fix: number;
   base_basicAttackRoleDice: number;
-  base_basicTarget: "single" | "multi";
+  base_basicTarget: BasicTarget;
   base_basicRange: number;
 };
 
 type BaseDataDefinition = {
-  content: string;
+  itemName: string;
   keyName: keyof EnemyBaseData;
   valueLabel: string;
 };
 
 const baseDataDefinitions: BaseDataDefinition[] = [
-  { content: "STR", keyName: "base_str", valueLabel: "数値" },
-  { content: "DEX", keyName: "base_dex", valueLabel: "数値" },
-  { content: "POW", keyName: "base_pow", valueLabel: "数値" },
-  { content: "INT", keyName: "base_int", valueLabel: "数値" },
+  { itemName: "STR", keyName: "base_str", valueLabel: "数値" },
+  { itemName: "DEX", keyName: "base_dex", valueLabel: "数値" },
+  { itemName: "POW", keyName: "base_pow", valueLabel: "数値" },
+  { itemName: "INT", keyName: "base_int", valueLabel: "数値" },
   {
-    content: "回避値（係数）",
+    itemName: "回避値（係数）",
     keyName: "base_avoid_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "回避値（固定値）",
+    itemName: "回避値（固定値）",
     keyName: "base_avoid_fix",
     valueLabel: "数値",
   },
   {
-    content: "抵抗値（係数）",
+    itemName: "抵抗値（係数）",
     keyName: "base_resist_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "抵抗値（固定値）",
+    itemName: "抵抗値（固定値）",
     keyName: "base_resist_fix",
     valueLabel: "数値",
   },
   {
-    content: "物理防御（係数）",
+    itemName: "物理防御（係数）",
     keyName: "base_pd_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "物理防御（固定値）",
+    itemName: "物理防御（固定値）",
     keyName: "base_pd_fix",
     valueLabel: "数値",
   },
   {
-    content: "魔法防御（係数）",
+    itemName: "魔法防御（係数）",
     keyName: "base_md_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "魔法防御（固定値）",
+    itemName: "魔法防御（固定値）",
     keyName: "base_md_fix",
     valueLabel: "数値",
   },
   {
-    content: "HP（係数）",
+    itemName: "HP（係数）",
     keyName: "base_hp_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "HP（固定値）",
+    itemName: "HP（固定値）",
     keyName: "base_hp_fix",
     valueLabel: "数値",
   },
   {
-    content: "行動値（固定値）",
+    itemName: "行動値（固定値）",
     keyName: "base_action_fix",
     valueLabel: "数値",
   },
   {
-    content: "ヘイト倍率（CR係数）",
+    itemName: "ヘイト倍率（CR係数）",
     keyName: "base_hateCr",
     valueLabel: "数値",
   },
   {
-    content: "ヘイト倍率（固定値）",
+    itemName: "ヘイト倍率（固定値）",
     keyName: "base_hate_fix",
     valueLabel: "数値",
   },
   {
-    content: "ダメージ（係数）",
+    itemName: "ダメージ（係数）",
     keyName: "base_damageAll_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "攻撃（係数）",
+    itemName: "攻撃（係数）",
     keyName: "base_aggression_coefficient",
     valueLabel: "数値",
   },
   {
-    content: "攻撃方法",
+    itemName: "攻撃方法",
     keyName: "base_basicAttackType",
     valueLabel: "melee / shooting / magical",
   },
   {
-    content: "命中値（固定値）",
+    itemName: "命中値（固定値）",
     keyName: "base_basicAttackRole_fix",
     valueLabel: "数値",
   },
   {
-    content: "命中値（ダイス）",
+    itemName: "命中値（ダイス）",
     keyName: "base_basicAttackRoleDice",
     valueLabel: "数値",
   },
   {
-    content: "攻撃対象",
+    itemName: "攻撃対象",
     keyName: "base_basicTarget",
     valueLabel: "single / multi",
   },
-  { content: "射程", keyName: "base_basicRange", valueLabel: "数値" },
+  {
+    itemName: "射程",
+    keyName: "base_basicRange",
+    valueLabel: "数値",
+  },
 ];
-
-const baseDataRows: BaseDataRow[] = baseDataDefinitions.map((definition) => ({
-  content: definition.content,
-  keyName: definition.keyName,
-  value: definition.valueLabel,
-}));
 
 const enemyBaseDataMap: Record<string, EnemyBaseData> = {
   アーマラー: {
@@ -426,9 +432,17 @@ const coreMaterialRows: CoreMaterialRow[] = [
   { power: 31, core: 1760, catalyst: 880 },
 ];
 
+function toExampleBaseDataRows(): BaseDataRow[] {
+  return baseDataDefinitions.map((definition) => ({
+    itemName: definition.itemName,
+    keyName: definition.keyName,
+    value: definition.valueLabel,
+  }));
+}
+
 function toBaseDataRows(data: EnemyBaseData): BaseDataRow[] {
   return baseDataDefinitions.map((definition) => ({
-    content: definition.content,
+    itemName: definition.itemName,
     keyName: definition.keyName,
     value: data[definition.keyName],
   }));
@@ -453,6 +467,14 @@ function DetailsBlock({
   );
 }
 
+function FormulaText({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-md bg-gray-50 px-3 py-2 font-mono text-sm text-gray-900">
+      {children}
+    </div>
+  );
+}
+
 function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
   return (
     <div className="overflow-x-auto">
@@ -474,7 +496,7 @@ function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
           {rows.map((row) => (
             <tr key={row.keyName} className="bg-white">
               <td className="border border-gray-300 px-3 py-2 align-top text-gray-900">
-                {row.content}
+                {row.itemName}
               </td>
               <td className="border border-gray-300 px-3 py-2 align-top">
                 <code className="font-mono text-[13px] text-gray-900">
@@ -488,14 +510,6 @@ function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
           ))}
         </tbody>
       </table>
-    </div>
-  );
-}
-
-function FormulaText({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-md bg-gray-50 px-3 py-2 font-mono text-sm text-gray-900">
-      {children}
     </div>
   );
 }
@@ -533,170 +547,175 @@ function CoreMaterialTable({ rows }: { rows: CoreMaterialRow[] }) {
   );
 }
 
+function PageLead() {
+  return (
+    <>
+      この計算式は公式（
+      <a
+        href={OFFICIAL_ENEMY_GUIDE_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-4"
+      >
+        {OFFICIAL_ENEMY_GUIDE_URL}
+      </a>
+      ）のJavaScriptから計算式を求めて反映させています。
+    </>
+  );
+}
+
+function BaseDataSection() {
+  return (
+    <div className="space-y-3">
+      <DetailsBlock title="設定項目一覧">
+        <BaseDataTable rows={toExampleBaseDataRows()} />
+      </DetailsBlock>
+
+      {Object.entries(enemyBaseDataMap).map(([typeName, data]) => (
+        <DetailsBlock key={typeName} title={typeName}>
+          <BaseDataTable rows={toBaseDataRows(data)} />
+        </DetailsBlock>
+      ))}
+    </div>
+  );
+}
+
+function CalculationFormulaSection() {
+  return (
+    <div className="space-y-3">
+      <p>算出された数値の小数点以下は切り捨て。</p>
+
+      <DetailsBlock title="各能力値（STR / DEX / POW / INT）">
+        <FormulaText>{"(<CR> * 1.1 + <base_各能力値>) // 3"}</FormulaText>
+        <p>ギミックの場合、上記の計算式を適用せず 0 に固定する</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="回避値（固定値）">
+        <FormulaText>
+          {"(<CR> * <base_avoid_coefficient> + <base_avoid_fix>) // 3"}
+        </FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="回避値（ダイス）">
+        <p>モブの場合、固定値 3 とする</p>
+        <p>モブ以外でグラップラーの場合、3D とする</p>
+        <p>上記以外の場合、2D とする</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="抵抗値（固定値）">
+        <FormulaText>
+          {"(<CR> * <base_resist_coefficient> + <base_resist_fix>) // 3"}
+        </FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="抵抗値（ダイス）">
+        <p>モブの場合、固定値 3 とする</p>
+        <p>モブ以外でグラップラーの場合、3D とする</p>
+        <p>上記以外の場合、2D とする</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="物理防御">
+        <FormulaText>{"<CR> * <base_pd_coefficient> + <base_pd_fix>"}</FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="魔法防御">
+        <FormulaText>{"<CR> * <base_md_coefficient> + <base_md_fix>"}</FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="HP">
+        <FormulaText>{"<CR> * <base_hp_coefficient> + <base_hp_fix>"}</FormulaText>
+        <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
+        <p>ボスの場合、上記の計算結果を 4 倍する</p>
+        <p>レイドの場合、上記の計算結果を 10 倍する</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="ヘイト">
+        <p>ギミックの場合、固定値 0 とする</p>
+
+        <p>ボス または レイドの場合、以下の計算式で算出する</p>
+        <FormulaText>{"<CR> / 2.4 + 4"}</FormulaText>
+
+        <p>ノーマル または モブの場合、以下の計算式で算出する</p>
+        <FormulaText>
+          {"(<CR> * <base_hateCr>) // 6 + <base_hate_fix>"}
+        </FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="行動値">
+        <FormulaText>{"value1 = (<CR> * 1.1 + 7) // 3"}</FormulaText>
+        <FormulaText>{"value2 = (<CR> * 1.1 + 3) // 3"}</FormulaText>
+        <FormulaText>{"value1 + value2 + <base_action_fix>"}</FormulaText>
+
+        <p>ギミックの場合、上記の計算式を適用せず 0 に固定する</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="移動力">
+        <p>ギミックの場合、固定値 0 とする</p>
+        <p>それ以外の場合、固定値 2 とする</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="命中値（固定値）">
+        <FormulaText>
+          {"(<CR> * 1.1 + 7) // 3 + <base_basicAttackRole_fix>"}
+        </FormulaText>
+      </DetailsBlock>
+
+      <DetailsBlock title="命中値（ダイス）">
+        <FormulaText>{"<base_basicAttackRoleDice>"}</FormulaText>
+        <p>モブの場合、 1D = 3 として換算する</p>
+        <p>例： 2D → 6、3D → 9</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="ダメージ固定値">
+        <DetailsBlock title="アーマラー、フェンサー、グラップラー、ヒーラー">
+          <FormulaText>{"<CR> * 3.5 + 8 + 8"}</FormulaText>
+        </DetailsBlock>
+
+        <DetailsBlock title="サポーター">
+          <FormulaText>{"<CR> * 3.5 + 8"}</FormulaText>
+        </DetailsBlock>
+
+        <DetailsBlock title="スピア、アーチャー">
+          <FormulaText>{"<CR> * 6 + 18 + 8"}</FormulaText>
+        </DetailsBlock>
+
+        <DetailsBlock title="シューター、ボマー">
+          <FormulaText>{"<CR> * 6 + 18"}</FormulaText>
+        </DetailsBlock>
+      </DetailsBlock>
+
+      <DetailsBlock title="ドロップ［金銭］">
+        <FormulaText>
+          {"gold = (<CR> + 2) * (<CR> + 2) * 0.72 + 17"}
+        </FormulaText>
+        <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
+        <p>ボス または レイドの場合、上記の計算結果を 4 倍する</p>
+        <p>※ 最終値は 5 の倍数になるように切り捨てる</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="ドロップ［コア、魔触媒］">
+        <CoreMaterialTable rows={coreMaterialRows} />
+      </DetailsBlock>
+    </div>
+  );
+}
+
 export default function EnemyFormulaPage() {
   return (
     <StaticPage
       current="enemy"
       title="計算式"
-      lead={
-        <>
-          この計算式は公式（
-          <a
-            href="https://lhrpg.com/data/enemy_data_guide2.html"
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-4"
-          >
-            https://lhrpg.com/data/enemy_data_guide2.html
-          </a>
-          ）のJavaScriptから計算式を求めて反映させています。
-        </>
-}      backHref="/enemy/subpages"
+      lead={<PageLead />}
+      backHref="/enemy/subpages"
       backLabel="エネミーデータ サブページ"
       sections={[
         {
           title: "各タイプの基本データ",
-          paragraphs: [
-            <div key="base-data" className="space-y-3">
-              <DetailsBlock title="設定項目一覧">
-                <BaseDataTable rows={baseDataRows} />
-              </DetailsBlock>
-
-              {Object.entries(enemyBaseDataMap).map(([typeName, data]) => (
-                <DetailsBlock key={typeName} title={typeName}>
-                  <BaseDataTable rows={toBaseDataRows(data)} />
-                </DetailsBlock>
-              ))}
-            </div>,
-          ],
+          paragraphs: [<BaseDataSection key="base-data" />],
         },
         {
           title: "各数値の計算式",
-          paragraphs: [
-            <div key="formulas" className="space-y-3">
-              <p>算出された数値の小数点以下は切り捨て。</p>
-
-              <DetailsBlock title="各能力値（STR / DEX / POW / INT）">
-                <FormulaText>
-                  {"(<CR> * 1.1 + <base_各能力値>) // 3"}
-                </FormulaText>
-                <p>ギミックの場合、上記の計算式を適用せず 0 に固定する</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="回避値（固定値）">
-                <FormulaText>
-                  {"(<CR> * <base_avoid_coefficient> + <base_avoid_fix>) // 3"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="回避値（ダイス）">
-                <p>モブの場合、固定値 3 とする</p>
-                <p>モブ以外でグラップラーの場合、3D とする</p>
-                <p>上記以外の場合、2D とする</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="抵抗値（固定値）">
-                <FormulaText>
-                  {"(<CR> * <base_resist_coefficient> + <base_resist_fix>) // 3"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="抵抗値（ダイス）">
-                <p>モブの場合、固定値 3 とする</p>
-                <p>モブ以外でグラップラーの場合、3D とする</p>
-                <p>上記以外の場合、2D とする</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="物理防御">
-                <FormulaText>
-                  {"<CR> * <base_pd_coefficient> + <base_pd_fix>"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="魔法防御">
-                <FormulaText>
-                  {"<CR> * <base_md_coefficient> + <base_md_fix>"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="HP">
-                <FormulaText>
-                  {"<CR> * <base_hp_coefficient> + <base_hp_fix>"}
-                </FormulaText>
-                <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
-                <p>ボスの場合、上記の計算結果を 4 倍する</p>
-                <p>レイドの場合、上記の計算結果を 10 倍する</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="ヘイト">
-                <p>ギミックの場合、固定値 0 とする</p>
-
-                <p>ボス または レイドの場合、以下の計算式で算出する</p>
-                <FormulaText>{"<CR> / 2.4 + 4"}</FormulaText>
-
-                <p>ノーマル または モブの場合、以下の計算式で算出する</p>
-                <FormulaText>
-                  {"(<CR> * <base_hateCr>) // 6 + <base_hate_fix>"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="行動値">
-                <FormulaText>{"value1 = (<CR> * 1.1 + 7) // 3"}</FormulaText>
-                <FormulaText>{"value2 = (<CR> * 1.1 + 3) // 3"}</FormulaText>
-                <FormulaText>{"value1 + value2 + <base_action_fix>"}</FormulaText>
-
-                <p>ギミックの場合、上記の計算式を適用せず 0 に固定する</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="移動力">
-                <p>ギミックの場合、固定値 0 とする</p>
-                <p>それ以外の場合、固定値 2 とする</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="命中値（固定値）">
-                <FormulaText>
-                  {"(<CR> * 1.1 + 7) // 3 + <base_basicAttackRole_fix>"}
-                </FormulaText>
-              </DetailsBlock>
-
-              <DetailsBlock title="命中値（ダイス）">
-                <FormulaText>{"<base_basicAttackRoleDice>"}</FormulaText>
-                <p>モブの場合、 1D = 3 として換算する</p>
-                <p>例： 2D → 6、3D → 9</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="ダメージ固定値">
-                <DetailsBlock title="アーマラー、フェンサー、グラップラー、ヒーラー">
-                  <FormulaText>{"<CR> * 3.5 + 8 + 8"}</FormulaText>
-                </DetailsBlock>
-
-                <DetailsBlock title="サポーター">
-                  <FormulaText>{"<CR> * 3.5 + 8"}</FormulaText>
-                </DetailsBlock>
-
-                <DetailsBlock title="スピア、アーチャー">
-                  <FormulaText>{"<CR> * 6 + 18 + 8"}</FormulaText>
-                </DetailsBlock>
-
-                <DetailsBlock title="シューター、ボマー">
-                  <FormulaText>{"<CR> * 6 + 18"}</FormulaText>
-                </DetailsBlock>
-              </DetailsBlock>
-
-              <DetailsBlock title="ドロップ［金銭］">
-                <FormulaText>
-                  {"gold = (<CR> + 2) * (<CR> + 2) * 0.72 + 17"}
-                </FormulaText>
-                <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
-                <p>ボス または レイドの場合、上記の計算結果を 4 倍する</p>
-                <p>※ 最終値は 5 の倍数になるように切り捨てる</p>
-              </DetailsBlock>
-
-              <DetailsBlock title="ドロップ［コア、魔触媒］">
-                <CoreMaterialTable rows={coreMaterialRows} />
-              </DetailsBlock>
-            </div>,
-          ],
+          paragraphs: [<CalculationFormulaSection key="formulas" />],
         },
       ]}
     />
