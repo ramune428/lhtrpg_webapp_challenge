@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppNav from "@/components/app-nav";
+import type { ReactNode } from "react";
 
 type TextBlock = {
   type: "text";
@@ -40,7 +41,7 @@ type StaticPageBlock =
 
 type Section = {
   title: string;
-  paragraphs?: string[];
+  paragraphs?: ReactNode[];
   blocks?: StaticPageBlock[];
   collapsible?: boolean;
   defaultOpen?: boolean;
@@ -49,7 +50,7 @@ type Section = {
 type StaticPageProps = {
   current?: "character" | "enemy";
   title: string;
-  lead?: string;
+  lead?: ReactNode;
   backHref?: string;
   backLabel?: string;
   sections: Section[];
@@ -159,14 +160,23 @@ function SectionBody({ section }: { section: Section }) {
 
   return (
     <div className="space-y-3">
-      {(section.paragraphs ?? []).map((paragraph, index) => (
-        <p
-          key={`${section.title}-${index}`}
-          className="text-sm leading-8 text-neutral-800"
-        >
-          {paragraph}
-        </p>
-      ))}
+      {(section.paragraphs ?? []).map((paragraph, index) =>
+        typeof paragraph === "string" ? (
+          <p
+            key={`${section.title}-${index}`}
+            className="text-sm leading-8 text-neutral-800"
+          >
+            {paragraph}
+          </p>
+        ) : (
+          <div
+            key={`${section.title}-${index}`}
+            className="text-sm leading-8 text-neutral-800"
+          >
+            {paragraph}
+          </div>
+        )
+      )}
     </div>
   );
 }
