@@ -26,9 +26,18 @@ export default function CharacterCommandDetailsPage() {
 
         <section className="space-y-12">
           <section>
-            <h2 className="mb-8 text-3xl font-bold tracking-tight">
-              生成されるコマンドの内容について
-            </h2>
+            <div className="mb-10 space-y-4">
+              <h2 className="text-3xl font-bold tracking-tight">
+                生成されるコマンドの内容について
+              </h2>
+
+              <p className="text-sm leading-8 text-neutral-800">
+                ログ・ホライズンTRPG冒険者窓口に登録されたキャラクターデータをもとに、
+                CCFOLIAに貼り付けるためのコマンドを作成します。
+                <br />
+                ※ パーソナルファクターと画像は、コマンド作成の参照対象に含まれません。
+              </p>
+            </div>
 
             <div className="space-y-12">
               <section>
