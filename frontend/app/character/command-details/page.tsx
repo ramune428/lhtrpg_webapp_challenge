@@ -118,14 +118,14 @@ export default function CharacterCommandDetailsPage() {
                   </li>
 
                   <li>
-                    <div className="font-medium">被ダメ計算用</div>
+                    <div className="font-medium">被ダメージ計算用</div>
 
                     <ol className="mt-2 list-decimal space-y-6 pl-8">
                       <li>
-                        <div>被物理ダメージ計算</div>
+                        <div>被ダメージ（物理）計算</div>
 
                         <p className="mt-1">
-                          ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その時の数値を入力して使用してください。
                         </p>
 
                         <p className="mt-1">
@@ -142,9 +142,9 @@ export default function CharacterCommandDetailsPage() {
 
                         <ul className="mt-2 list-disc space-y-1 pl-6">
                           <li>
-                            エネミーのダメージ：エネミーの物理ダメージの値
+                            エネミーのダメージ：エネミー（GM）の攻撃で発生した物理ダメージの値
                           </li>
-                          <li>軽減：軽減値</li>
+                          <li>軽減：CSなどの軽減値</li>
                         </ul>
 
                         <p className="mt-2">
@@ -159,10 +159,10 @@ export default function CharacterCommandDetailsPage() {
                       </li>
 
                       <li>
-                        <div>被魔法ダメージ計算</div>
+                        <div>被ダメージ（魔法）計算</div>
 
                         <p className="mt-1">
-                          ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その時の数値を入力して使用してください。
                         </p>
 
                         <p className="mt-1">
@@ -179,9 +179,9 @@ export default function CharacterCommandDetailsPage() {
 
                         <ul className="mt-2 list-disc space-y-1 pl-6">
                           <li>
-                            エネミーのダメージ：エネミーの魔法ダメージの値
+                            エネミーのダメージ：エネミー（GM）の攻撃で発生した魔法ダメージの値
                           </li>
-                          <li>軽減：軽減値</li>
+                          <li>軽減：CSなどの軽減値</li>
                         </ul>
 
                         <p className="mt-2">
@@ -196,10 +196,10 @@ export default function CharacterCommandDetailsPage() {
                       </li>
 
                       <li>
-                        <div>残HP計算</div>
+                        <div>残りHP計算</div>
 
                         <p className="mt-1">
-                          ※ 赤字の部分に、その場の数値を入力して使用してください。
+                          ※ 赤字の部分に、その時の数値を入力して使用してください。
                         </p>
 
                         <p className="mt-1">
@@ -216,7 +216,7 @@ export default function CharacterCommandDetailsPage() {
                         </p>
 
                         <ul className="mt-2 list-disc space-y-1 pl-6">
-                          <li>ダメージ：実際に受けたダメージ量</li>
+                          <li>ダメージ：実際に受けるダメージ量</li>
                           <li>
                             ヘイト倍率：エネミーのヘイト倍率（ヘイトアンダーの場合は 0）
                           </li>
@@ -242,6 +242,21 @@ export default function CharacterCommandDetailsPage() {
                             <span className="font-bold text-red-500">0</span>
                             {" "}-{" "}
                             <span className="font-bold text-red-500">0</span>)
+                          </p>
+                          <p className="mt-1">と入力する。</p>
+                        </div>
+
+                                                <div className="mt-2">
+                          <p>
+                            例：28点のダメージを受け、ヘイトトップ（ヘイト倍率2倍）で、弱点が10ある場合
+                          </p>
+                          <p className="mt-1">
+                            コマンド： C(({"{HP}"} + {"{障壁}"}) -{" "}
+                            <span className="font-bold text-red-500">28</span>
+                            {" "}- {"{ヘイト}"} *{" "}
+                            <span className="font-bold text-red-500">2</span>
+                            {" "}-{" "}
+                            <span className="font-bold text-red-500">10</span>)
                           </p>
                           <p className="mt-1">と入力する。</p>
                         </div>
@@ -280,16 +295,22 @@ export default function CharacterCommandDetailsPage() {
                       <summary className="cursor-pointer select-none font-medium">
                         ダメージロール
                       </summary>
+
                       <div className="mt-3 space-y-3 pl-6">
                         <p>
-                          ダメージロールには、その特技単独のダイスや計算式のみが反映されています。
-                          マスタリー系やスタイルに関しては各自で修正してください。
+                          ダメージロールには、その特技単独のダイスや計算式のみを反映しています。
+                          マスタリー系やスタイルなどによる補正は、必要に応じて修正してください。
                         </p>
-                        <p>
-                          現在、表示できるダメージロールは
-                          [直接攻撃を除くダメージ]、[HP回復]、
-                          [弱点、軽減を除く強度が存在するBSとCS]となっています。
-                        </p>
+
+                        <div>
+                          <p>現在表示できるダメージロールは、以下の内容です。</p>
+                          <ul className="mt-2 list-disc space-y-1 pl-6">
+                            <li>直接攻撃を除くダメージ</li>
+                            <li>HP回復</li>
+                            <li>弱点、軽減を除く強度が存在するBS・CS</li>
+                          </ul>
+                        </div>
+
                         <p>
                           ただし、追加効果（〔因果力〕、〔CR11〕、〔マイナー〕など）は反映されません。
                         </p>
