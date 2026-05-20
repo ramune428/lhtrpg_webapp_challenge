@@ -1510,23 +1510,38 @@ export default function EnemyPage() {
 
               <div>
                 <p className="mb-2 font-medium">ドロップ品:</p>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {items.filter((item) => item.name.trim() || item.dice.trim())
                     .length === 0 ? (
                     <p>-</p>
                   ) : (
                     items
                       .filter((item) => item.name.trim() || item.dice.trim())
-                      .map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-xl border border-neutral-200 p-3"
-                        >
-                          <p>ダイス: {item.dice || "-"}</p>
-                          <p>アイテム名: {item.name || "-"}</p>
-                          <p>解説: {item.description || "-"}</p>
-                        </div>
-                      ))
+                      .map((item, index) => {
+                        const summaryName = item.name.trim() || "（未入力）";
+
+                        return (
+                          <details
+                            key={item.id}
+                            className="group rounded-2xl border border-neutral-300 p-4"
+                          >
+                            <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold text-neutral-950 [&::-webkit-details-marker]:hidden">
+                              <span className="transition-transform group-open:rotate-90">
+                                ▶
+                              </span>
+                              <span>
+                                ドロップ品{index + 1}：{summaryName}
+                              </span>
+                            </summary>
+
+                            <div className="mt-4 space-y-2 text-sm font-normal text-neutral-800">
+                              <p>ダイス: {item.dice || "-"}</p>
+                              <p>アイテム名: {item.name || "-"}</p>
+                              <p>解説: {item.description || "-"}</p>
+                            </div>
+                          </details>
+                        );
+                      })
                   )}
                 </div>
               </div>
@@ -1558,30 +1573,51 @@ export default function EnemyPage() {
               <div>
                 <p className="mb-2 font-medium">特技:</p>
                 <div className="space-y-3">
-                  {outputSkills
-                    .filter((skill) => skill.name.trim() || skill.effect.trim())
-                    .map((skill) => (
-                      <div
-                        key={skill.id}
-                        className="rounded-xl border border-neutral-200 p-3"
-                      >
-                        <p>特技名: {skill.name || "-"}</p>
-                        <p>タグ: {skill.tags || "-"}</p>
-                        <p>タイミング: {skill.timing || "-"}</p>
-                        <p>
-                          対決:{" "}
-                          {skill.roleAttack && skill.roleDefense
-                            ? `${skill.roleAttack}／${skill.roleDefense}`
-                            : "-"}
-                        </p>
-                        <p>対象: {skill.target || "-"}</p>
-                        <p>射程: {skill.range || "-"}</p>
-                        <p>制限: {skill.limit || "-"}</p>
-                        <p className="whitespace-pre-wrap">
-                          効果: {skill.effect || "-"}
-                        </p>
-                      </div>
-                    ))}
+                  {outputSkills.filter(
+                    (skill) => skill.name.trim() || skill.effect.trim(),
+                  ).length === 0 ? (
+                    <p>-</p>
+                  ) : (
+                    outputSkills
+                      .filter((skill) => skill.name.trim() || skill.effect.trim())
+                      .map((skill, index) => {
+                        const summaryName = skill.name.trim() || "（未入力）";
+
+                        return (
+                          <details
+                            key={skill.id}
+                            className="group rounded-2xl border border-neutral-300 p-4"
+                          >
+                            <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold text-neutral-950 [&::-webkit-details-marker]:hidden">
+                              <span className="transition-transform group-open:rotate-90">
+                                ▶
+                              </span>
+                              <span>
+                                特技{index + 1}：{summaryName}
+                              </span>
+                            </summary>
+
+                            <div className="mt-4 space-y-2 text-sm font-normal text-neutral-800">
+                              <p>特技名: {skill.name || "-"}</p>
+                              <p>タグ: {skill.tags || "-"}</p>
+                              <p>タイミング: {skill.timing || "-"}</p>
+                              <p>
+                                対決:{" "}
+                                {skill.roleAttack && skill.roleDefense
+                                  ? `${skill.roleAttack}／${skill.roleDefense}`
+                                  : "-"}
+                              </p>
+                              <p>対象: {skill.target || "-"}</p>
+                              <p>射程: {skill.range || "-"}</p>
+                              <p>制限: {skill.limit || "-"}</p>
+                              <p className="whitespace-pre-wrap">
+                                効果: {skill.effect || "-"}
+                              </p>
+                            </div>
+                          </details>
+                        );
+                      })
+                  )}
                 </div>
               </div>
 
