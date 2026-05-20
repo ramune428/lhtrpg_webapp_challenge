@@ -16,45 +16,65 @@ export default function EnemyHowToPage() {
           blocks: [
             {
               type: "details",
-              title: "GUI",
+              title: "画面全体",
               defaultOpen: true,
               blocks: [
                 {
                   type: "image",
-                  label: "エネミー情報入力 GUI",
-                  src: "/enemy/how-to/enemy-info-gui.svg",
-                  alt: "エネミー情報入力タブ全体のGUI",
+                  label: "エネミー情報入力タブ 全体",
+                  src: "/enemy/how-to/EnemyHowTo-01-Overview.png",
+                  alt: "エネミー情報入力タブの全体説明画像",
                   caption:
-                    "エネミー情報入力タブ全体の画像です。実際の画面キャプチャに差し替えてください。",
+                    "エネミー情報入力タブでは、タブ切り替え、入力ファイルの読み込み、入力内容のクリア、エネミー情報、ドロップ品、能力値を操作します。",
                 },
               ],
             },
             {
               type: "details",
-              title: "入力例",
+              title: "基本操作",
               defaultOpen: true,
               blocks: [
                 {
                   type: "image",
-                  label: "エネミー情報入力 入力例",
-                  src: "/enemy/how-to/enemy-info-example.svg",
-                  alt: "エネミー情報入力タブ全体の入力例",
+                  label: "基本操作",
+                  src: "/enemy/how-to/EnemyHowTo-02-BasicOperations.png",
+                  alt: "タブの切り替え、入力ファイルの読み込み、入力内容のクリアの説明画像",
                   caption:
-                    "入力済みのエネミー情報入力タブ全体の画像です。実際の入力例画像に差し替えてください。",
+                    "タブの切り替え、入力ファイルの読み込み、入力内容のクリアに関する操作です。",
                 },
               ],
             },
             { type: "heading", text: "① タブの切り替え" },
             {
               type: "text",
-              text: "「エネミー情報入力」「特技情報入力」「エネミーデータ出力」を切り替える。",
+              text: "「エネミー情報」「特技情報」「データ出力」を切り替えます。",
             },
-            { type: "heading", text: "② JSONファイルのアップロード" },
+            { type: "heading", text: "② 入力ファイルの読み込み" },
             {
               type: "text",
-              text: "JSONファイルを読み込む → JSON（読み込み）について",
+              text: "入力ファイル読込ボタンから、作業再開用のJSONファイルを読み込みます。読み込みが完了すると、画面上部に読み込み結果のメッセージが表示されます。",
             },
-            { type: "heading", text: "③ エネミー情報入力欄" },
+            { type: "heading", text: "③ 入力内容をクリア" },
+            {
+              type: "text",
+              text: "入力内容を初期状態に戻します。現在の入力内容を残したい場合は、先にJSONファイルやXLSXファイルを出力してください。",
+            },
+            {
+              type: "details",
+              title: "④ エネミー情報入力欄",
+              defaultOpen: true,
+              blocks: [
+                {
+                  type: "image",
+                  label: "エネミー情報入力欄",
+                  src: "/enemy/how-to/EnemyHowTo-03-EnemyInfoForm.png",
+                  alt: "エネミー情報入力欄の説明画像",
+                  caption:
+                    "名称、ランク、CR、タイプ、大種族、知名度、識別難易度、タグ、メモなどを入力します。",
+                },
+              ],
+            },
+            { type: "heading", text: "④ エネミー情報入力欄" },
             {
               type: "bullets",
               items: [
@@ -65,33 +85,61 @@ export default function EnemyHowToPage() {
                 "大種族：8つの種族から選択。「ギミック」を作成する場合は必ず選択。",
                 "知名度：8つの知名度から選択。",
                 "識別難易度：CRと知名度から自動で計算。調整可能。",
-                "タグ：ランク（ノーマルを除く）と大種族が自動で反映される。",
+                "初期タグ：ランク（ノーマルを除く）と大種族が自動で反映される。",
+                "タグ：任意のタグを入力。",
                 "メモ：自由記述欄。CCFOLIAでは「キャラクターメモ」に反映される。",
               ],
             },
-            { type: "heading", text: "④ エネミータイプの説明" },
             {
-              type: "text",
-              text: "「エネミー情報入力欄」の「タイプ」の説明。自動で反映される。",
+              type: "details",
+              title: "⑤ ドロップ入力欄",
+              defaultOpen: true,
+              blocks: [
+                {
+                  type: "image",
+                  label: "ドロップ入力欄",
+                  src: "/enemy/how-to/EnemyHowTo-04-DropItemsForm.png",
+                  alt: "ドロップ入力欄の説明画像",
+                  caption:
+                    "CRとランク、またはギミック設定に応じて推奨ドロップ品が表示されます。必要に応じてドロップ品の内容を調整します。",
+                },
+              ],
             },
-            { type: "heading", text: "⑤ 推奨ドロップ" },
-            {
-              type: "text",
-              text: "CRとランク（orギミック）から推奨ドロップ品を計算。",
-            },
-            { type: "heading", text: "⑥ ドロップ" },
+            { type: "heading", text: "⑤ ドロップ入力欄" },
             {
               type: "bullets",
               items: [
+                "推奨ドロップ品：CRとランク、またはギミック設定に応じて表示される。",
                 "ドロップ品の数：数字に合わせて入力欄（ドロップ品〇）が反映される。",
                 "ダイス：「固定」「1～6」（レイドの場合「1～9」）から選択。",
-                "CR：1～30まで対応。＋－で選択 or 数字を入力。",
+                "アイテム名：ドロップ品の名称を入力。",
+                "解説：必要に応じてドロップ品の説明を入力。",
               ],
             },
-            { type: "heading", text: "⑦ エネミー能力値欄" },
             {
-              type: "text",
-              text: "ランク、CR、タイプから各能力値を算出。調整可能。",
+              type: "details",
+              title: "⑥ エネミー能力値欄",
+              defaultOpen: true,
+              blocks: [
+                {
+                  type: "image",
+                  label: "エネミー能力値欄",
+                  src: "/enemy/how-to/EnemyHowTo-05-AbilityValuesForm.png",
+                  alt: "エネミー能力値欄の説明画像",
+                  caption:
+                    "ランク、CR、タイプから各能力値を算出します。必要に応じて値を調整できます。",
+                },
+              ],
+            },
+            { type: "heading", text: "⑥ エネミー能力値欄" },
+            {
+              type: "bullets",
+              items: [
+                "基本能力値：STR、DEX、POW、INTを入力。",
+                "判定値：回避、抵抗の固定値とダイス数を入力。判定表記は自動で表示される。",
+                "その他：物理防御力、魔法防御力、最大HP、ヘイト倍率、行動力、移動力、因果力を入力。",
+                "推奨能力値を反映：ランク、CR、タイプに基づく推奨能力値を反映する。",
+              ],
             },
           ],
         },
