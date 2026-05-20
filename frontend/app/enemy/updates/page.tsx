@@ -9,7 +9,7 @@ type VersionItem = {
 
 const currentVersion: VersionItem = {
   version: "ver 2.0",
-  date: "2026/05",
+  date: "2026/06",
   notes: [
     "Webアプリ版として再構成",
     "エネミーデータ/駒作成ツールをメインページとして公開",
@@ -27,7 +27,7 @@ const currentVersion: VersionItem = {
 /*
 const currentVersionForHistory: VersionItem = {
   version: "ver 2.0",
-  date: "2026/05",
+  date: "2026/06",
   notes: [
     "Webアプリ版として再構成",
     "エネミーデータ/駒作成ツールをメインページとして公開",
