@@ -1,0 +1,37 @@
+enemy/page.tsx refactor part 1
+
+Scope: top of enemy/page.tsx.
+
+Move helper logic to frontend/app/enemy/enemy-page-helpers.ts.
+This helper file has already been added.
+
+In page.tsx, remove local definitions for:
+- EnemySkillRow
+- EnemyDropItemRow
+- normalizeDropDiceText
+- getSelectedDiceValues
+- getDiceRangeBoundaryValues
+- toFullWidthDiceValue
+- normalizeDiceRangeSelection
+- formatDropDiceForOutput
+- makeId
+- toNonNegativeNumber
+- clampInteger
+- normalizeCr
+- normalizeCount
+- withSkillRowId
+- withDropRowId
+- downloadTextFile
+- downloadBlobFile
+- buildCurrentFormData
+
+Then import those functions and row types from ./enemy-page-helpers.
+
+Keep these in page.tsx for now:
+- TabKey
+- diceButtonValues
+- TabButton
+- EnemyPage component
+
+Do not change createEnemyPiece, createEnemyJson, or createEnemyXlsx calls.
+The output must remain unchanged.
