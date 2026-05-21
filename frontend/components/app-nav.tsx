@@ -3,22 +3,24 @@
 import Link from "next/link";
 import { useState } from "react";
 
+type NavigationKey = "character" | "enemy";
+
 type AppNavProps = {
-  current?: "character" | "enemy";
+  current?: NavigationKey;
 };
 
-type NavItem = {
+type NavigationItem = {
   label: string;
   href: string;
 };
 
-type NavGroup = {
-  key: "character" | "enemy";
+type NavigationGroup = {
+  key: NavigationKey;
   label: string;
-  items: NavItem[];
+  items: NavigationItem[];
 };
 
-const navGroups: NavGroup[] = [
+const navigationGroups: NavigationGroup[] = [
   {
     key: "character",
     label: "キャラクター駒作成",
@@ -42,32 +44,44 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export default function AppNav({ current }: AppNavProps) {
-  const [openKey, setOpenKey] = useState<NavGroup["key"] | null>(null);
+const navigationStyles = {
+  nav: "mb-8 flex flex-wrap gap-4 sm:gap-6",
+  group: "relative",
+  triggerBase: "rounded-xl border px-4 py-2 text-sm font-medium transition",
+  triggerActive: "border-black bg-black text-white hover:bg-black hover:text-white",
+  triggerDefault:
+    "border-neutral-300 bg-white text-black hover:bg-neutral-50 hover:text-black",
+  menu: "absolute left-0 z-20 mt-2 w-64 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg",
+  item: "block rounded-lg px-3 py-2 text-sm text-neutral-800 transition hover:bg-neutral-100",
+} as const;
 
-  const summaryBaseClass =
-    "rounded-lg border px-4 py-2 text-sm font-medium transition";
-  const activeSummaryClass =
-    "border-black bg-black text-white hover:bg-black hover:text-white";
-  const normalSummaryClass =
-    "border-neutral-300 bg-white text-black hover:bg-neutral-50 hover:text-black";
-  const itemClass =
-    "block rounded-lg px-3 py-2 text-sm text-neutral-800 transition hover:bg-neutral-100";
+function getTriggerClassName(isActive: boolean) {
+  return [
+    navigationStyles.triggerBase,
+    isActive ? navigationStyles.triggerActive : navigationStyles.triggerDefault,
+  ].join(" ");
+}
+
+export default function AppNav({ current }: AppNavProps) {
+  const [openNavigationKey, setOpenNavigationKey] =
+    useState<NavigationKey | null>(null);
+
+  const toggleNavigation = (key: NavigationKey) => {
+    setOpenNavigationKey((currentKey) => (currentKey === key ? null : key));
+  };
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-10">
-      {navGroups.map((group) => {
+    <nav className={navigationStyles.nav}>
+      {navigationGroups.map((group) => {
         const isActive = current === group.key;
-        const isOpen = openKey === group.key;
+        const isOpen = openNavigationKey === group.key;
 
         return (
-          <div key={group.key} className="relative">
+          <div key={group.key} className={navigationStyles.group}>
             <button
               type="button"
-              onClick={() => setOpenKey(isOpen ? null : group.key)}
-              className={`${summaryBaseClass} ${
-                isActive ? activeSummaryClass : normalSummaryClass
-              }`}
+              onClick={() => toggleNavigation(group.key)}
+              className={getTriggerClassName(isActive)}
               aria-expanded={isOpen}
             >
               <span className="mr-2">{isOpen ? "▼" : "▶"}</span>
@@ -75,13 +89,13 @@ export default function AppNav({ current }: AppNavProps) {
             </button>
 
             {isOpen ? (
-              <div className="absolute left-0 z-20 mt-2 w-64 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg">
+              <div className={navigationStyles.menu}>
                 {group.items.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={itemClass}
-                    onClick={() => setOpenKey(null)}
+                    className={navigationStyles.item}
+                    onClick={() => setOpenNavigationKey(null)}
                   >
                     {item.label}
                   </Link>
