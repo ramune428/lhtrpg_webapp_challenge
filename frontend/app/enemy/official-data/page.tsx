@@ -81,7 +81,6 @@ function IntroBlock() {
 function StepImageFigure({ image }: { image: StepImage }) {
   return (
     <figure className="mt-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.src}
         alt={image.alt}
@@ -311,9 +310,7 @@ export default function EnemyOfficialDataPage() {
         },
         {
           title: "JSONファイルの読み込み",
-          paragraphs: [
-            <UploadJsonSteps key="upload-json-steps" />,
-          ],
+          paragraphs: [<UploadJsonSteps key="upload-json-steps" />],
         },
       ]}
     />
