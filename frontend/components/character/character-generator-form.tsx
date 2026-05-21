@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import {
+  buttonClassName,
+  FormControl,
+  inputClassName,
+} from "@/components/ui/form-control";
 import SectionCard from "@/components/ui/section-card";
 import { createPiece } from "@/utils/createPiece";
 import { extractCharacterId } from "@/utils/extractCharacterId";
-
-const buttonClass =
-  "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function CharacterGeneratorForm() {
   const [inputValue, setInputValue] = useState("");
@@ -78,14 +80,7 @@ export default function CharacterGeneratorForm() {
       </section>
 
       <SectionCard className="mb-12">
-        <div className="mb-4">
-          <label
-            htmlFor="character-input"
-            className="mb-2 block text-base font-semibold text-neutral-950"
-          >
-            キャラクターURL/キャラクターID
-          </label>
-
+        <FormControl label="キャラクターURL/キャラクターID" className="mb-4">
           <input
             id="character-input"
             type="text"
@@ -93,16 +88,16 @@ export default function CharacterGeneratorForm() {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="https://lhrpg.com/lhz/pc?id=123456 / 123456"
-            className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none transition focus:border-neutral-500"
+            className={`${inputClassName} text-base`}
           />
-        </div>
+        </FormControl>
 
         <div className="mb-6 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={handleGenerate}
             disabled={isLoading}
-            className={buttonClass}
+            className={buttonClassName}
           >
             {isLoading ? "生成中..." : "コマンドを生成する"}
           </button>
@@ -111,7 +106,7 @@ export default function CharacterGeneratorForm() {
             type="button"
             onClick={handleClear}
             disabled={isLoading}
-            className={buttonClass}
+            className={buttonClassName}
           >
             クリア
           </button>
@@ -120,7 +115,7 @@ export default function CharacterGeneratorForm() {
             type="button"
             onClick={handleCopy}
             disabled={!result}
-            className={buttonClass}
+            className={buttonClassName}
           >
             コピー
           </button>
@@ -130,20 +125,15 @@ export default function CharacterGeneratorForm() {
           {statusMessage}
         </p>
 
-        <label
-          htmlFor="result-area"
-          className="mb-2 block text-base font-semibold text-neutral-950"
-        >
-          CCFOLIA用 キャラクター駒作成コマンド
-        </label>
-
-        <textarea
-          id="result-area"
-          value={result}
-          readOnly
-          placeholder="ここに生成されたコマンドが表示されます"
-          className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
-        />
+        <FormControl label="CCFOLIA用 キャラクター駒作成コマンド">
+          <textarea
+            id="result-area"
+            value={result}
+            readOnly
+            placeholder="ここに生成されたコマンドが表示されます"
+            className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
+          />
+        </FormControl>
       </SectionCard>
     </>
   );
