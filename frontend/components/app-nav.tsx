@@ -23,7 +23,7 @@ const navGroups: NavGroup[] = [
     key: "character",
     label: "キャラクター駒作成",
     items: [
-      { label: "ツール本体", href: "/" },
+      { label: "キャラクター駒作成ツール", href: "/" },
       { label: "使い方（詳細）", href: "/character/how-to" },
       { label: "コマンド内訳", href: "/character/command-details" },
       { label: "アップデート情報", href: "/character/updates" },
@@ -33,8 +33,8 @@ const navGroups: NavGroup[] = [
     key: "enemy",
     label: "エネミーデータ作成",
     items: [
-      { label: "ツール本体", href: "/enemy" },
-      { label: "JSON（読み込み）について", href: "/enemy/json" },
+      { label: "エネミーデータ作成ツール", href: "/enemy" },
+      { label: "公式データについて", href: "/enemy/official-data" },
       { label: "使い方（詳細）", href: "/enemy/how-to" },
       { label: "計算式", href: "/enemy/formula" },
       { label: "アップデート情報", href: "/enemy/updates" },
