@@ -4,7 +4,11 @@
 
 ## 起動方法
 
-```bash
+cd backend
+python -m uvicorn main:app --reload
+
 cd frontend
-npm install
 npm run dev
+
+debug:
+https://lhrpg.com/lhz/pc?id=130760
