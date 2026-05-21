@@ -1,22 +1,11 @@
 import Link from "next/link";
-import AppNav from "@/components/app-nav";
 import type { ReactNode } from "react";
+import PageShell from "@/components/page-shell";
+import SectionCard from "@/components/ui/section-card";
 
-type TextBlock = {
-  type: "text";
-  text: string;
-};
-
-type HeadingBlock = {
-  type: "heading";
-  text: string;
-};
-
-type BulletListBlock = {
-  type: "bullets";
-  items: string[];
-};
-
+type TextBlock = { type: "text"; text: string };
+type HeadingBlock = { type: "heading"; text: string };
+type BulletListBlock = { type: "bullets"; items: string[] };
 type ImageBlock = {
   type: "image";
   label: string;
@@ -25,7 +14,6 @@ type ImageBlock = {
   caption?: string;
   maxWidth?: string;
 };
-
 type DetailsBlock = {
   type: "details";
   title: string;
@@ -68,23 +56,14 @@ type StaticPageProps = {
   sections: Section[];
 };
 
-function BackLink({
-  href,
-  label,
-}: {
-  href?: string;
-  label?: string;
-}) {
+function BackLink({ href, label }: { href?: string; label?: string }) {
   if (!href || !label) {
     return null;
   }
 
   return (
     <div className="mb-6">
-      <Link
-        href={href}
-        className="text-sm text-neutral-600 underline underline-offset-4"
-      >
+      <Link href={href} className="text-sm text-neutral-600 underline underline-offset-4">
         ← {label}
       </Link>
     </div>
@@ -105,9 +84,7 @@ function ImageContent({ block }: { block: ImageBlock }) {
       <figure className="my-4 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4">
         <div className="flex min-h-[180px] items-center justify-center rounded-md border border-neutral-200 bg-white px-4 text-center">
           <div>
-            <p className="text-sm font-semibold text-neutral-800">
-              {block.label}
-            </p>
+            <p className="text-sm font-semibold text-neutral-800">{block.label}</p>
             <p className="mt-2 text-xs leading-6 text-neutral-500">
               ここに画像を差し込む想定です。
             </p>
@@ -124,23 +101,19 @@ function ImageContent({ block }: { block: ImageBlock }) {
   }
 
   return (
-  <figure
-    className="my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white"
-    style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
-  >
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img
-      src={block.src}
-      alt={block.alt ?? block.label}
-      className="w-full object-contain"
-    />
+    <figure
+      className="my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white"
+      style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={block.src} alt={block.alt ?? block.label} className="w-full object-contain" />
 
-    {block.caption ? (
-      <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
-        {block.caption}
-      </figcaption>
-    ) : null}
-  </figure>
+      {block.caption ? (
+        <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
+          {block.caption}
+        </figcaption>
+      ) : null}
+    </figure>
   );
 }
 
@@ -149,11 +122,7 @@ function TextContent({ text }: { text: string }) {
 }
 
 function HeadingContent({ text }: { text: string }) {
-  return (
-    <h3 className="pt-3 text-base font-semibold leading-8 text-neutral-900">
-      {text}
-    </h3>
-  );
+  return <h3 className="pt-3 text-base font-semibold leading-8 text-neutral-900">{text}</h3>;
 }
 
 function BulletListContent({ items }: { items: string[] }) {
@@ -168,14 +137,10 @@ function BulletListContent({ items }: { items: string[] }) {
 
 function DetailsContent({ block }: { block: DetailsBlock }) {
   return (
-    <details
-      open={block.defaultOpen ?? true}
-      className="rounded-lg border border-neutral-200 bg-neutral-50"
-    >
+    <details open={block.defaultOpen ?? true} className="rounded-lg border border-neutral-200 bg-neutral-50">
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-neutral-900">
         {block.title}
       </summary>
-
       <div className="border-t border-neutral-200 px-4 py-4">
         <BlockList blocks={block.blocks} />
       </div>
@@ -187,19 +152,14 @@ function BlockContent({ block }: { block: StaticPageBlock }) {
   switch (block.type) {
     case "heading":
       return <HeadingContent text={block.text} />;
-
     case "text":
       return <TextContent text={block.text} />;
-
     case "bullets":
       return <BulletListContent items={block.items} />;
-
     case "image":
       return <ImageContent block={block} />;
-
     case "details":
       return <DetailsContent block={block} />;
-
     default:
       return null;
   }
@@ -215,13 +175,7 @@ function BlockList({ blocks }: { blocks: StaticPageBlock[] }) {
   );
 }
 
-function ParagraphList({
-  title,
-  paragraphs,
-}: {
-  title?: string;
-  paragraphs?: ReactNode[];
-}) {
+function ParagraphList({ title, paragraphs }: { title?: string; paragraphs?: ReactNode[] }) {
   if (!paragraphs || paragraphs.length === 0) {
     return null;
   }
@@ -254,9 +208,7 @@ function SectionBody({ section }: { section: Section }) {
     return <BlockList blocks={section.blocks} />;
   }
 
-  return (
-    <ParagraphList title={"title" in section ? section.title : undefined} paragraphs={section.paragraphs} />
-  );
+  return <ParagraphList title={"title" in section ? section.title : undefined} paragraphs={section.paragraphs} />;
 }
 
 function StaticSection({ section, index }: { section: Section; index: number }) {
@@ -264,60 +216,37 @@ function StaticSection({ section, index }: { section: Section; index: number }) 
 
   if (section.collapsible) {
     return (
-      <details key={sectionKey} open={section.defaultOpen ?? true}>
-        <summary className="mb-3 cursor-pointer text-xl font-semibold">
+      <details key={sectionKey} open={section.defaultOpen ?? true} className="rounded-2xl border border-neutral-300 p-6">
+        <summary className="cursor-pointer text-xl font-semibold tracking-tight text-neutral-950">
           {section.title}
         </summary>
-
-        <div className="pt-1">
+        <div className="pt-4">
           <SectionBody section={section} />
         </div>
       </details>
     );
   }
 
-  const shouldShowTitle = Boolean(section.title) && !section.hideTitle;
-
   return (
-    <section key={sectionKey}>
-      {shouldShowTitle ? (
-        <h2 className="mb-3 text-xl font-semibold">{section.title}</h2>
-      ) : null}
-
+    <SectionCard key={sectionKey} title={!section.hideTitle ? section.title : undefined}>
       <SectionBody section={section} />
-    </section>
+    </SectionCard>
   );
 }
 
-export default function StaticPage({
-  current,
-  title,
-  lead,
-  backHref,
-  backLabel,
-  sections,
-}: StaticPageProps) {
+export default function StaticPage({ current, title, lead, backHref, backLabel, sections }: StaticPageProps) {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
-        <AppNav current={current} />
-
-        <BackLink href={backHref} label={backLabel} />
-
-        <h1 className="mb-4 text-3xl font-bold tracking-tight">{title}</h1>
-
-        <PageLead lead={lead} />
-
-        <div className="space-y-10">
-          {sections.map((section, index) => (
-            <StaticSection
-              key={section.title ?? `section-${index}`}
-              section={section}
-              index={index}
-            />
-          ))}
-        </div>
+    <PageShell current={current}>
+      <BackLink href={backHref} label={backLabel} />
+      <h1 className="mb-4 text-3xl font-bold tracking-tight text-neutral-950 sm:text-4xl">
+        {title}
+      </h1>
+      <PageLead lead={lead} />
+      <div className="space-y-10">
+        {sections.map((section, index) => (
+          <StaticSection key={section.title ?? `section-${index}`} section={section} index={index} />
+        ))}
       </div>
-    </main>
+    </PageShell>
   );
 }
