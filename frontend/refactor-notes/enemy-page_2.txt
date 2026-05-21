@@ -1,0 +1,63 @@
+enemy/page.tsx refactor part 2
+
+Scope: JSX className cleanup.
+
+Use shared constants from frontend/components/ui-styles.ts.
+
+Recommended replacements:
+
+1. Page wrapper
+- min-h-screen bg-white text-black
+  -> layoutStyles.page
+
+2. Main container
+- mx-auto w-full max-w-6xl px-6 py-12 sm:px-8
+  -> layoutStyles.container
+
+3. Header
+- mb-10
+  -> layoutStyles.header
+
+4. Main title
+- mb-4 text-3xl font-bold tracking-tight sm:text-4xl
+  -> layoutStyles.title
+
+5. Normal card sections
+- rounded-2xl border border-neutral-300 p-6
+  -> cardStyles.base
+
+6. Compact card sections
+- rounded-2xl border border-neutral-300 p-5
+  -> cardStyles.compact
+
+7. Body text
+- text-sm leading-8 text-neutral-800
+  -> textStyles.body
+
+8. Muted status text
+- text-sm text-neutral-600
+  -> textStyles.muted
+
+9. Normal input
+- w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500
+  -> formStyles.input
+
+10. Readonly input
+- w-full rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 outline-none
+  -> formStyles.inputReadOnly
+
+11. Normal button
+- rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50
+  -> formStyles.button
+
+12. Small button
+- rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-neutral-50
+  -> formStyles.smallButton
+
+13. Danger clear button
+- rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50
+  -> formStyles.dangerButton
+
+Important:
+Keep text, href values, state updates, and output generation unchanged.
+Do not rename form fields such as form.name, form.cr, form.skills, or item.dice.
