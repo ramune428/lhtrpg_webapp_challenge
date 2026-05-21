@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import AppNav from "@/components/app-nav";
+import {
+  cardStyles,
+  formStyles,
+  layoutStyles,
+  textStyles,
+} from "@/components/ui-styles";
 import { createPiece } from "@/utils/createPiece";
 
 function extractCharacterId(input: string): string {
@@ -51,7 +57,7 @@ export default function HomePage() {
       console.error(error);
       setResult("");
       setStatusMessage(
-        "コマンドの生成に失敗しました。入力内容を確認してください。"
+        "コマンドの生成に失敗しました。入力内容を確認してください。",
       );
     } finally {
       setIsLoading(false);
@@ -80,7 +86,7 @@ export default function HomePage() {
   };
 
   const handleKeyDown = async (
-    event: React.KeyboardEvent<HTMLInputElement>
+    event: React.KeyboardEvent<HTMLInputElement>,
   ) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -89,16 +95,16 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
+    <main className={layoutStyles.page}>
+      <div className={layoutStyles.container}>
         <AppNav current="character" />
 
-        <header className="mb-10">
-          <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+        <header className={layoutStyles.header}>
+          <h1 className={layoutStyles.title}>
             LHTRPG- キャラ駒作成ツール（CCFOLIA）
           </h1>
 
-          <p className="text-sm leading-8 text-neutral-800">
+          <p className={layoutStyles.lead}>
             このキャラ駒作成ツールは
             「
             <a
@@ -114,9 +120,9 @@ export default function HomePage() {
           </p>
         </header>
 
-        <section className="mb-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+        <section className={`mb-8 ${cardStyles.warning}`}>
           <h2 className="mb-3 text-lg font-semibold">💡【重要なお知らせ】</h2>
-          <p className="text-sm leading-8 text-neutral-800">
+          <p className={textStyles.body}>
             「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックがついていても、
             JSONデータを取得できず、エラーが発生する場合があります。
             一度チェックを外して、「外部ツールからの&lt;冒険者&gt;データ参照を許可する」を更新してください。
@@ -135,27 +141,24 @@ export default function HomePage() {
         </section>
         */}
 
-        <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
-          <p className="text-sm leading-8 text-neutral-800">
+        <section className={`mb-10 ${cardStyles.compact}`}>
+          <p className={textStyles.body}>
             GM・ディベロッパー向けのエネミーデータ/駒作成ツールはこちら
           </p>
           <div className="mt-3">
-            <p className="text-sm leading-8 text-neutral-800">
+            <p className={textStyles.body}>
               →{" "}
-              <Link
-                href="/enemy"
-                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-              >
+              <Link href="/enemy" className={textStyles.link}>
                 LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
               </Link>
             </p>
           </div>
         </section>
 
-        <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">使い方</h2>
+        <section className={`mb-12 ${cardStyles.base}`}>
+          <h2 className={textStyles.cardTitle}>使い方</h2>
 
-          <div className="space-y-3 text-sm leading-8 text-neutral-800">
+          <div className={`space-y-3 ${textStyles.body}`}>
             <p>1. ログ･ホライズンTRPG冒険者窓口でキャラクターページを開く。</p>
             <p>
               2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
@@ -174,12 +177,9 @@ export default function HomePage() {
           </div>
 
           <div className="mt-5">
-            <p className="text-sm leading-8 text-neutral-800">
+            <p className={textStyles.body}>
               詳しい使い方についてはこちら →{" "}
-              <Link
-                href="/character/how-to"
-                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-              >
+              <Link href="/character/how-to" className={textStyles.link}>
                 使い方（詳細）
               </Link>
             </p>
@@ -190,7 +190,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-semibold">キャラ駒作成ツール</h2>
         </section>
 
-        <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
+        <section className={`mb-12 ${cardStyles.base}`}>
           <div className="mb-3">
             <label
               htmlFor="character-input"
@@ -206,7 +206,7 @@ export default function HomePage() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="https://lhrpg.com/lhz/pc?id=123456 / 123456"
-              className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none transition focus:border-neutral-500"
+              className={`${formStyles.input} text-base transition`}
             />
           </div>
 
@@ -219,7 +219,7 @@ export default function HomePage() {
               type="button"
               onClick={handleGenerate}
               disabled={isLoading}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className={formStyles.button}
             >
               {isLoading ? "生成中..." : "コマンドを生成する"}
             </button>
@@ -228,7 +228,7 @@ export default function HomePage() {
               type="button"
               onClick={handleClear}
               disabled={isLoading}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className={formStyles.button}
             >
               クリア
             </button>
@@ -237,13 +237,13 @@ export default function HomePage() {
               type="button"
               onClick={handleCopy}
               disabled={!result}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`${formStyles.button} disabled:opacity-50`}
             >
               コピー
             </button>
           </div>
 
-          <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
+          <p className={`mb-4 min-h-[1.5rem] ${textStyles.muted}`}>
             {statusMessage}
           </p>
 
@@ -258,33 +258,27 @@ export default function HomePage() {
             value={result}
             readOnly
             placeholder="ここに生成されたコマンドが表示されます"
-            className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
+            className={`min-h-[320px] ${formStyles.textarea}`}
           />
         </section>
 
-        <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
-          <h2 className="mb-4 text-2xl font-semibold">お知らせ</h2>
+        <section className={`mb-12 ${cardStyles.base}`}>
+          <h2 className={textStyles.cardTitle}>お知らせ</h2>
 
-          <div className="space-y-3 text-sm leading-8 text-neutral-800">
+          <div className={`space-y-3 ${textStyles.body}`}>
             <p>コマンド内訳やアップデート情報はこちら</p>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-4">
-            <Link
-              href="/character/command-details"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
+            <Link href="/character/command-details" className={textStyles.link}>
               コマンド内訳
             </Link>
-            <Link
-              href="/character/updates"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
+            <Link href="/character/updates" className={textStyles.link}>
               アップデート情報
             </Link>
           </div>
 
-          <div className="mt-6 space-y-3 text-sm leading-8 text-neutral-800">
+          <div className={`mt-6 space-y-3 ${textStyles.body}`}>
             <p>
               「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
               下記Googleフォームにてご連絡ください。
@@ -304,12 +298,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
+        <section className={`mb-8 ${cardStyles.info}`}>
           <h2 className="mb-3 text-lg font-semibold">💡参考情報</h2>
-          <p className="text-sm leading-8 text-neutral-800">
+          <p className={textStyles.body}>
             このツールは「LHTRPGのチャットパレットを作るやつ」を参考に作成しています。
           </p>
-          <p className="mt-2 text-sm leading-8 text-neutral-800">
+          <p className={`mt-2 ${textStyles.body}`}>
             「LHTRPGのチャットパレットを作るやつ」 →
             <a
               href="http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111"
