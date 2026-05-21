@@ -1,19 +1,30 @@
 import StaticPage from "@/components/static-page";
 import type { ReactNode } from "react";
 
-const ENEMY_TOOL_URL =
-  "https://www.notion.so/LHTRPG-CCFOLIA-cbfb65dea1b247dd95fc37f0ba3c5660?pvs=21";
-
-const DETAIL_HOW_TO_URL =
-  "https://www.notion.so/3f33033ffc2b48d19ec40bcef1883735?pvs=21";
-
 const LHTRPG_DATABASE_URL = "https://lhrpg.com/lhz/database";
+
+const IMAGE_BASE_PATH = "/enemy/official-data";
+
+const officialDataImages = {
+  officialJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-01-OfficialJsonFile.png`,
+  jsonpText: `${IMAGE_BASE_PATH}/EnemyOfficialData-02-JsonpText.png`,
+  saveAsJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-03-SaveAsJsonFile.png`,
+  removeJsonpWrapper: `${IMAGE_BASE_PATH}/EnemyOfficialData-04-RemoveJsonpWrapper.png`,
+  cleanJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-05-CleanJsonFile.png`,
+  importButton: `${IMAGE_BASE_PATH}/EnemyOfficialData-06-ImportButton.png`,
+  jsonImportResult: `${IMAGE_BASE_PATH}/EnemyOfficialData-07-JsonImportResult.png`,
+} as const;
+
+type StepImage = {
+  src: string;
+  alt: string;
+  caption?: string;
+};
 
 type StepItem = {
   title: string;
   children: ReactNode;
-  imageLabel?: string;
-  imageCaption?: string;
+  images?: StepImage[];
 };
 
 function TextLink({
@@ -61,26 +72,42 @@ function NoticeBlock({
   return (
     <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
       <p className="mb-1 font-semibold text-neutral-900">{title}</p>
-      <div className="space-y-2 text-sm leading-8 text-neutral-800">{children}</div>
+      <div className="space-y-2 text-sm leading-8 text-neutral-800">
+        {children}
+      </div>
     </div>
   );
 }
 
-function ImagePlaceholder({
-  label,
-  caption,
-}: {
-  label: string;
-  caption?: string;
-}) {
+function IntroBlock() {
   return (
-    <figure className="mt-4 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4">
-      <div className="flex min-h-[180px] items-center justify-center rounded-md border border-neutral-200 bg-white px-4 text-center">
-        <p className="text-sm font-semibold text-neutral-800">{label}</p>
+    <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm leading-8 text-neutral-800">
+      <div className="space-y-3">
+        <p>
+          公式データベースである「
+          <TextLink href={LHTRPG_DATABASE_URL}>
+            ログ・ホライズンTRPG冒険者窓口 -データベース-
+          </TextLink>
+          」から取得したエネミーデータを、エネミーデータ作成ツールで読み込むための手順をまとめています。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
+        </p>
       </div>
-      {caption ? (
-        <figcaption className="mt-2 text-xs leading-6 text-neutral-600">
-          {caption}
+    </div>
+  );
+}
+
+function StepImageFigure({ image }: { image: StepImage }) {
+  return (
+    <figure className="mt-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image.src}
+        alt={image.alt}
+        className="w-full object-contain"
+        loading="lazy"
+      />
+      {image.caption ? (
+        <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
+          {image.caption}
         </figcaption>
       ) : null}
     </figure>
@@ -106,12 +133,9 @@ function StepList({ steps }: { steps: StepItem[] }) {
               <div className="space-y-2 text-sm leading-8 text-neutral-800">
                 {step.children}
               </div>
-              {step.imageLabel ? (
-                <ImagePlaceholder
-                  label={step.imageLabel}
-                  caption={step.imageCaption}
-                />
-              ) : null}
+              {step.images?.map((image) => (
+                <StepImageFigure key={image.src} image={image} />
+              ))}
             </div>
           </div>
         </li>
@@ -120,43 +144,19 @@ function StepList({ steps }: { steps: StepItem[] }) {
   );
 }
 
-function LinkArea() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-lg border border-neutral-200 bg-white px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          Tool
-        </p>
-        <p className="mt-1 text-sm leading-7">
-          エネミーデータ作成ツールに戻る →{" "}
-          <TextLink href={ENEMY_TOOL_URL}>
-            -LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
-          </TextLink>
-        </p>
-      </div>
-
-      <div className="rounded-lg border border-neutral-200 bg-white px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-          Guide
-        </p>
-        <p className="mt-1 text-sm leading-7">
-          使い方の詳細はこちら →{" "}
-          <TextLink href={DETAIL_HOW_TO_URL}>使い方（詳細）</TextLink>
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function DownloadJsonSteps() {
   return (
     <StepList
       steps={[
         {
-          title: "ダウンロードしたいエネミーのページを開く",
-          imageLabel: "画像：公式データベースでエネミーページを開いた画面",
-          imageCaption:
-            "画像を配置する場合は、この枠を公式データベースのエネミーページ画面に差し替えてください。",
+          title: "公式データベースでエネミーページを開く",
+          images: [
+            {
+              src: officialDataImages.officialJsonFile,
+              alt: "公式データベースのエネミーページでJSONボタンを確認する画面",
+              caption: "エネミーページ左下の［JSON］ボタンを確認します。",
+            },
+          ],
           children: (
             <p>
               <TextLink href={LHTRPG_DATABASE_URL}>
@@ -168,14 +168,29 @@ function DownloadJsonSteps() {
         },
         {
           title: "左下の［JSON］をクリックする",
-          imageLabel: "画像：エネミーページ左下の JSON リンク",
-          imageCaption:
-            "［JSON］をクリックすると、新しいページでJSONP形式のテキストが開きます。",
-          children: <p>クリック後、新しいページが開かれます。</p>,
+          images: [
+            {
+              src: officialDataImages.jsonpText,
+              alt: "JSONボタンをクリックしてJSONP形式のテキストが表示された画面",
+              caption: "クリック後、新しいページでJSONP形式のテキストが表示されます。",
+            },
+          ],
+          children: (
+            <p>
+              ［JSON］をクリックすると、新しいページに <code>jsonp(...)</code>
+              の形式でテキストが表示されます。
+            </p>
+          ),
         },
         {
           title: "JSONファイルとして保存する",
-          imageLabel: "画像：名前を付けて保存で拡張子を .json に変更する画面",
+          images: [
+            {
+              src: officialDataImages.saveAsJsonFile,
+              alt: "名前を付けて保存で拡張子をjsonに変更する画面",
+              caption: "ファイル名の拡張子を .json にして保存します。",
+            },
+          ],
           children: (
             <div className="space-y-2">
               <p>
@@ -187,21 +202,38 @@ function DownloadJsonSteps() {
                 <code>.json</code> に変更して保存してください。
               </p>
               <p>
-                うまく保存できない場合は、テキストをすべて選択して
-                <KeyboardKey>Ctrl</KeyboardKey> + <KeyboardKey>A</KeyboardKey>
-                、メモ帳へ貼り付けてから <code>.json</code> 形式で保存しても問題ありません。
+                うまく保存できない場合は、すべてのテキストをメモ帳にコピペしてから <code>.json</code> 形式で保存しても問題ありません。
               </p>
             </div>
           ),
         },
         {
-          title: "保存したファイルをメモ帳で開く",
-          imageLabel: "画像：保存した JSON ファイルをメモ帳で開く画面",
-          children: <p>保存したファイルを右クリックし、メモ帳で開きます。</p>,
+          title: "保存したファイルをテキストエディタで開く",
+          images: [
+            {
+              src: officialDataImages.removeJsonpWrapper,
+              alt: "メモ帳で開いたJSONP形式のファイルの先頭と末尾を確認する画面",
+              caption: "先頭の jsonp( と末尾の ); が残っている状態です。",
+            },
+          ],
+          children: (
+            <p>
+              保存したファイルをテキストエディタで開きます。メモ帳、VSCode、サクラエディタなど、普段使用しているエディタで問題ありません。
+              先頭の <code>jsonp(</code> と末尾の <code>);</code>
+              が残っていることを確認します。
+            </p>
+          ),
         },
         {
           title: "先頭の jsonp( と末尾の ); を削除する",
-          imageLabel: "画像：jsonp( と ); を削除する前後の画面",
+          images: [
+            {
+              src: officialDataImages.cleanJsonFile,
+              alt: "不要なJSONPの文字を削除してJSON形式に整えた画面",
+              caption:
+                "先頭の jsonp( と末尾の ); を削除し、JSONとして読み込める形に整えます。",
+            },
+          ],
           children: (
             <div className="space-y-3">
               <p>
@@ -242,21 +274,33 @@ function UploadJsonSteps() {
     <StepList
       steps={[
         {
-          title: "Upload JSON からJSONファイルを開く",
-          imageLabel: "画像：エネミー情報入力欄の Upload JSON ボタン",
+          title: "［入力ファイル読込］からJSONファイルを開く",
+          images: [
+            {
+              src: officialDataImages.importButton,
+              alt: "エネミーデータ作成ツールの入力ファイル読込ボタン",
+              caption: "エネミー情報入力欄の上部にある［入力ファイル読込］をクリックします。",
+            },
+          ],
           children: (
             <p>
-              ツールの［エネミー情報入力］欄の一番上にある
-              ［Upload JSON］から、編集済みのJSONファイルを開きます。
+              エネミーデータ作成ツールの［エネミー情報］欄で
+              ［入力ファイル読込］をクリックし、編集済みのJSONファイルを開きます。
             </p>
           ),
         },
         {
-          title: "Download CSV / Download JSON が表示されることを確認する",
-          imageLabel: "画像：エネミーデータ出力欄に Download CSV / Download JSON が表示された画面",
+          title: "読み込み結果を確認する",
+          images: [
+            {
+              src: officialDataImages.jsonImportResult,
+              alt: "JSONファイルを読み込んだ後にエネミーデータが反映された画面",
+              caption: "「JSONを読み込みました。」と表示され、名称やCRなどが反映されていれば読み込み完了です。",
+            },
+          ],
           children: (
             <p>
-              ［エネミーデータ出力］欄の最後に［Download CSV］［Download JSON］が表示されていれば、読み込み完了です。
+              画面上に「JSONを読み込みました。」と表示され、名称、CR、大種族、タグなどの内容が反映されていることを確認します。
             </p>
           ),
         },
@@ -265,61 +309,27 @@ function UploadJsonSteps() {
   );
 }
 
-export default function EnemyJsonPage() {
+export default function EnemyOfficialDataPage() {
   return (
     <StaticPage
       current="enemy"
-      title="JSON（読み込み）について"
-      lead="公式データベースから取得したエネミーデータを、エネミーデータ作成ツールで読み込むための手順をまとめています。"
-      backHref="/enemy/subpages"
-      backLabel="エネミーデータ サブページ"
+      title="公式データについて"
+      backHref="/enemy"
+      backLabel="エネミーデータ"
       sections={[
         {
-          title: "関連リンク",
-          paragraphs: [<LinkArea key="link-area" />],
+          title: "概要",
+          hideTitle: true,
+          paragraphs: [<IntroBlock key="intro-block" />],
         },
         {
-          title: "はじめに",
-          paragraphs: [
-            "このツールでは、JSONファイルのダウンロードおよびアップロードにより、疑似的なセーブ機能を実現しています。",
-            <p key="intro-database">
-              それに伴い、
-              <TextLink href={LHTRPG_DATABASE_URL}>
-                ログ・ホライズンTRPG冒険者窓口 -データベース-
-              </TextLink>
-              のエネミーデータも読み込むことができます。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
-            </p>,
-            <NoticeBlock key="intro-notice" title="このページで扱うこと">
-              <p>
-                公式データベースからJSONファイルを保存し、先頭と末尾の不要な文字を削除してから、エネミーデータ作成ツールへアップロードするまでの流れを説明します。
-              </p>
-            </NoticeBlock>,
-          ],
-        },
-        {
-          title: "データベースからJSONファイルをダウンロード",
+          title: "データベースからJSONファイルを保存",
           paragraphs: [<DownloadJsonSteps key="download-json-steps" />],
         },
         {
           title: "JSONファイルの読み込み",
           paragraphs: [
             <UploadJsonSteps key="upload-json-steps" />,
-            <NoticeBlock key="upload-notice" title="CSV出力時の注意">
-              <p>
-                公式のエネミーデータでは全角記号が使用されているため、CSVの文字コードでは表示できない場合があります。
-                その場合、読み込み時にエラーが発生し、［Download CSV］［Download JSON］が表示されないことがあります。
-              </p>
-              <p>
-                ただし、CCFOLIAコマンド自体は生成できる場合があるため、CSVやJSONのダウンロードが不要であれば、そのまま使用しても問題ありません。
-              </p>
-            </NoticeBlock>,
-          ],
-        },
-        {
-          title: "画像の差し替えについて",
-          paragraphs: [
-            "このページ内の画像枠は、Notionの画像をそのまま参照せず、Webアプリ側で画像を管理する前提のプレースホルダーにしています。",
-            "実画像を入れる場合は、public 配下に画像を配置し、ImagePlaceholder を通常の img 表示に差し替えるか、StaticPage 側の image block を使って表示してください。",
           ],
         },
       ]}
