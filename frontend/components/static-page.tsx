@@ -105,7 +105,6 @@ function ImageContent({ block }: { block: ImageBlock }) {
       className="my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white"
       style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={block.src} alt={block.alt ?? block.label} className="w-full object-contain" />
 
       {block.caption ? (
