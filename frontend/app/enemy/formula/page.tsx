@@ -706,8 +706,8 @@ export default function EnemyFormulaPage() {
       current="enemy"
       title="計算式"
       lead={<PageLead />}
-      backHref="/enemy/subpages"
-      backLabel="エネミーデータ サブページ"
+      backHref="/enemy"
+      backLabel="エネミーデータ作成ツールに戻る"
       sections={[
         {
           title: "各タイプの基本データ",

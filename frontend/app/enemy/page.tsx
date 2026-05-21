@@ -135,6 +135,27 @@ function toNonNegativeNumber(value: string) {
   return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
 }
 
+function clampInteger(
+  value: number,
+  min: number,
+  max: number,
+  fallback: number,
+) {
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(min, Math.min(max, Math.floor(value)));
+}
+
+function normalizeCr(value: number) {
+  return clampInteger(value, 1, 30, 1);
+}
+
+function normalizeCount(value: number, fallback: number) {
+  return clampInteger(value, 1, 99, fallback);
+}
+
 function withSkillRowId(skill: EnemySkillInput): EnemySkillRow {
   return { id: makeId(), ...skill };
 }
@@ -415,9 +436,9 @@ export default function EnemyPage() {
   };
 
   const handleItemCountChange = (nextCountRaw: number) => {
-    const nextCount = Math.max(1, Math.min(99, nextCountRaw));
-
     setItems((prev) => {
+      const nextCount = normalizeCount(nextCountRaw, prev.length);
+
       if (nextCount === prev.length) {
         return prev;
       }
@@ -434,9 +455,9 @@ export default function EnemyPage() {
   };
 
   const handleSkillCountChange = (nextCountRaw: number) => {
-    const nextCount = Math.max(1, Math.min(99, nextCountRaw));
-
     setSkills((prev) => {
+      const nextCount = normalizeCount(nextCountRaw, prev.length);
+
       if (nextCount === prev.length) {
         return prev;
       }
@@ -517,7 +538,14 @@ export default function EnemyPage() {
             >
               「ログ・ホライズンTRPG冒険者窓口 -データベース-」
             </Link>
-            のエネミーデータも読み込むことができますが、読み込む前に一手間必要です。使用する前に、詳細（JSON読み込みについて）をご確認ください。一部のエネミーに関してエラーの発生を確認しています。大抵の原因は文字コードの相違です。発見した場合は、お問い合わせフォームまでご一報ください。
+            のエネミーデータも読み込むことができますが、読み込む前に一手間必要です。使用する前に、
+            <Link
+              href="/enemy/official-data"
+              className="underline underline-offset-4"
+            >
+              公式データについて
+            </Link>
+            をご確認ください。一部のエネミーに関してエラーの発生を確認しています。大抵の原因は文字コードの相違です。発見した場合は、お問い合わせフォームまでご一報ください。
           </p>
 
           <p>
@@ -682,7 +710,7 @@ export default function EnemyPage() {
                   max={30}
                   value={form.cr}
                   onChange={(e) => {
-                    const nextCr = Number(e.target.value);
+                    const nextCr = normalizeCr(Number(e.target.value));
                     setForm((prev) => ({
                       ...prev,
                       cr: nextCr,

@@ -23,6 +23,7 @@ type ImageBlock = {
   src?: string;
   alt?: string;
   caption?: string;
+  maxWidth?: string;
 };
 
 type DetailsBlock = {
@@ -123,20 +124,23 @@ function ImageContent({ block }: { block: ImageBlock }) {
   }
 
   return (
-    <figure className="my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={block.src}
-        alt={block.alt ?? block.label}
-        className="w-full object-contain"
-      />
+  <figure
+    className="my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white"
+    style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
+  >
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      src={block.src}
+      alt={block.alt ?? block.label}
+      className="w-full object-contain"
+    />
 
-      {block.caption ? (
-        <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
-          {block.caption}
-        </figcaption>
-      ) : null}
-    </figure>
+    {block.caption ? (
+      <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
+        {block.caption}
+      </figcaption>
+    ) : null}
+  </figure>
   );
 }
 
