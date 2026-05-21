@@ -48,9 +48,16 @@ function firstLine(value: unknown): string {
   return asString(value).split("\n")[0] ?? "";
 }
 
-function pythonListLikeString(values: unknown): string {
-  const array = asArray(values).map((item) => asString(item));
-  return `[${array.map((item) => `'${item}'`).join(", ")}]`;
+function formatCharacterTags(values: unknown): string {
+  const tags = asArray(values)
+    .map((item) => asString(item))
+    .filter(Boolean);
+
+  if (tags.length === 0) {
+    return "";
+  }
+
+  return `タグ：${tags.map((tag) => `[${tag}]`).join(" ")}`;
 }
 
 function convertDToLH(value: string): string {
@@ -78,7 +85,7 @@ function createCharacterData(jsonData: AnyRecord, characterId: string) {
   const initiative = asNumber(jsonData.action);
   const url = `https://lhrpg.com/lhz/pc_status?id=${characterId}`;
   const memo = jsonData.remarks;
-  const characterTags = pythonListLikeString(jsonData.tags);
+  const characterTags = formatCharacterTags(jsonData.tags);
 
   return {
     name: characterName,
