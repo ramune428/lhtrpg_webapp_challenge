@@ -46,16 +46,16 @@ export default function AppNav({ current }: AppNavProps) {
   const [openKey, setOpenKey] = useState<NavGroup["key"] | null>(null);
 
   const summaryBaseClass =
-    "rounded-lg border px-4 py-2 text-sm font-medium transition";
+    "rounded-xl border px-4 py-2 text-sm font-medium tracking-tight transition";
   const activeSummaryClass =
-    "border-black bg-black text-white hover:bg-black hover:text-white";
+    "border-neutral-950 bg-neutral-950 text-white hover:bg-neutral-950 hover:text-white";
   const normalSummaryClass =
-    "border-neutral-300 bg-white text-black hover:bg-neutral-50 hover:text-black";
+    "border-neutral-300 bg-white text-neutral-950 hover:bg-neutral-50 hover:text-neutral-950";
   const itemClass =
     "block rounded-lg px-3 py-2 text-sm text-neutral-800 transition hover:bg-neutral-100";
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-10">
+    <nav className="mb-8 flex flex-wrap gap-3" aria-label="メインナビゲーション">
       {navGroups.map((group) => {
         const isActive = current === group.key;
         const isOpen = openKey === group.key;
@@ -70,7 +70,9 @@ export default function AppNav({ current }: AppNavProps) {
               }`}
               aria-expanded={isOpen}
             >
-              <span className="mr-2">{isOpen ? "▼" : "▶"}</span>
+              <span className="mr-2" aria-hidden="true">
+                {isOpen ? "▼" : "▶"}
+              </span>
               {group.label}
             </button>
 
