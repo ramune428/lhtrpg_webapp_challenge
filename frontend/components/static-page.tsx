@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AppNav from "@/components/app-nav";
+import { layoutStyles, textStyles } from "@/components/ui-styles";
 import type { ReactNode } from "react";
 
 type TextBlock = {
@@ -68,23 +69,25 @@ type StaticPageProps = {
   sections: Section[];
 };
 
-function BackLink({
-  href,
-  label,
-}: {
-  href?: string;
-  label?: string;
-}) {
+const imageStyles = {
+  placeholderFigure:
+    "my-4 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4",
+  placeholderBox:
+    "flex min-h-[180px] items-center justify-center rounded-md border border-neutral-200 bg-white px-4 text-center",
+  imageFigure:
+    "my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white",
+  image: "w-full object-contain",
+  caption: "border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600",
+} as const;
+
+function BackLink({ href, label }: { href?: string; label?: string }) {
   if (!href || !label) {
     return null;
   }
 
   return (
     <div className="mb-6">
-      <Link
-        href={href}
-        className="text-sm text-neutral-600 underline underline-offset-4"
-      >
+      <Link href={href} className="text-sm text-neutral-600 underline underline-offset-4">
         ← {label}
       </Link>
     </div>
@@ -102,12 +105,10 @@ function PageLead({ lead }: { lead?: ReactNode }) {
 function ImageContent({ block }: { block: ImageBlock }) {
   if (!block.src) {
     return (
-      <figure className="my-4 rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4">
-        <div className="flex min-h-[180px] items-center justify-center rounded-md border border-neutral-200 bg-white px-4 text-center">
+      <figure className={imageStyles.placeholderFigure}>
+        <div className={imageStyles.placeholderBox}>
           <div>
-            <p className="text-sm font-semibold text-neutral-800">
-              {block.label}
-            </p>
+            <p className="text-sm font-semibold text-neutral-800">{block.label}</p>
             <p className="mt-2 text-xs leading-6 text-neutral-500">
               ここに画像を差し込む想定です。
             </p>
@@ -124,28 +125,22 @@ function ImageContent({ block }: { block: ImageBlock }) {
   }
 
   return (
-  <figure
-    className="my-4 mx-auto overflow-hidden rounded-lg border border-neutral-200 bg-white"
-    style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
-  >
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img
-      src={block.src}
-      alt={block.alt ?? block.label}
-      className="w-full object-contain"
-    />
+    <figure
+      className={imageStyles.imageFigure}
+      style={block.maxWidth ? { maxWidth: block.maxWidth } : undefined}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={block.src} alt={block.alt ?? block.label} className={imageStyles.image} />
 
-    {block.caption ? (
-      <figcaption className="border-t border-neutral-200 px-4 py-2 text-xs leading-6 text-neutral-600">
-        {block.caption}
-      </figcaption>
-    ) : null}
-  </figure>
+      {block.caption ? (
+        <figcaption className={imageStyles.caption}>{block.caption}</figcaption>
+      ) : null}
+    </figure>
   );
 }
 
 function TextContent({ text }: { text: string }) {
-  return <p className="text-sm leading-8 text-neutral-800">{text}</p>;
+  return <p className={textStyles.body}>{text}</p>;
 }
 
 function HeadingContent({ text }: { text: string }) {
@@ -187,19 +182,14 @@ function BlockContent({ block }: { block: StaticPageBlock }) {
   switch (block.type) {
     case "heading":
       return <HeadingContent text={block.text} />;
-
     case "text":
       return <TextContent text={block.text} />;
-
     case "bullets":
       return <BulletListContent items={block.items} />;
-
     case "image":
       return <ImageContent block={block} />;
-
     case "details":
       return <DetailsContent block={block} />;
-
     default:
       return null;
   }
@@ -233,14 +223,14 @@ function ParagraphList({
 
         if (typeof paragraph === "string") {
           return (
-            <p key={key} className="text-sm leading-8 text-neutral-800">
+            <p key={key} className={textStyles.body}>
               {paragraph}
             </p>
           );
         }
 
         return (
-          <div key={key} className="text-sm leading-8 text-neutral-800">
+          <div key={key} className={textStyles.body}>
             {paragraph}
           </div>
         );
@@ -255,7 +245,10 @@ function SectionBody({ section }: { section: Section }) {
   }
 
   return (
-    <ParagraphList title={"title" in section ? section.title : undefined} paragraphs={section.paragraphs} />
+    <ParagraphList
+      title={"title" in section ? section.title : undefined}
+      paragraphs={section.paragraphs}
+    />
   );
 }
 
@@ -281,7 +274,7 @@ function StaticSection({ section, index }: { section: Section; index: number }) 
   return (
     <section key={sectionKey}>
       {shouldShowTitle ? (
-        <h2 className="mb-3 text-xl font-semibold">{section.title}</h2>
+        <h2 className={textStyles.sectionTitle}>{section.title}</h2>
       ) : null}
 
       <SectionBody section={section} />
@@ -298,13 +291,13 @@ export default function StaticPage({
   sections,
 }: StaticPageProps) {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
+    <main className={layoutStyles.page}>
+      <div className={layoutStyles.container}>
         <AppNav current={current} />
 
         <BackLink href={backHref} label={backLabel} />
 
-        <h1 className="mb-4 text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 className={layoutStyles.title}>{title}</h1>
 
         <PageLead lead={lead} />
 
