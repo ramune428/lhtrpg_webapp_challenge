@@ -1,0 +1,71 @@
+enemy/page.tsx refactor part 3
+
+Scope: recommended next split after helper extraction.
+
+Suggested component split:
+
+1. frontend/app/enemy/components/EnemyIntroSections.tsx
+Move only the top explanation sections:
+- link to character page
+- before-use section
+- how-to section
+
+Props: none.
+No state should be moved here.
+
+2. frontend/app/enemy/components/EnemyTabNav.tsx
+Move tab buttons and clear button.
+
+Props:
+- activeTab
+- onChangeTab
+- onClear
+
+3. frontend/app/enemy/components/EnemyOutputPreview.tsx
+Move only the output tab JSX.
+
+Props:
+- form
+- items
+- outputSkills
+- result
+- onGenerate
+- onCopy
+- onDownloadXlsx
+- onDownloadJson
+
+Important rule:
+Keep all state in page.tsx first.
+Move display-only JSX before moving logic.
+
+Recommended order:
+
+Step 1:
+Use enemy-page-helpers.ts in page.tsx.
+
+Step 2:
+Apply shared style constants.
+
+Step 3:
+Extract EnemyIntroSections because it has no state.
+
+Step 4:
+Extract EnemyTabNav because it has simple props.
+
+Step 5:
+Extract EnemyOutputPreview.
+
+Avoid extracting the basic input tab and skill input tab in the first pass.
+Those sections have many state updates and are easier to break.
+
+Minimum check after each step:
+- npm run lint
+- npm run build
+- open /enemy
+- change CR
+- generate command
+- copy command
+- download JSON
+- download XLSX
+- import JSON
+- import XLSX
