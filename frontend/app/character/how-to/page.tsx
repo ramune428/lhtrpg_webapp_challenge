@@ -162,12 +162,10 @@ export default function CharacterHowToPage() {
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
         <AppNav current="character" />
 
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="text-sm text-neutral-600 underline underline-offset-4"
-          >
-            ← キャラ駒作成ツールに戻る
+        <div className="mb-6 text-sm leading-8 text-neutral-800">
+          <span>← </span>
+          <Link href="/" className="underline underline-offset-4">
+            キャラ駒作成ツールに戻る
           </Link>
         </div>
 

@@ -707,7 +707,7 @@ export default function EnemyFormulaPage() {
       title="計算式"
       lead={<PageLead />}
       backHref="/enemy"
-      backLabel="エネミーデータ作成ツールに戻る"
+      backLabel="エネミーデータ/駒作成ツールに戻る"
       sections={[
         {
           title: "各タイプの基本データ",
