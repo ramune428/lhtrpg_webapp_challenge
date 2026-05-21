@@ -1,4 +1,4 @@
-type AnyRecord = Record<string, any>;
+type AnyRecord = Record<string, unknown>;
 
 type StatusEntry = {
   label: string;
@@ -28,8 +28,20 @@ function asNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-function asArray<T = any>(value: unknown): T[] {
+function asArray<T = unknown>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function asRecord(value: unknown): AnyRecord | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as AnyRecord;
 }
 
 function firstLine(value: unknown): string {
@@ -524,13 +536,13 @@ function createEquipmentData(jsonData: AnyRecord): {
   hand1: AnyRecord | null;
   hand2: AnyRecord | null;
 } {
-  const hand1 = jsonData.hand1 ?? null;
-  const hand2 = jsonData.hand2 ?? null;
-  const armor = jsonData.armor ?? null;
-  const supportItem1 = jsonData.support_item1 ?? null;
-  const supportItem2 = jsonData.support_item2 ?? null;
-  const supportItem3 = jsonData.support_item3 ?? null;
-  const bag = jsonData.bag ?? null;
+  const hand1 = asRecord(jsonData.hand1);
+  const hand2 = asRecord(jsonData.hand2);
+  const armor = asRecord(jsonData.armor);
+  const supportItem1 = asRecord(jsonData.support_item1);
+  const supportItem2 = asRecord(jsonData.support_item2);
+  const supportItem3 = asRecord(jsonData.support_item3);
+  const bag = asRecord(jsonData.bag);
 
   const equipment = [hand1, hand2, armor, supportItem1, supportItem2, supportItem3, bag];
   const equipmentData: string[] = [];

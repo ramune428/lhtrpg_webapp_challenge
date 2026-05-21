@@ -35,7 +35,7 @@ type EnemyDropItemRow = EnemyDropItemInput & { id: string };
 type TabKey = "basic" | "skills" | "output";
 
 const diceButtonValues = ["固定", "1", "2", "3", "4", "5", "6"] as const;
-type DiceButtonValue = (typeof diceButtonValues)[number];
+// type DiceButtonValue = (typeof diceButtonValues)[number];
 
 function normalizeDropDiceText(dice: string): string {
   return dice

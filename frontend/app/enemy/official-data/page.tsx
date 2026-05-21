@@ -62,23 +62,6 @@ function CodeBlock({ children }: { children: ReactNode }) {
   );
 }
 
-function NoticeBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
-      <p className="mb-1 font-semibold text-neutral-900">{title}</p>
-      <div className="space-y-2 text-sm leading-8 text-neutral-800">
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function IntroBlock() {
   return (
     <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm leading-8 text-neutral-800">
