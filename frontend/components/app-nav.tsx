@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NAV_GROUPS, type ToolKey } from "@/components/tool-config";
 
 type AppNavProps = {
@@ -19,9 +19,42 @@ const itemClass =
 
 export default function AppNav({ current }: AppNavProps) {
   const [openKey, setOpenKey] = useState<ToolKey | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!openKey) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (
+        target instanceof Node &&
+        navRef.current &&
+        !navRef.current.contains(target)
+      ) {
+        setOpenKey(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenKey(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openKey]);
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-10">
+    <nav ref={navRef} className="mb-8 flex flex-wrap gap-10">
       {NAV_GROUPS.map((group) => {
         const isActive = current === group.key;
         const isOpen = openKey === group.key;

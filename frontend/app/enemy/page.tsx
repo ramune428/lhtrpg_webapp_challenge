@@ -614,7 +614,7 @@ export default function EnemyPage() {
             <ul className="list-disc space-y-2 pl-6">
               <li>
                 「コマンドを生成する」→
-                CCFOLIA用のコマンドが表示されます。CCFOLIAに貼り付けると「キャラクター駒」が作成できます。
+                CCFOLIA用のコマンドが表示されます。CCFOLIAに貼り付けると「マイキャラクター」として駒を作成できます。
               </li>
               <li>
                 「Download XLSX」→

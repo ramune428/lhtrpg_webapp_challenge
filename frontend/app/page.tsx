@@ -6,6 +6,8 @@ import AppNav from "@/components/app-nav";
 import PageLinkCard from "@/components/page-link-card";
 import {
   CHARACTER_PAGE_LINKS,
+  ENEMY_PAGE_LINKS,
+  EXTERNAL_LINKS,
   TOOL_CONFIG,
   TOOL_TITLES,
 } from "@/components/tool-config";
@@ -16,9 +18,6 @@ const BODY_LINK_CLASS =
   "text-sm font-medium text-neutral-700 underline underline-offset-4";
 const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
-const REFERENCE_CHAT_PALETTE_URL =
-  "http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111";
-const FEEDBACK_FORM_URL = "https://forms.gle/76AvTAYyxM5DLQtL8";
 
 function extractCharacterId(input: string): string {
   const trimmed = input.trim();
@@ -117,7 +116,7 @@ export default function HomePage() {
             この{TOOL_CONFIG.character.toolLabel}は
             「
             <a
-              href="https://lhrpg.com/lhz/top"
+              href={EXTERNAL_LINKS.lhzTop}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
@@ -157,7 +156,7 @@ export default function HomePage() {
           <div className="mt-3">
             <p className={BODY_TEXT_CLASS}>
               →{" "}
-              <Link href={TOOL_CONFIG.enemy.href} className={BODY_LINK_CLASS}>
+              <Link href={ENEMY_PAGE_LINKS.home.href} className={BODY_LINK_CLASS}>
                 {TOOL_TITLES.enemy}
               </Link>
             </p>
@@ -305,12 +304,12 @@ export default function HomePage() {
             <p>
               Googleフォーム →
               <a
-                href={FEEDBACK_FORM_URL}
+                href={EXTERNAL_LINKS.feedbackForm}
                 target="_blank"
                 rel="noreferrer"
                 className="ml-2 underline underline-offset-4"
               >
-                {FEEDBACK_FORM_URL}
+                {EXTERNAL_LINKS.feedbackForm}
               </a>
             </p>
           </div>
@@ -324,12 +323,12 @@ export default function HomePage() {
           <p className="mt-2 text-sm leading-8 text-neutral-800">
             「LHTRPGのチャットパレットを作るやつ」 →
             <a
-              href={REFERENCE_CHAT_PALETTE_URL}
+              href={EXTERNAL_LINKS.referenceChatPalette}
               target="_blank"
               rel="noreferrer"
               className="ml-2 underline underline-offset-4"
             >
-              {REFERENCE_CHAT_PALETTE_URL}
+              {EXTERNAL_LINKS.referenceChatPalette}
             </a>
           </p>
         </section>
