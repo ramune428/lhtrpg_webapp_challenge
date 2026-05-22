@@ -46,8 +46,26 @@ const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 const BODY_LINK_CLASS =
   "text-sm font-medium text-neutral-700 underline underline-offset-4";
 
-const diceButtonValues = ["固定", "1", "2", "3", "4", "5", "6"] as const;
-// type DiceButtonValue = (typeof diceButtonValues)[number];
+const diceButtonValues = [
+  "固定",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "以上",
+] as const;
+
+type DiceButtonValue = (typeof diceButtonValues)[number];
+
+function getMaxDropDice(rank: EnemyFormData["rank"]) {
+  return rank === "レイド" ? 10 : 6;
+}
 
 function normalizeDropDiceText(dice: string): string {
   return dice
@@ -58,32 +76,112 @@ function normalizeDropDiceText(dice: string): string {
     .replace(/[～〜－―ー−]/g, "~");
 }
 
-function getSelectedDiceValues(dice: string): Set<string> {
+function toFullWidthNumber(value: number): string {
+  return String(value).replace(/[0-9]/g, (digit) =>
+    String.fromCharCode("０".charCodeAt(0) + Number(digit)),
+  );
+}
+
+function isNumericDiceButton(
+  diceValue: DiceButtonValue,
+): diceValue is Exclude<DiceButtonValue, "固定" | "以上"> {
+  return diceValue !== "固定" && diceValue !== "以上";
+}
+
+function isDiceButtonEnabled(
+  diceValue: DiceButtonValue,
+  maxDropDice: number,
+) {
+  if (diceValue === "固定" || diceValue === "以上") {
+    return true;
+  }
+
+  return Number(diceValue) <= maxDropDice;
+}
+
+function clampDropDiceValue(value: number, maxDropDice: number) {
+  return Math.max(1, Math.min(value, maxDropDice));
+}
+
+function getDropDiceAboveStartValue(
+  dice: string,
+  maxDropDice: number,
+): number | null {
+  const normalized = normalizeDropDiceText(dice).trim();
+  const match = normalized.match(/^(10|[1-9])\s*~\s*$/);
+
+  if (!match) {
+    return null;
+  }
+
+  return clampDropDiceValue(Number(match[1]), maxDropDice);
+}
+
+function formatDiceAboveSelection(
+  selected: Set<string>,
+  maxDropDice: number,
+): string {
+  const selectedNumbers = Array.from(selected)
+    .map((value) => Number(value))
+    .filter(
+      (value) =>
+        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
+    )
+    .sort((a, b) => a - b);
+
+  const start = selectedNumbers[0] ?? 1;
+
+  return `${toFullWidthNumber(start)}～`;
+}
+
+function getSelectedDiceValues(
+  dice: string,
+  maxDropDice: number,
+): Set<string> {
   const selected = new Set<string>();
+  const aboveStart = getDropDiceAboveStartValue(dice, maxDropDice);
+
+  if (aboveStart !== null) {
+    selected.add(String(aboveStart));
+    return selected;
+  }
+
   const normalized = normalizeDropDiceText(dice);
 
-  for (const match of normalized.matchAll(/([1-6])\s*[~-]\s*([1-6])/g)) {
+  for (const match of normalized.matchAll(
+    /(10|[1-9])\s*[~-]\s*(10|[1-9])/g,
+  )) {
     const start = Number(match[1]);
     const end = Number(match[2]);
-    const min = Math.min(start, end);
-    const max = Math.max(start, end);
+    const min = Math.max(1, Math.min(start, end));
+    const max = Math.min(Math.max(start, end), maxDropDice);
 
     for (let value = min; value <= max; value += 1) {
       selected.add(String(value));
     }
   }
 
-  for (const match of normalized.matchAll(/[1-6]/g)) {
-    selected.add(match[0]);
+  for (const match of normalized.matchAll(/10|[1-9]/g)) {
+    const value = Number(match[0]);
+
+    if (value >= 1 && value <= maxDropDice) {
+      selected.add(String(value));
+    }
   }
 
   return selected;
 }
 
-function getDiceRangeBoundaryValues(selected: Set<string>): Set<string> {
+function getDiceRangeBoundaryValues(
+  selected: Set<string>,
+  maxDropDice: number,
+): Set<string> {
   const sortedValues = Array.from(selected)
     .map((value) => Number(value))
-    .filter((value) => Number.isInteger(value) && value >= 1 && value <= 6)
+    .filter(
+      (value) =>
+        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
+    )
     .sort((a, b) => a - b);
 
   const boundaries = new Set<string>();
@@ -101,14 +199,16 @@ function getDiceRangeBoundaryValues(selected: Set<string>): Set<string> {
   return boundaries;
 }
 
-function toFullWidthDiceValue(value: number): string {
-  return String.fromCharCode("０".charCodeAt(0) + value);
-}
-
-function normalizeDiceRangeSelection(selected: Set<string>): string {
+function normalizeDiceRangeSelection(
+  selected: Set<string>,
+  maxDropDice: number,
+): string {
   const sortedValues = Array.from(selected)
     .map((value) => Number(value))
-    .filter((value) => Number.isInteger(value) && value >= 1 && value <= 6)
+    .filter(
+      (value) =>
+        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
+    )
     .sort((a, b) => a - b);
 
   if (sortedValues.length === 0) {
@@ -116,26 +216,41 @@ function normalizeDiceRangeSelection(selected: Set<string>): string {
   }
 
   if (sortedValues.length === 1) {
-    return toFullWidthDiceValue(sortedValues[0]);
+    return toFullWidthNumber(sortedValues[0]);
   }
 
   const min = sortedValues[0];
   const max = sortedValues[sortedValues.length - 1];
 
-  return `${toFullWidthDiceValue(min)}～${toFullWidthDiceValue(max)}`;
+  return `${toFullWidthNumber(min)}～${toFullWidthNumber(max)}`;
 }
 
-function formatDropDiceForOutput(dice: string): string {
+function formatDropDiceForOutput(
+  dice: string,
+  maxDropDice: number,
+): string {
   const trimmedDice = dice.trim();
 
   if (trimmedDice === "固定") {
     return "固定";
   }
 
-  const selected = getSelectedDiceValues(trimmedDice);
-  const formattedDice = normalizeDiceRangeSelection(selected);
+  const aboveStart = getDropDiceAboveStartValue(trimmedDice, maxDropDice);
+
+  if (aboveStart !== null) {
+    return `${toFullWidthNumber(aboveStart)}～`;
+  }
+
+  const selected = getSelectedDiceValues(trimmedDice, maxDropDice);
+  const formattedDice = normalizeDiceRangeSelection(selected, maxDropDice);
 
   return formattedDice || trimmedDice;
+}
+
+function getDropDicePreview(dice: string, maxDropDice: number): string {
+  const preview = formatDropDiceForOutput(dice, maxDropDice).trim();
+
+  return preview || "未選択";
 }
 
 function makeId() {
@@ -204,12 +319,14 @@ function buildCurrentFormData(
   skills: EnemySkillRow[],
   items: EnemyDropItemRow[],
 ): EnemyFormData {
+  const maxDropDice = getMaxDropDice(form.rank);
+
   return {
     ...form,
     skills: skills.map(({ id, ...skill }) => skill),
     items: items.map(({ id, ...item }) => ({
       ...item,
-      dice: formatDropDiceForOutput(item.dice),
+      dice: formatDropDiceForOutput(item.dice, maxDropDice),
     })),
   };
 }
@@ -444,6 +561,15 @@ export default function EnemyPage() {
       return next.length > 0
         ? next
         : [withDropRowId(createEmptyDropItemInput())];
+    });
+  };
+
+  const removeSkill = (id: string) => {
+    setSkills((prev) => {
+      const next = prev.filter((skill) => skill.id !== id);
+      return next.length > 0
+        ? next
+        : [withSkillRowId(createEmptySkillInput())];
     });
   };
 
@@ -879,6 +1005,7 @@ export default function EnemyPage() {
               <div className="space-y-4">
                 {items.map((item, index) => {
                   const summaryName = item.name.trim() || "（未入力）";
+                  const maxDropDice = getMaxDropDice(form.rank);
 
                   return (
                     <details
@@ -891,21 +1018,51 @@ export default function EnemyPage() {
 
                       <div className="mt-4 grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="mb-2 block text-sm font-medium">
-                            ダイス
-                          </label>
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <label className="block text-sm font-medium">
+                              ダイス
+                            </label>
+
+                            <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-600">
+                              出力：{getDropDicePreview(item.dice, maxDropDice)}
+                            </span>
+                          </div>
+
                           <div className="flex flex-wrap gap-2">
                             {diceButtonValues.map((diceValue) => {
-                              const selected = getSelectedDiceValues(item.dice);
+                              const selected = getSelectedDiceValues(
+                                item.dice,
+                                maxDropDice,
+                              );
                               const boundaryValues =
-                                getDiceRangeBoundaryValues(selected);
+                                getDiceRangeBoundaryValues(
+                                  selected,
+                                  maxDropDice,
+                                );
+                              const isEnabled = isDiceButtonEnabled(
+                                diceValue,
+                                maxDropDice,
+                              );
                               const isFixedActive = item.dice.trim() === "固定";
+                              const isAboveButton = diceValue === "以上";
+                              const isAboveActive =
+                                getDropDiceAboveStartValue(
+                                  item.dice,
+                                  maxDropDice,
+                                ) !== null;
+                              const isAboveDisabled =
+                                isAboveButton && isFixedActive;
+
                               const isActive =
                                 diceValue === "固定"
                                   ? isFixedActive
-                                  : selected.has(diceValue);
+                                  : isAboveButton
+                                    ? isAboveActive
+                                    : selected.has(diceValue);
+
                               const isAutoFilled =
-                                diceValue !== "固定" &&
+                                isNumericDiceButton(diceValue) &&
+                                !isAboveActive &&
                                 isActive &&
                                 !boundaryValues.has(diceValue);
 
@@ -913,14 +1070,26 @@ export default function EnemyPage() {
                                 <button
                                   key={diceValue}
                                   type="button"
-                                  disabled={isAutoFilled}
+                                  disabled={
+                                    !isEnabled || isAutoFilled || isAboveDisabled
+                                  }
                                   title={
-                                    isAutoFilled
-                                      ? "両端の値から自動で選択されています"
-                                      : undefined
+                                    !isEnabled
+                                      ? "レイドの場合のみ選択できます"
+                                      : isAboveDisabled
+                                        ? "固定選択中は使用できません"
+                                        : isAutoFilled
+                                          ? "両端の値から自動で選択されています"
+                                          : diceValue === "以上"
+                                            ? "出力を「n～」の形式に切り替えます"
+                                            : undefined
                                   }
                                   onClick={() => {
-                                    if (isAutoFilled) {
+                                    if (
+                                      !isEnabled ||
+                                      isAutoFilled ||
+                                      isAboveDisabled
+                                    ) {
                                       return;
                                     }
 
@@ -929,8 +1098,45 @@ export default function EnemyPage() {
                                       return;
                                     }
 
+                                    if (diceValue === "以上") {
+                                      if (isAboveActive) {
+                                        const selectedNumbers = Array.from(
+                                          selected,
+                                        )
+                                          .map((value) => Number(value))
+                                          .filter((value) =>
+                                            Number.isInteger(value),
+                                          )
+                                          .sort((a, b) => a - b);
+                                        const start = selectedNumbers[0] ?? 1;
+                                        updateItem(
+                                          item.id,
+                                          "dice",
+                                          toFullWidthNumber(start),
+                                        );
+                                        return;
+                                      }
+
+                                      const nextDice = formatDiceAboveSelection(
+                                        selected,
+                                        maxDropDice,
+                                      );
+                                      updateItem(item.id, "dice", nextDice);
+                                      return;
+                                    }
+
+                                    if (isAboveActive) {
+                                      updateItem(
+                                        item.id,
+                                        "dice",
+                                        `${toFullWidthNumber(Number(diceValue))}～`,
+                                      );
+                                      return;
+                                    }
+
                                     const nextSelected = getSelectedDiceValues(
                                       item.dice,
+                                      maxDropDice,
                                     );
                                     if (nextSelected.has(diceValue)) {
                                       nextSelected.delete(diceValue);
@@ -938,17 +1144,21 @@ export default function EnemyPage() {
                                       nextSelected.add(diceValue);
                                     }
 
-                                    const nextDice =
-                                      normalizeDiceRangeSelection(nextSelected);
+                                    const nextDice = normalizeDiceRangeSelection(
+                                      nextSelected,
+                                      maxDropDice,
+                                    );
                                     updateItem(item.id, "dice", nextDice);
                                   }}
                                   className={[
                                     "min-w-12 rounded-xl border px-4 py-3 text-sm transition",
-                                    isAutoFilled
-                                      ? "border-red-300 bg-red-100 text-red-700 cursor-default"
-                                      : isActive
-                                        ? "border-red-500 bg-red-50 text-red-600 hover:bg-red-100"
-                                        : "border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50",
+                                    !isEnabled || isAboveDisabled
+                                      ? "cursor-not-allowed border-neutral-200 bg-neutral-100 text-neutral-400"
+                                      : isAutoFilled
+                                        ? "cursor-default border-red-300 bg-red-100 text-red-700"
+                                        : isActive
+                                          ? "border-red-500 bg-red-50 text-red-600 hover:bg-red-100"
+                                          : "border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50",
                                   ].join(" ")}
                                 >
                                   {diceValue}
@@ -956,9 +1166,10 @@ export default function EnemyPage() {
                               );
                             })}
                           </div>
-                          <p className="mt-2 text-xs text-neutral-500">
+                          <p className="mt-2 text-xs leading-6 text-neutral-500">
                             ※
-                            1〜6は複数選択が可能です。2つの数字を選択すると、間の数字は自動で選択されます。
+                            1〜6は常に選択できます。7〜10はランクが「レイド」の場合のみ選択できます。
+                            「以上」は、選択中の最小値に「～」を付けた形式で出力します。
                           </p>
                         </div>
 
@@ -1518,6 +1729,16 @@ export default function EnemyPage() {
                           placeholder={exampleSkill.effect}
                           className="min-h-[120px] w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
                         />
+                      </div>
+
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill.id)}
+                          className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+                        >
+                          削除
+                        </button>
                       </div>
                     </div>
                   </details>
