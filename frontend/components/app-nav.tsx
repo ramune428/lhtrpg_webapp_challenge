@@ -2,61 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { NAV_GROUPS, type ToolKey } from "@/components/tool-config";
 
 type AppNavProps = {
-  current?: "character" | "enemy";
+  current?: ToolKey;
 };
 
-type NavItem = {
-  label: string;
-  href: string;
-};
-
-type NavGroup = {
-  key: "character" | "enemy";
-  label: string;
-  items: NavItem[];
-};
-
-const navGroups: NavGroup[] = [
-  {
-    key: "character",
-    label: "キャラクター駒作成",
-    items: [
-      { label: "キャラクター駒作成ツール", href: "/" },
-      { label: "使い方（詳細）", href: "/character/how-to" },
-      { label: "コマンド内訳", href: "/character/command-details" },
-      { label: "アップデート情報", href: "/character/updates" },
-    ],
-  },
-  {
-    key: "enemy",
-    label: "エネミーデータ作成",
-    items: [
-      { label: "エネミーデータ作成ツール", href: "/enemy" },
-      { label: "公式データについて", href: "/enemy/official-data" },
-      { label: "使い方（詳細）", href: "/enemy/how-to" },
-      { label: "計算式", href: "/enemy/formula" },
-      { label: "アップデート情報", href: "/enemy/updates" },
-    ],
-  },
-];
+const summaryBaseClass =
+  "rounded-lg border px-4 py-2 text-sm font-medium transition";
+const activeSummaryClass =
+  "border-black bg-black text-white hover:bg-black hover:text-white";
+const normalSummaryClass =
+  "border-neutral-300 bg-white text-black hover:bg-neutral-50 hover:text-black";
+const itemClass =
+  "block rounded-lg px-3 py-2 text-sm text-neutral-800 transition hover:bg-neutral-100";
 
 export default function AppNav({ current }: AppNavProps) {
-  const [openKey, setOpenKey] = useState<NavGroup["key"] | null>(null);
-
-  const summaryBaseClass =
-    "rounded-lg border px-4 py-2 text-sm font-medium transition";
-  const activeSummaryClass =
-    "border-black bg-black text-white hover:bg-black hover:text-white";
-  const normalSummaryClass =
-    "border-neutral-300 bg-white text-black hover:bg-neutral-50 hover:text-black";
-  const itemClass =
-    "block rounded-lg px-3 py-2 text-sm text-neutral-800 transition hover:bg-neutral-100";
+  const [openKey, setOpenKey] = useState<ToolKey | null>(null);
 
   return (
     <nav className="mb-8 flex flex-wrap gap-10">
-      {navGroups.map((group) => {
+      {NAV_GROUPS.map((group) => {
         const isActive = current === group.key;
         const isOpen = openKey === group.key;
 
