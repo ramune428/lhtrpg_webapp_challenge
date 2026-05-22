@@ -34,8 +34,8 @@ export const TOOL_CONFIG: Record<ToolKey, ToolConfig> = {
 } as const;
 
 export const TOOL_TITLES: Record<ToolKey, string> = {
-  character: `LHTRPG- ${TOOL_CONFIG.character.toolLabel}（CCFOLIA）`,
-  enemy: `LHTRPG- ${TOOL_CONFIG.enemy.toolLabel}（CCFOLIA）`,
+  character: `-LHTRPG- ${TOOL_CONFIG.character.toolLabel}（CCFOLIA）`,
+  enemy: `-LHTRPG- ${TOOL_CONFIG.enemy.toolLabel}（CCFOLIA）`,
 } as const;
 
 export const BACK_LABELS: Record<ToolKey, string> = {
@@ -108,3 +108,11 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+export const EXTERNAL_LINKS = {
+  lhzTop: "https://lhrpg.com/lhz/top",
+  lhzDatabase: "https://lhrpg.com/lhz/database",
+  enemyDataGuide: "https://lhrpg.com/data/enemy_data_guide2.html",
+  referenceChatPalette: "http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111",
+  feedbackForm: "https://forms.gle/76AvTAYyxM5DLQtL8",
+} as const;

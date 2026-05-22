@@ -1,4 +1,5 @@
 import StaticPage from "@/components/static-page";
+import { TOOL_CONFIG } from "@/components/tool-config";
 
 const HOW_TO_IMAGE_DIR = "/enemy/how-to";
 
@@ -77,9 +78,8 @@ export default function EnemyHowToPage() {
     <StaticPage
       current="enemy"
       title="使い方（詳細）"
-      lead="エネミーデータ／駒作成ツール（CCFOLIA）の詳しい使い方を説明します。"
-      backHref="/enemy"
-      backLabel="エネミーデータ作成ツールに戻る"
+      lead={`${TOOL_CONFIG.enemy.toolLabel}（CCFOLIA）の詳しい使い方を説明します。`}
+      backHref={TOOL_CONFIG.enemy.href}
       sections={[
         {
           title: "1. [エネミー情報]欄について",
@@ -251,7 +251,7 @@ export default function EnemyHowToPage() {
             { type: "heading", text: "③ CCFOLIA用コマンドの出力" },
             {
               type: "text",
-              text: "CCFOLIA用のコマンドを生成し、コマンド出力欄に反映します。コピーした内容をCCFOLIAに貼り付けることで、キャラクター駒を作成できます。",
+              text: "CCFOLIA用のコマンドを生成し、コマンド出力欄に反映します。コピーした内容をCCFOLIAに貼り付けることで、エネミー駒を作成できます。",
             },
             { type: "heading", text: "④ データファイル出力" },
             {

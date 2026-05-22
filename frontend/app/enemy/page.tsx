@@ -3,6 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import AppNav from "@/components/app-nav";
+import PageLinkCard from "@/components/page-link-card";
+import {
+  CHARACTER_PAGE_LINKS,
+  ENEMY_PAGE_LINKS,
+  EXTERNAL_LINKS,
+  TOOL_CONFIG,
+  TOOL_TITLES,
+} from "@/components/tool-config";
 import {
   calculateEnemyValues,
   calculateIdentification,
@@ -33,6 +41,10 @@ type EnemySkillRow = EnemySkillInput & { id: string };
 type EnemyDropItemRow = EnemyDropItemInput & { id: string };
 
 type TabKey = "basic" | "skills" | "output";
+
+const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
+const BODY_LINK_CLASS =
+  "text-sm font-medium text-neutral-700 underline underline-offset-4";
 
 const diceButtonValues = ["固定", "1", "2", "3", "4", "5", "6"] as const;
 // type DiceButtonValue = (typeof diceButtonValues)[number];
@@ -480,13 +492,13 @@ export default function EnemyPage() {
 
         <header className="mb-10">
           <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            -LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
+            {TOOL_TITLES.enemy}
           </h1>
 
-          <p className="text-sm leading-8 text-neutral-800">
-            このエネミーデータ/駒作成ツールは
+          <p className={BODY_TEXT_CLASS}>
+            この{TOOL_CONFIG.enemy.toolLabel}は
             <Link
-              href="https://lhrpg.com/data/enemy_data_guide2.html"
+              href={EXTERNAL_LINKS.enemyDataGuide}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
@@ -499,16 +511,16 @@ export default function EnemyPage() {
 
         <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
           <p className="text-sm leading-8 text-neutral-800">
-            PL向けのキャラ駒作成ツール（CCFOLIA）はこちら
+            PL向けの{TOOL_CONFIG.character.toolLabel}はこちら
           </p>
           <div className="mt-3">
             <p className="text-sm leading-8 text-neutral-800">
               →{" "}
               <Link
-                href="/"
-                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+                href={CHARACTER_PAGE_LINKS.home.href}
+                className={BODY_LINK_CLASS}
               >
-                -LHTRPG- キャラ駒作成ツール（CCFOLIA）
+                {TOOL_TITLES.character}
               </Link>
             </p>
           </div>
@@ -516,7 +528,7 @@ export default function EnemyPage() {
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6 space-y-5 text-sm leading-8 text-neutral-800">
           <h2 className="text-2xl font-semibold text-neutral-950">
-            エネミーデータ/駒作成ツールを使用する前に
+            {TOOL_CONFIG.enemy.toolLabel}を使用する前に
           </h2>
 
           <p>
@@ -531,7 +543,7 @@ export default function EnemyPage() {
           <p>
             また、
             <Link
-              href="https://lhrpg.com/lhz/database"
+              href={EXTERNAL_LINKS.lhzDatabase}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
@@ -540,10 +552,10 @@ export default function EnemyPage() {
             </Link>
             のエネミーデータも読み込むことができますが、読み込む前に一手間必要です。使用する前に、
             <Link
-              href="/enemy/official-data"
+              href={ENEMY_PAGE_LINKS.officialData.href}
               className="underline underline-offset-4"
             >
-              公式データについて
+              {ENEMY_PAGE_LINKS.officialData.label}
             </Link>
             をご確認ください。一部のエネミーに関してエラーの発生を確認しています。大抵の原因は文字コードの相違です。発見した場合は、お問い合わせフォームまでご一報ください。
           </p>
@@ -1696,6 +1708,33 @@ export default function EnemyPage() {
 
         <section className="mt-12 rounded-2xl border border-neutral-300 p-6 space-y-4 text-sm leading-8 text-neutral-800">
           <h2 className="text-2xl font-semibold text-neutral-950">お知らせ</h2>
+
+          <div className="space-y-3">
+            <p>関連ページはこちら</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PageLinkCard
+                href={ENEMY_PAGE_LINKS.officialData.href}
+                title={ENEMY_PAGE_LINKS.officialData.label}
+                description="公式データベースから取得したJSONファイルの読み込み手順を確認できます。"
+              />
+              <PageLinkCard
+                href={ENEMY_PAGE_LINKS.howTo.href}
+                title={ENEMY_PAGE_LINKS.howTo.label}
+                description="各入力欄と出力手順を画像付きで確認できます。"
+              />
+              <PageLinkCard
+                href={ENEMY_PAGE_LINKS.formula.href}
+                title={ENEMY_PAGE_LINKS.formula.label}
+                description="能力値や推奨値の計算式を確認できます。"
+              />
+              <PageLinkCard
+                href={ENEMY_PAGE_LINKS.updates.href}
+                title={ENEMY_PAGE_LINKS.updates.label}
+                description="公開後の変更内容や過去バージョンの履歴を確認できます。"
+              />
+            </div>
+          </div>
+
           <p>
             「コマンドが表示されない」「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
             下記Googleフォームにてご連絡ください。
@@ -1704,12 +1743,12 @@ export default function EnemyPage() {
           <p>
             Googleフォーム →{" "}
             <Link
-              href="https://forms.gle/76AvTAYyxM5DLQtL8"
+              href={EXTERNAL_LINKS.feedbackForm}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
             >
-              https://forms.gle/76AvTAYyxM5DLQtL8
+              {EXTERNAL_LINKS.feedbackForm}
             </Link>
           </p>
         </section>
