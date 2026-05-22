@@ -1,5 +1,20 @@
+import type { ReactNode } from "react";
 import StaticPage from "@/components/static-page";
 import { TOOL_CONFIG } from "@/components/tool-config";
+
+type StepImage = {
+  src: string;
+  alt: string;
+  caption?: string;
+  narrow?: boolean;
+};
+
+type Step = {
+  number: string;
+  title: string;
+  text: ReactNode;
+  images: StepImage[];
+};
 
 const HOW_TO_IMAGE_DIR = "/enemy/how-to";
 
@@ -17,262 +32,271 @@ const HOW_TO_IMAGES = {
   jsonOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-11-JsonOutput.png`,
 } as const;
 
-type TextBlock = {
-  type: "text";
-  text: string;
-};
+const STEP_IMAGE_CLASS =
+  "h-auto w-full max-w-3xl rounded-xl border border-neutral-200";
+const NARROW_STEP_IMAGE_CLASS =
+  "h-auto w-full max-w-[520px] rounded-xl border border-neutral-200";
 
-type ImageBlock = {
-  type: "image";
-  label: string;
-  src: string;
-  alt: string;
-  caption: string;
-  maxWidth?: string;
-};
-
-const textBlock = (text: string): TextBlock => ({
-  type: "text",
-  text,
-});
-
-const imageBlock = (
-  label: string,
-  src: string,
-  alt: string,
-  maxWidth?: string,
-): ImageBlock => ({
-  type: "image",
-  label,
-  src,
-  alt,
-  caption: "",
-  maxWidth,
-});
-
-const imageWithDescription = (
-  label: string,
-  src: string,
-  alt: string,
-  description: string,
-): [ImageBlock, TextBlock] => [
-  imageBlock(label, src, alt),
-  textBlock(description),
+const steps: Step[] = [
+  {
+    number: "1",
+    title: "画面全体を確認する",
+    text: (
+      <>
+        {TOOL_CONFIG.enemy.toolLabel}
+        の画面全体です。上部のタブを切り替えながら、
+        エネミー情報、特技情報、データ出力の順に入力・確認します。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.enemyOverview,
+        alt: `${TOOL_CONFIG.enemy.toolLabel}のエネミー情報タブ全体`,
+      },
+    ],
+  },
+  {
+    number: "2",
+    title: "基本操作の位置を確認する",
+    text: (
+      <>
+        タブ切り替え、入力ファイル読込、入力内容クリアの位置を確認します。
+        XLSXファイルまたはJSONファイルを読み込む場合は、[入力ファイル読込]
+        からファイルを選択します。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.basicOperations,
+        alt: "タブ切り替え、入力ファイル読込、入力内容クリアの位置",
+      },
+    ],
+  },
+  {
+    number: "3",
+    title: "エネミー情報を入力する",
+    text: (
+      <>
+        「名称」「ランク」「CR」「タイプ」「大種族」「知名度」「タグ」「メモ」を入力してください。
+        「識別難易度」は「CR」と「知名度」から自動計算されます。
+        「初期タグ」は「ランク」と「大種族」に基づいて自動設定され、入力した「タグ」と合わせて出力されます。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.enemyInfoForm,
+        alt: "エネミー情報入力欄",
+      },
+    ],
+  },
+  {
+    number: "4",
+    title: "ドロップ品を入力する",
+    text: (
+      <>
+        「ドロップ品の数」を設定すると入力欄が増減します。
+        推奨ドロップ品を参考にしながら、「ダイス」、「アイテム名」、「解説」を入力してください。
+        解説は必要な場合のみ入力してください。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.dropItemsForm,
+        alt: "ドロップ品入力欄",
+      },
+    ],
+  },
+  {
+    number: "5",
+    title: "能力値を確認・調整する",
+    text: (
+      <>
+        [推奨能力値を反映] をクリックすると、「ランク」「CR」「タイプ」に基づいて各能力値の推奨値が反映されます。
+        各能力値は、必要に応じて手動で調整できます。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.abilityValuesForm,
+        alt: "エネミー能力値欄",
+      },
+    ],
+  },
+  {
+    number: "6",
+    title: "特技情報タブを確認する",
+    text: (
+      <>
+        [特技情報] タブを開き、特技例、特技の数、特技入力欄の位置を確認します。
+        大種族が「ギミック」の場合は、専用の特技《意志なき機構》が自動で追加されます。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.skillOverview,
+        alt: "特技情報タブ全体",
+      },
+    ],
+  },
+  {
+    number: "7",
+    title: "特技の例を確認する",
+    text: (
+      <>
+        「CR」と「タイプ」に応じた特技例が表示されます。
+        ダメージや命中値の目安として参考にしてください。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.skillExample,
+        alt: "特技の例",
+      },
+    ],
+  },
+  {
+    number: "8",
+    title: "特技を入力する",
+    text: (
+      <>
+        「特技の数」を指定し、各特技の内容を入力します。
+        「特技名」と「効果」が空欄の場合は、データ出力に反映されません。
+        空欄ではなく「-」を表示したい場合は、「-」を入力してください。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.skillInput,
+        alt: "特技入力欄",
+      },
+    ],
+  },
+  {
+    number: "9",
+    title: "データ出力タブを確認する",
+    text: (
+      <>
+        [データ出力] タブを開き、入力したエネミーデータの確認欄、
+        CCFOLIA用コマンドの出力欄、ファイル出力ボタンの位置を確認します。
+        ここに表示されていない内容は出力されません。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.outputOverview,
+        alt: "データ出力タブ全体",
+      },
+    ],
+  },
+  {
+    number: "10",
+    title: "CCFOLIA用コマンドを生成する",
+    text: (
+      <>
+        [コマンドを生成する] をクリックすると、CCFOLIA用のコマンドが表示されます。
+        コピーした内容をCCFOLIAに貼り付けると「マイキャラクター」として駒を作成できます。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.outputOverview,
+        alt: "CCFOLIA用コマンドの出力欄",
+      },
+    ],
+  },
+  {
+    number: "11",
+    title: "必要に応じてデータファイルを出力する",
+    text: (
+      <>
+        エネミーデータはXLSXファイルまたはJSONファイルとして出力できます。
+        出力したファイルは、後から読み込んで再編集できます。
+        ファイル名は「エネミー名_CR」の形式になります。
+      </>
+    ),
+    images: [
+      {
+        src: HOW_TO_IMAGES.xlsxOutput,
+        alt: "XLSXファイル出力例",
+        narrow: true,
+      },
+      {
+        src: HOW_TO_IMAGES.jsonOutput,
+        alt: "JSONファイル出力例",
+        narrow: true,
+      },
+    ],
+  },
 ];
 
-const overviewImageDetails = (
-  title: string,
-  label: string,
-  src: string,
-  alt: string,
-  description: string,
-) => ({
-  type: "details" as const,
-  title,
-  defaultOpen: false,
-  blocks: imageWithDescription(label, src, alt, description),
-});
+function StepImageFigure({
+  image,
+  figureNumber,
+}: {
+  image: StepImage;
+  figureNumber: number;
+}) {
+  return (
+    <figure className="flex flex-col items-center space-y-2">
+      <img
+        src={image.src}
+        alt={image.alt}
+        className={image.narrow ? NARROW_STEP_IMAGE_CLASS : STEP_IMAGE_CLASS}
+      />
+      <figcaption className="max-w-3xl text-center text-sm leading-6 text-neutral-600">
+        図{figureNumber}：{image.caption ?? image.alt}
+      </figcaption>
+    </figure>
+  );
+}
+
+function StepCard({
+  step,
+  stepIndex,
+}: {
+  step: Step;
+  stepIndex: number;
+}) {
+  const figureOffset = steps
+    .slice(0, stepIndex)
+    .reduce((total, currentStep) => total + currentStep.images.length, 0);
+
+  return (
+    <section className="rounded-2xl border border-neutral-300 p-6">
+      <h2 className="mb-3 text-2xl font-semibold">-{step.number}-</h2>
+
+      <h3 className="mb-4 text-lg font-semibold text-neutral-900">
+        {step.title}
+      </h3>
+
+      <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
+
+      <div className="flex flex-wrap justify-center gap-8">
+        {step.images.map((image, imageIndex) => (
+          <StepImageFigure
+            key={`${step.number}-${image.src}-${imageIndex}`}
+            image={image}
+            figureNumber={figureOffset + imageIndex + 1}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export default function EnemyHowToPage() {
   return (
     <StaticPage
       current="enemy"
       title="使い方（詳細）"
-      lead={`${TOOL_CONFIG.enemy.toolLabel}（CCFOLIA）の詳しい使い方を説明します。`}
+      lead={`${TOOL_CONFIG.enemy.toolLabel}でエネミーデータを作成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}
       backHref={TOOL_CONFIG.enemy.href}
-      sections={[
-        {
-          title: "1. [エネミー情報]欄について",
-          collapsible: true,
-          defaultOpen: true,
-          blocks: [
-            overviewImageDetails(
-              "画面全体を確認する",
-              "エネミー情報タブ 全体",
-              HOW_TO_IMAGES.enemyOverview,
-              "エネミー情報タブ全体の説明画像",
-              "エネミー情報タブ全体の画面です。各入力欄の位置を確認できます。",
-            ),
-            ...imageWithDescription(
-              "基本操作の位置",
-              HOW_TO_IMAGES.basicOperations,
-              "タブ切り替え、入力ファイル読込、入力内容クリアの位置を示した画像",
-              "タブ切り替え、入力ファイル読込、入力内容クリアの位置です。",
-            ),
-            { type: "heading", text: "① タブの切り替え" },
-            {
-              type: "text",
-              text: "「エネミー情報」「特技情報」「データ出力」のタブを切り替えます。",
-            },
-            { type: "heading", text: "② 入力ファイルの読み込み" },
-            {
-              type: "text",
-              text: "XLSXファイルまたはJSONファイルを読み込みます。公式データを読み込む場合は、「JSON（読み込み）について」を確認してください。",
-            },
-            { type: "heading", text: "③ 入力内容をクリア" },
-            {
-              type: "text",
-              text: "入力内容を初期状態に戻します。特技情報も含めて、すべての入力内容が初期状態に戻ります。",
-            },
-            { type: "heading", text: "④ エネミー情報入力欄" },
-            ...imageWithDescription(
-              "入力欄の位置",
-              HOW_TO_IMAGES.enemyInfoForm,
-              "エネミー情報入力欄の説明画像",
-              "エネミーの基本情報を入力する欄です。",
-            ),
-            {
-              type: "bullets",
-              items: [
-                "名称：エネミーの名称を入力します。",
-                "ランク：「モブ」「ノーマル」「ボス」「レイド」から選択します。",
-                "CR：1～30に対応しています。",
-                "タイプ：9つのタイプから選択します。「不明」は公式データの読み込み用です。",
-                "大種族：8つの種族から選択します。「ギミック」を作成する場合は必ず選択してください。",
-                "知名度：8つの知名度から選択します。",
-                "識別難易度：CRと知名度から自動で計算されます。必要に応じて調整できます。",
-                "初期タグ：ランク（ノーマルを除く）と大種族が自動で反映されます。",
-                "タグ：任意のタグを入力します。",
-                "メモ：自由記述欄です。CCFOLIAでは「キャラクターメモ」に反映されます。",
-              ],
-            },
-            { type: "heading", text: "⑤ ドロップ入力欄" },
-            ...imageWithDescription(
-              "ドロップ品入力の位置",
-              HOW_TO_IMAGES.dropItemsForm,
-              "ドロップ入力欄の説明画像",
-              "推奨ドロップ品を確認し、必要に応じて内容を調整する欄です。",
-            ),
-            {
-              type: "bullets",
-              items: [
-                "推奨ドロップ品：CRとランク、または大種族「ギミック」の設定に基づいて表示されます。",
-                "ドロップ品の数：入力した数に合わせて、入力欄（ドロップ品1、ドロップ品2…）が反映されます。",
-                "ダイス：「固定」「1～6」（レイドの場合は「1～9」）から選択します。",
-                "アイテム名：ドロップ品の名称を入力します。",
-                "解説：必要に応じてドロップ品の説明を入力します。",
-              ],
-            },
-            { type: "heading", text: "⑥ エネミー能力値欄" },
-            ...imageWithDescription(
-              "能力値入力の位置",
-              HOW_TO_IMAGES.abilityValuesForm,
-              "エネミー能力値欄の説明画像",
-              "能力値や判定値を入力・調整する欄です。",
-            ),
-            {
-              type: "bullets",
-              items: [
-                "基本能力値：STR、DEX、POW、INTを入力します。",
-                "判定値：回避、抵抗の固定値とダイス数を入力します。判定表記は自動で表示されます。",
-                "その他：物理防御力、魔法防御力、最大HP、ヘイト倍率、行動力、移動力、因果力を入力します。",
-                "推奨能力値を反映：ランク、CR、タイプに基づく推奨能力値を反映します。",
-              ],
-            },
-          ],
-        },
-        {
-          title: "2. [特技情報]欄について",
-          collapsible: true,
-          defaultOpen: true,
-          blocks: [
-            overviewImageDetails(
-              "画面全体を確認する",
-              "特技情報タブ 全体",
-              HOW_TO_IMAGES.skillOverview,
-              "特技情報タブ全体の説明画像",
-              "特技情報タブ全体の画面です。特技例、特技数、特技入力欄の位置を確認できます。",
-            ),
-            { type: "heading", text: "① タブの切り替え" },
-            {
-              type: "text",
-              text: "「エネミー情報」「特技情報」「データ出力」のタブを切り替えます。",
-            },
-            { type: "heading", text: "② 特技の例" },
-            ...imageWithDescription(
-              "特技例の位置",
-              HOW_TO_IMAGES.skillExample,
-              "特技の例の説明画像",
-              "CRとタイプに応じた特技例が表示されます。",
-            ),
-            {
-              type: "text",
-              text: "ダメージや命中値の目安として参考にしてください。",
-            },
-            { type: "heading", text: "③ 特技の入力" },
-            ...imageWithDescription(
-              "特技入力欄の位置",
-              HOW_TO_IMAGES.skillInput,
-              "特技入力欄の説明画像",
-              "各特技の見出しを開いて、特技の内容を入力します。",
-            ),
-            {
-              type: "text",
-              text: "空欄部分は反映されないため、「-」を表示したい場合は「-」を入力してください。",
-            },
-            {
-              type: "bullets",
-              items: [
-                "特技の数：数字に合わせて入力欄（特技1、特技2…）が反映されます。",
-                "特技名：特技の名称を入力します。空欄の場合は、［データ出力］に反映されません。",
-                "タグ：複数記述する場合は「,」で区切ります。空欄のままでも問題ありません。",
-                "タイミング：任意のタイミングを選択します。",
-                "命中値：ダイスも含めて入力します。空欄のままでも問題ありません。",
-                "判定：回避、抵抗などを入力します。空欄のままでも問題ありません。",
-                "対象：対象を入力します。空欄のままでも問題ありません。",
-                "射程：射程を入力します。空欄のままでも問題ありません。",
-                "制限：制限を入力します。空欄のままでも問題ありません。",
-                "効果：自由記述欄です。空欄の場合は反映されません。",
-              ],
-            },
-          ],
-        },
-        {
-          title: "3. [データ出力]欄について",
-          collapsible: true,
-          defaultOpen: true,
-          blocks: [
-            ...imageWithDescription(
-              "データ出力タブ 全体",
-              HOW_TO_IMAGES.outputOverview,
-              "データ出力タブ全体の説明画像",
-              "データ出力タブ全体の画面です。エネミーデータ確認欄、コマンド出力欄、ファイル出力ボタンの位置を確認できます。",
-            ),
-            { type: "heading", text: "① タブの切り替え" },
-            {
-              type: "text",
-              text: "「エネミー情報」「特技情報」「データ出力」のタブを切り替えます。",
-            },
-            { type: "heading", text: "② エネミーデータ確認" },
-            {
-              type: "text",
-              text: "「エネミー情報」と「特技情報」で入力した内容が表示されます。ここに反映されていない内容は出力されません。",
-            },
-            { type: "heading", text: "③ CCFOLIA用コマンドの出力" },
-            {
-              type: "text",
-              text: "CCFOLIA用のコマンドを生成し、コマンド出力欄に反映します。コピーした内容をCCFOLIAに貼り付けることで、エネミー駒を作成できます。",
-            },
-            { type: "heading", text: "④ データファイル出力" },
-            {
-              type: "text",
-              text: "エネミーデータをXLSXファイルまたはJSONファイルで出力します。ファイル名は「《エネミーの名称》_《CR》」です。",
-            },
-            imageBlock(
-              "XLSXファイル出力",
-              HOW_TO_IMAGES.xlsxOutput,
-              "XLSXファイル出力例の画像",
-              "760px",
-            ),
-            imageBlock(
-              "JSONファイル出力",
-              HOW_TO_IMAGES.jsonOutput,
-              "JSONファイル出力例の画像",
-              "760px",
-            ),
-          ],
-        },
-      ]}
-    />
+    >
+      <div className="space-y-12">
+        {steps.map((step, stepIndex) => (
+          <StepCard key={step.number} step={step} stepIndex={stepIndex} />
+        ))}
+      </div>
+    </StaticPage>
   );
 }
