@@ -7,7 +7,7 @@ export type ToolConfig = {
   backLabel: string;
 };
 
-export type NavItem = {
+export type PageLinkConfig = {
   label: string;
   href: string;
 };
@@ -15,7 +15,7 @@ export type NavItem = {
 export type NavGroup = {
   key: ToolKey;
   label: string;
-  items: NavItem[];
+  items: PageLinkConfig[];
 };
 
 export const TOOL_CONFIG: Record<ToolKey, ToolConfig> = {
@@ -33,31 +33,78 @@ export const TOOL_CONFIG: Record<ToolKey, ToolConfig> = {
   },
 } as const;
 
+export const TOOL_TITLES: Record<ToolKey, string> = {
+  character: `LHTRPG- ${TOOL_CONFIG.character.toolLabel}（CCFOLIA）`,
+  enemy: `LHTRPG- ${TOOL_CONFIG.enemy.toolLabel}（CCFOLIA）`,
+} as const;
+
 export const BACK_LABELS: Record<ToolKey, string> = {
   character: TOOL_CONFIG.character.backLabel,
   enemy: TOOL_CONFIG.enemy.backLabel,
 } as const;
+
+export const CHARACTER_PAGE_LINKS = {
+  home: {
+    label: TOOL_CONFIG.character.toolLabel,
+    href: TOOL_CONFIG.character.href,
+  },
+  howTo: {
+    label: "使い方（詳細）",
+    href: "/character/how-to",
+  },
+  commandDetails: {
+    label: "コマンド内訳",
+    href: "/character/command-details",
+  },
+  updates: {
+    label: "アップデート情報",
+    href: "/character/updates",
+  },
+} as const satisfies Record<string, PageLinkConfig>;
+
+export const ENEMY_PAGE_LINKS = {
+  home: {
+    label: TOOL_CONFIG.enemy.toolLabel,
+    href: TOOL_CONFIG.enemy.href,
+  },
+  officialData: {
+    label: "公式データについて",
+    href: "/enemy/official-data",
+  },
+  howTo: {
+    label: "使い方（詳細）",
+    href: "/enemy/how-to",
+  },
+  formula: {
+    label: "計算式",
+    href: "/enemy/formula",
+  },
+  updates: {
+    label: "アップデート情報",
+    href: "/enemy/updates",
+  },
+} as const satisfies Record<string, PageLinkConfig>;
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     key: "character",
     label: TOOL_CONFIG.character.navLabel,
     items: [
-      { label: TOOL_CONFIG.character.toolLabel, href: TOOL_CONFIG.character.href },
-      { label: "使い方（詳細）", href: "/character/how-to" },
-      { label: "コマンド内訳", href: "/character/command-details" },
-      { label: "アップデート情報", href: "/character/updates" },
+      CHARACTER_PAGE_LINKS.home,
+      CHARACTER_PAGE_LINKS.howTo,
+      CHARACTER_PAGE_LINKS.commandDetails,
+      CHARACTER_PAGE_LINKS.updates,
     ],
   },
   {
     key: "enemy",
     label: TOOL_CONFIG.enemy.navLabel,
     items: [
-      { label: TOOL_CONFIG.enemy.toolLabel, href: TOOL_CONFIG.enemy.href },
-      { label: "公式データについて", href: "/enemy/official-data" },
-      { label: "使い方（詳細）", href: "/enemy/how-to" },
-      { label: "計算式", href: "/enemy/formula" },
-      { label: "アップデート情報", href: "/enemy/updates" },
+      ENEMY_PAGE_LINKS.home,
+      ENEMY_PAGE_LINKS.officialData,
+      ENEMY_PAGE_LINKS.howTo,
+      ENEMY_PAGE_LINKS.formula,
+      ENEMY_PAGE_LINKS.updates,
     ],
   },
 ];

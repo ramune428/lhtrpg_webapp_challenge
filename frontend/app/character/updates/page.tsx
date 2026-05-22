@@ -1,5 +1,5 @@
-import Link from "next/link";
-import AppNav from "@/components/app-nav";
+import StaticPage from "@/components/static-page";
+import { TOOL_CONFIG } from "@/components/tool-config";
 
 type VersionItem = {
   version: string;
@@ -12,7 +12,7 @@ const currentVersion: VersionItem = {
   date: "2026/06",
   notes: [
     "Webアプリ版として再構成",
-    "「キャラ駒作成ツール」を公開",
+    `「${TOOL_CONFIG.character.toolLabel}」を公開`,
     "「使い方（詳細）」「コマンド内訳」「アップデート情報」ページを追加",
     "ページ構成と導線を整理",
     "UIを調整",
@@ -30,7 +30,7 @@ const currentVersionForHistory: VersionItem = {
   date: "2026/06",
   notes: [
     "Webアプリ版として再構成",
-    "キャラ駒作成ツールをメインページとして公開",
+    `${TOOL_CONFIG.character.toolLabel}をメインページとして公開`,
     "「使い方（詳細）」「コマンド内訳」「アップデート情報」ページを追加",
     "ページ構成と導線を整理",
     "UIを調整",
@@ -52,7 +52,9 @@ const notionVersionsForHistory: VersionItem[] = [
   {
     version: "ver 2.0",
     date: "2023/10",
-    notes: ["「LHTRPG- キャラ駒作成ツール（CCFOLIA）」（Notion）を正式リリース"],
+    notes: [
+      `「LHTRPG- ${TOOL_CONFIG.character.toolLabel}（CCFOLIA）」（Notion）を正式リリース`,
+    ],
   },
   {
     version: "ver 1.4",
@@ -117,83 +119,68 @@ function VersionCard({ item }: { item: VersionItem }) {
 
 export default function CharacterUpdatesPage() {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
-        <AppNav current="character" />
+    <StaticPage
+      current="character"
+      title="アップデート情報"
+      lead={`${TOOL_CONFIG.character.toolLabel}の更新履歴をまとめています。`}
+      backHref={TOOL_CONFIG.character.href}
+    >
+      <section>
+        <h2 className="mb-4 text-2xl font-bold">最新バージョン</h2>
+        <VersionCard item={currentVersion} />
+      </section>
 
-        <div className="mb-6 text-sm leading-8 text-neutral-800">
-          <span>← </span>
-          <Link href="/" className="underline underline-offset-4">
-            キャラ作成ツールに戻る
-          </Link>
+      <section className="space-y-10">
+        <div>
+          <h2 className="mb-4 text-2xl font-bold">過去バージョン</h2>
+          <p className="text-sm leading-8 text-neutral-700">
+            過去の更新履歴をまとめています。
+          </p>
         </div>
 
-        <header className="mb-10">
-          <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            アップデート情報
-          </h1>
-          <p className="text-sm leading-8 text-neutral-700">
-            キャラ駒作成ツールの更新履歴をまとめています。
-          </p>
-        </header>
-
-        <section className="mb-12">
-          <h2 className="mb-4 text-2xl font-bold">最新バージョン</h2>
-          <VersionCard item={currentVersion} />
-        </section>
-
-        <section className="space-y-10">
+        {/* <section className="space-y-6">
           <div>
-            <h2 className="mb-4 text-2xl font-bold">過去バージョン</h2>
+            <h3 className="mb-2 text-xl font-semibold">現行Webアプリ版</h3>
             <p className="text-sm leading-8 text-neutral-700">
-              過去の更新履歴をまとめています。
+              現在のWebアプリ版として公開している更新履歴です。
             </p>
           </div>
 
-          {/* <section className="space-y-6">
-            <div>
-              <h3 className="mb-2 text-xl font-semibold">現行Webアプリ版</h3>
-              <p className="text-sm leading-8 text-neutral-700">
-                現在のWebアプリ版として公開している更新履歴です。
-              </p>
-            </div>
+          <div className="space-y-6">
+            <VersionCard item={currentVersionForHistory} />
+          </div>
+        </section> */}
 
-            <div className="space-y-6">
-              <VersionCard item={currentVersionForHistory} />
-            </div>
-          </section> */}
+        <section className="space-y-6">
+          <div>
+            <h3 className="mb-2 text-xl font-semibold">Notion版</h3>
+            <p className="text-sm leading-8 text-neutral-700">
+              Notion版の更新履歴です。
+            </p>
+          </div>
 
-          <section className="space-y-6">
-            <div>
-              <h3 className="mb-2 text-xl font-semibold">Notion版</h3>
-              <p className="text-sm leading-8 text-neutral-700">
-                Notion版の更新履歴です。
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {notionVersionsForHistory.map((item) => (
-                <VersionCard key={item.version} item={item} />
-              ))}
-            </div>
-          </section>
-
-          <section className="space-y-6">
-            <div>
-              <h3 className="mb-2 text-xl font-semibold">.exe / 旧版</h3>
-              <p className="text-sm leading-8 text-neutral-700">
-                .exe版および初期のWebアプリ版の更新履歴です。
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {legacyVersionsForHistory.map((item) => (
-                <VersionCard key={item.version} item={item} />
-              ))}
-            </div>
-          </section>
+          <div className="space-y-6">
+            {notionVersionsForHistory.map((item) => (
+              <VersionCard key={item.version} item={item} />
+            ))}
+          </div>
         </section>
-      </div>
-    </main>
+
+        <section className="space-y-6">
+          <div>
+            <h3 className="mb-2 text-xl font-semibold">.exe / 旧版</h3>
+            <p className="text-sm leading-8 text-neutral-700">
+              .exe版および初期のWebアプリ版の更新履歴です。
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {legacyVersionsForHistory.map((item) => (
+              <VersionCard key={item.version} item={item} />
+            ))}
+          </div>
+        </section>
+      </section>
+    </StaticPage>
   );
 }

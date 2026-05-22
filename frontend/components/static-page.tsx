@@ -68,7 +68,8 @@ type StaticPageProps = {
   lead?: ReactNode;
   backHref?: string;
   backLabel?: string;
-  sections: Section[];
+  sections?: Section[];
+  children?: ReactNode;
 };
 
 const DEFAULT_COLLAPSIBLE_OPEN = true;
@@ -331,9 +332,11 @@ export default function StaticPage({
   lead,
   backHref,
   backLabel,
-  sections,
+  sections = [],
+  children,
 }: StaticPageProps) {
   const resolvedBackLabel = resolveBackLabel({ current, backHref, backLabel });
+  const hasContent = sections.length > 0 || Boolean(children);
 
   return (
     <main className="min-h-screen bg-white text-black">
@@ -342,19 +345,25 @@ export default function StaticPage({
 
         <BackLink href={backHref} label={resolvedBackLabel} />
 
-        <h1 className="mb-4 text-3xl font-bold tracking-tight">{title}</h1>
+        <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
+          {title}
+        </h1>
 
         <PageLead lead={lead} />
 
-        <div className="space-y-10">
-          {sections.map((section, index) => (
-            <StaticSection
-              key={section.title ?? `section-${index}`}
-              section={section}
-              index={index}
-            />
-          ))}
-        </div>
+        {hasContent ? (
+          <div className="space-y-10">
+            {sections.map((section, index) => (
+              <StaticSection
+                key={section.title ?? `section-${index}`}
+                section={section}
+                index={index}
+              />
+            ))}
+
+            {children}
+          </div>
+        ) : null}
       </div>
     </main>
   );

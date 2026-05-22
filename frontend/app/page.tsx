@@ -3,7 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import AppNav from "@/components/app-nav";
+import PageLinkCard from "@/components/page-link-card";
+import {
+  CHARACTER_PAGE_LINKS,
+  TOOL_CONFIG,
+  TOOL_TITLES,
+} from "@/components/tool-config";
 import { createPiece } from "@/utils/createPiece";
+
+const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
+const BODY_LINK_CLASS =
+  "text-sm font-medium text-neutral-700 underline underline-offset-4";
+const FORM_BUTTON_CLASS =
+  "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
+const REFERENCE_CHAT_PALETTE_URL =
+  "http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111";
+const FEEDBACK_FORM_URL = "https://forms.gle/76AvTAYyxM5DLQtL8";
 
 function extractCharacterId(input: string): string {
   const trimmed = input.trim();
@@ -95,11 +110,11 @@ export default function HomePage() {
 
         <header className="mb-10">
           <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            LHTRPG- キャラ駒作成ツール（CCFOLIA）
+            {TOOL_TITLES.character}
           </h1>
 
-          <p className="text-sm leading-8 text-neutral-800">
-            このキャラ駒作成ツールは
+          <p className={BODY_TEXT_CLASS}>
+            この{TOOL_CONFIG.character.toolLabel}は
             「
             <a
               href="https://lhrpg.com/lhz/top"
@@ -116,7 +131,7 @@ export default function HomePage() {
 
         <section className="mb-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
           <h2 className="mb-3 text-lg font-semibold">💡【重要なお知らせ】</h2>
-          <p className="text-sm leading-8 text-neutral-800">
+          <p className={BODY_TEXT_CLASS}>
             「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックがついていても、
             JSONデータを取得できず、エラーが発生する場合があります。
             一度チェックを外して、「外部ツールからの&lt;冒険者&gt;データ参照を許可する」を更新してください。
@@ -136,17 +151,14 @@ export default function HomePage() {
         */}
 
         <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
-          <p className="text-sm leading-8 text-neutral-800">
-            GM・ディベロッパー向けのエネミーデータ/駒作成ツールはこちら
+          <p className={BODY_TEXT_CLASS}>
+            GM・ディベロッパー向けの{TOOL_CONFIG.enemy.toolLabel}はこちら
           </p>
           <div className="mt-3">
-            <p className="text-sm leading-8 text-neutral-800">
+            <p className={BODY_TEXT_CLASS}>
               →{" "}
-              <Link
-                href="/enemy"
-                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-              >
-                LHTRPG- エネミーデータ/駒作成ツール（CCFOLIA）
+              <Link href={TOOL_CONFIG.enemy.href} className={BODY_LINK_CLASS}>
+                {TOOL_TITLES.enemy}
               </Link>
             </p>
           </div>
@@ -174,20 +186,22 @@ export default function HomePage() {
           </div>
 
           <div className="mt-5">
-            <p className="text-sm leading-8 text-neutral-800">
+            <p className={BODY_TEXT_CLASS}>
               詳しい使い方についてはこちら →{" "}
               <Link
-                href="/character/how-to"
-                className="text-sm font-medium text-neutral-700 underline underline-offset-4"
+                href={CHARACTER_PAGE_LINKS.howTo.href}
+                className={BODY_LINK_CLASS}
               >
-                使い方（詳細）
+                {CHARACTER_PAGE_LINKS.howTo.label}
               </Link>
             </p>
           </div>
         </section>
 
         <section className="mb-4">
-          <h2 className="text-2xl font-semibold">キャラ駒作成ツール</h2>
+          <h2 className="text-2xl font-semibold">
+            {TOOL_CONFIG.character.toolLabel}
+          </h2>
         </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
@@ -219,7 +233,7 @@ export default function HomePage() {
               type="button"
               onClick={handleGenerate}
               disabled={isLoading}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className={FORM_BUTTON_CLASS}
             >
               {isLoading ? "生成中..." : "コマンドを生成する"}
             </button>
@@ -228,7 +242,7 @@ export default function HomePage() {
               type="button"
               onClick={handleClear}
               disabled={isLoading}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className={FORM_BUTTON_CLASS}
             >
               クリア
             </button>
@@ -237,7 +251,7 @@ export default function HomePage() {
               type="button"
               onClick={handleCopy}
               disabled={!result}
-              className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className={FORM_BUTTON_CLASS}
             >
               コピー
             </button>
@@ -269,19 +283,17 @@ export default function HomePage() {
             <p>コマンド内訳やアップデート情報はこちら</p>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-4">
-            <Link
-              href="/character/command-details"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
-              コマンド内訳
-            </Link>
-            <Link
-              href="/character/updates"
-              className="text-sm font-medium text-neutral-700 underline underline-offset-4"
-            >
-              アップデート情報
-            </Link>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <PageLinkCard
+              href={CHARACTER_PAGE_LINKS.commandDetails.href}
+              title={CHARACTER_PAGE_LINKS.commandDetails.label}
+              description="生成されるコマンドの内容を確認できます。"
+            />
+            <PageLinkCard
+              href={CHARACTER_PAGE_LINKS.updates.href}
+              title={CHARACTER_PAGE_LINKS.updates.label}
+              description="公開後の変更内容や過去バージョンの履歴を確認できます。"
+            />
           </div>
 
           <div className="mt-6 space-y-3 text-sm leading-8 text-neutral-800">
@@ -293,12 +305,12 @@ export default function HomePage() {
             <p>
               Googleフォーム →
               <a
-                href="https://forms.gle/76AvTAYyxM5DLQtL8"
+                href={FEEDBACK_FORM_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="ml-2 underline underline-offset-4"
               >
-                https://forms.gle/76AvTAYyxM5DLQtL8
+                {FEEDBACK_FORM_URL}
               </a>
             </p>
           </div>
@@ -306,18 +318,18 @@ export default function HomePage() {
 
         <section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
           <h2 className="mb-3 text-lg font-semibold">💡参考情報</h2>
-          <p className="text-sm leading-8 text-neutral-800">
+          <p className={BODY_TEXT_CLASS}>
             このツールは「LHTRPGのチャットパレットを作るやつ」を参考に作成しています。
           </p>
           <p className="mt-2 text-sm leading-8 text-neutral-800">
             「LHTRPGのチャットパレットを作るやつ」 →
             <a
-              href="http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111"
+              href={REFERENCE_CHAT_PALETTE_URL}
               target="_blank"
               rel="noreferrer"
               className="ml-2 underline underline-offset-4"
             >
-              http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111
+              {REFERENCE_CHAT_PALETTE_URL}
             </a>
           </p>
         </section>
