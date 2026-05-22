@@ -28,8 +28,10 @@ const HOW_TO_IMAGES = {
   skillExample: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-07-SkillExample.png`,
   skillInput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-08-SkillInput.png`,
   outputOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-09-OutPut.png`,
-  xlsxOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-10-XlsxOutput.png`,
-  jsonOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-11-JsonOutput.png`,
+  ccfoliaOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-10-CcfoliaOutPut.png`,
+  xlsxJsonOutputButton: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-11-XlsxJsonOutputButton.png`,
+  xlsxOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-12-XlsxOutput.png`,
+  jsonOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-13-JsonOutput.png`,
 } as const;
 
 const STEP_IMAGE_CLASS =
@@ -199,7 +201,7 @@ const steps: Step[] = [
     ),
     images: [
       {
-        src: HOW_TO_IMAGES.outputOverview,
+        src: HOW_TO_IMAGES.ccfoliaOutput,
         alt: "CCFOLIA用コマンドの出力欄",
       },
     ],
@@ -215,6 +217,10 @@ const steps: Step[] = [
       </>
     ),
     images: [
+      {
+        src: HOW_TO_IMAGES.xlsxJsonOutputButton,
+        alt: "XLSXファイル・JSONファイル出力ボタン",
+      },
       {
         src: HOW_TO_IMAGES.xlsxOutput,
         alt: "XLSXファイル出力例",
