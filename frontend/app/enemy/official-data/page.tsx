@@ -1,7 +1,6 @@
 import StaticPage from "@/components/static-page";
 import type { ReactNode } from "react";
-
-const LHTRPG_DATABASE_URL = "https://lhrpg.com/lhz/database";
+import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
 
 const IMAGE_BASE_PATH = "/enemy/official-data";
 
@@ -68,10 +67,10 @@ function IntroBlock() {
       <div className="space-y-3">
         <p>
           公式データベースである「
-          <TextLink href={LHTRPG_DATABASE_URL}>
+          <TextLink href={EXTERNAL_LINKS.lhzDatabase}>
             ログ・ホライズンTRPG冒険者窓口 -データベース-
           </TextLink>
-          」から取得したエネミーデータを、エネミーデータ作成ツールで読み込むための手順をまとめています。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
+          」から取得したエネミーデータを、{TOOL_CONFIG.enemy.toolLabel}で読み込むための手順をまとめています。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
         </p>
       </div>
     </div>
@@ -80,7 +79,7 @@ function IntroBlock() {
 
 function StepImageFigure({ image }: { image: StepImage }) {
   return (
-    <figure className="mt-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <figure className="mx-auto my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.src}
@@ -142,7 +141,7 @@ function DownloadJsonSteps() {
           ],
           children: (
             <p>
-              <TextLink href={LHTRPG_DATABASE_URL}>
+              <TextLink href={EXTERNAL_LINKS.lhzDatabase}>
                 ログ・ホライズンTRPG冒険者窓口 -データベース-
               </TextLink>
               から、読み込みたいエネミーのページを開きます。
@@ -261,13 +260,13 @@ function UploadJsonSteps() {
           images: [
             {
               src: officialDataImages.importButton,
-              alt: "エネミーデータ作成ツールの入力ファイル読込ボタン",
+              alt: `${TOOL_CONFIG.enemy.toolLabel}の入力ファイル読込ボタン`,
               caption: "エネミー情報入力欄の上部にある［入力ファイル読込］をクリックします。",
             },
           ],
           children: (
             <p>
-              エネミーデータ作成ツールの［エネミー情報］欄で
+              {TOOL_CONFIG.enemy.toolLabel}の［エネミー情報］欄で
               ［入力ファイル読込］をクリックし、編集済みのJSONファイルを開きます。
             </p>
           ),
@@ -297,8 +296,7 @@ export default function EnemyOfficialDataPage() {
     <StaticPage
       current="enemy"
       title="公式データについて"
-      backHref="/enemy"
-      backLabel="エネミーデータ"
+      backHref={TOOL_CONFIG.enemy.href}
       sections={[
         {
           title: "概要",

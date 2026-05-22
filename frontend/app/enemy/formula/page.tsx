@@ -1,8 +1,6 @@
 import StaticPage from "@/components/static-page";
 import type { ReactNode } from "react";
-
-const OFFICIAL_ENEMY_GUIDE_URL =
-  "https://lhrpg.com/data/enemy_data_guide2.html";
+import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
 
 type BaseDataValue = string | number;
 
@@ -456,11 +454,11 @@ function DetailsBlock({
   children: ReactNode;
 }) {
   return (
-    <details className="rounded-md border border-gray-200 bg-white px-4 py-3">
-      <summary className="cursor-pointer select-none font-medium text-gray-900">
+    <details className="rounded-xl border border-neutral-200 bg-white px-5 py-4">
+      <summary className="cursor-pointer select-none font-medium text-neutral-900">
         {title}
       </summary>
-      <div className="mt-4 space-y-3 text-sm leading-7 text-gray-800">
+      <div className="mt-4 space-y-3 text-sm leading-7 text-neutral-800">
         {children}
       </div>
     </details>
@@ -469,7 +467,7 @@ function DetailsBlock({
 
 function FormulaText({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-md bg-gray-50 px-3 py-2 font-mono text-sm text-gray-900">
+    <div className="rounded-lg bg-neutral-50 px-3 py-2 font-mono text-sm text-neutral-900">
       {children}
     </div>
   );
@@ -478,16 +476,16 @@ function FormulaText({ children }: { children: ReactNode }) {
 function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] border-collapse border border-gray-300 text-sm">
+      <table className="w-full min-w-[760px] border-collapse border border-neutral-300 text-sm">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="w-[30%] border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+          <tr className="bg-neutral-100">
+            <th className="w-[30%] border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               項目
             </th>
-            <th className="w-[42%] border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+            <th className="w-[42%] border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               内部キー
             </th>
-            <th className="w-[28%] border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+            <th className="w-[28%] border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               値
             </th>
           </tr>
@@ -495,15 +493,15 @@ function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.keyName} className="bg-white">
-              <td className="border border-gray-300 px-3 py-2 align-top text-gray-900">
+              <td className="border border-neutral-300 px-3 py-2 align-top text-neutral-900">
                 {row.itemName}
               </td>
-              <td className="border border-gray-300 px-3 py-2 align-top">
-                <code className="font-mono text-[13px] text-gray-900">
+              <td className="border border-neutral-300 px-3 py-2 align-top">
+                <code className="font-mono text-[13px] text-neutral-900">
                   {row.keyName}
                 </code>
               </td>
-              <td className="whitespace-nowrap border border-gray-300 px-3 py-2 align-top font-mono text-gray-900">
+              <td className="whitespace-nowrap border border-neutral-300 px-3 py-2 align-top font-mono text-neutral-900">
                 {row.value}
               </td>
             </tr>
@@ -517,16 +515,16 @@ function BaseDataTable({ rows }: { rows: BaseDataRow[] }) {
 function CoreMaterialTable({ rows }: { rows: CoreMaterialRow[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-[360px] border-collapse border border-gray-300 text-sm">
+      <table className="min-w-[360px] border-collapse border border-neutral-300 text-sm">
         <thead>
-          <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+          <tr className="bg-neutral-100">
+            <th className="border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               強度
             </th>
-            <th className="border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+            <th className="border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               コア素材
             </th>
-            <th className="border border-gray-300 px-3 py-2 text-left font-bold text-gray-900">
+            <th className="border border-neutral-300 px-3 py-2 text-left font-bold text-neutral-900">
               魔触媒
             </th>
           </tr>
@@ -534,9 +532,9 @@ function CoreMaterialTable({ rows }: { rows: CoreMaterialRow[] }) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.power} className="bg-white">
-              <td className="border border-gray-300 px-3 py-2">{row.power}</td>
-              <td className="border border-gray-300 px-3 py-2">{row.core}</td>
-              <td className="border border-gray-300 px-3 py-2">
+              <td className="border border-neutral-300 px-3 py-2">{row.power}</td>
+              <td className="border border-neutral-300 px-3 py-2">{row.core}</td>
+              <td className="border border-neutral-300 px-3 py-2">
                 {row.catalyst}
               </td>
             </tr>
@@ -552,12 +550,12 @@ function PageLead() {
     <>
       この計算式は公式（
       <a
-        href={OFFICIAL_ENEMY_GUIDE_URL}
+        href={EXTERNAL_LINKS.enemyDataGuide}
         target="_blank"
         rel="noreferrer"
         className="underline underline-offset-4"
       >
-        {OFFICIAL_ENEMY_GUIDE_URL}
+        {EXTERNAL_LINKS.enemyDataGuide}
       </a>
       ）のJavaScriptから計算式を求めて反映させています。
     </>
@@ -706,8 +704,7 @@ export default function EnemyFormulaPage() {
       current="enemy"
       title="計算式"
       lead={<PageLead />}
-      backHref="/enemy"
-      backLabel="エネミーデータ作成ツールに戻る"
+      backHref={TOOL_CONFIG.enemy.href}
       sections={[
         {
           title: "各タイプの基本データ",

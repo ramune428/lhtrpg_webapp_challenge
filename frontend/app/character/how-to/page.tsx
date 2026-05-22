@@ -1,5 +1,6 @@
-import Link from "next/link";
-import AppNav from "@/components/app-nav";
+import type { ReactNode } from "react";
+import StaticPage from "@/components/static-page";
+import { TOOL_CONFIG } from "@/components/tool-config";
 
 type StepImage = {
   src: string;
@@ -10,9 +11,14 @@ type StepImage = {
 
 type Step = {
   number: string;
-  text: React.ReactNode;
+  text: ReactNode;
   images: StepImage[];
 };
+
+const STEP_IMAGE_CLASS =
+  "h-auto w-full max-w-3xl rounded-xl border border-neutral-200";
+const NARROW_STEP_IMAGE_CLASS =
+  "h-auto w-full max-w-[320px] rounded-xl border border-neutral-200";
 
 const steps: Step[] = [
   {
@@ -98,11 +104,16 @@ const steps: Step[] = [
   },
   {
     number: "6",
-    text: <>キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力する。</>,
+    text: (
+      <>
+        {TOOL_CONFIG.character.toolLabel}
+        にキャラクターURLまたはキャラクターIDを入力する。
+      </>
+    ),
     images: [
       {
         src: "/character/how-to/CharacterHowTo-07-InputCharacterId.png",
-        alt: "キャラ駒作成ツールにキャラクターURLまたはキャラクターIDを入力する画面",
+        alt: `${TOOL_CONFIG.character.toolLabel}にキャラクターURLまたはキャラクターIDを入力する画面`,
       },
     ],
   },
@@ -122,15 +133,15 @@ const steps: Step[] = [
     ],
   },
   {
-  number: "8",
-  text: <>CCFOLIAの盤面に、コピーしたコマンドを貼り付ける。</>,
-  images: [
-    {
-      src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
-      alt: "CCFOLIAにコピーしたコマンドを貼り付ける画面",
-      narrow: true,
-    },
-  ],
+    number: "8",
+    text: <>CCFOLIAの盤面に、コピーしたコマンドを貼り付ける。</>,
+    images: [
+      {
+        src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
+        alt: "CCFOLIAにコピーしたコマンドを貼り付ける画面",
+        narrow: true,
+      },
+    ],
   },
   {
     number: "9",
@@ -156,77 +167,70 @@ const steps: Step[] = [
   },
 ];
 
+function StepImageFigure({
+  image,
+  figureNumber,
+}: {
+  image: StepImage;
+  figureNumber: number;
+}) {
+  return (
+    <figure className="flex flex-col items-center space-y-2">
+      <img
+        src={image.src}
+        alt={image.alt}
+        className={image.narrow ? NARROW_STEP_IMAGE_CLASS : STEP_IMAGE_CLASS}
+      />
+      <figcaption className="max-w-3xl text-center text-sm leading-6 text-neutral-600">
+        図{figureNumber}：{image.caption ?? image.alt}
+      </figcaption>
+    </figure>
+  );
+}
+
+function StepCard({
+  step,
+  stepIndex,
+}: {
+  step: Step;
+  stepIndex: number;
+}) {
+  const figureOffset = steps
+    .slice(0, stepIndex)
+    .reduce((total, currentStep) => total + currentStep.images.length, 0);
+
+  return (
+    <section className="rounded-2xl border border-neutral-300 p-6">
+      <h2 className="mb-4 text-2xl font-semibold">-{step.number}-</h2>
+
+      <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
+
+      <div className="flex flex-wrap justify-center gap-8">
+        {step.images.map((image, imageIndex) => (
+          <StepImageFigure
+            key={image.src}
+            image={image}
+            figureNumber={figureOffset + imageIndex + 1}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function CharacterHowToPage() {
   return (
-    <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
-        <AppNav current="character" />
-
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="text-sm text-neutral-600 underline underline-offset-4"
-          >
-            ← キャラ駒作成ツールに戻る
-          </Link>
-        </div>
-
-        <header className="mb-10">
-          <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            使い方（詳細）
-          </h1>
-          <p className="text-sm leading-8 text-neutral-700">
-            キャラ駒作成ツールでコマンドを生成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。
-          </p>
-        </header>
-
-        <div className="space-y-12">
-          {steps.map((step, stepIndex) => {
-            const figureOffset = steps
-              .slice(0, stepIndex)
-              .reduce((total, currentStep) => total + currentStep.images.length, 0);
-
-            return (
-              <section
-                key={step.number}
-                className="rounded-2xl border border-neutral-300 p-6"
-              >
-                <h2 className="mb-4 text-2xl font-semibold">-{step.number}-</h2>
-
-                <p className="mb-6 text-sm leading-8 text-neutral-800">
-                  {step.text}
-                </p>
-
-                <div className="flex flex-wrap justify-center gap-8">
-                  {step.images.map((image, imageIndex) => {
-                    const figureNumber = figureOffset + imageIndex + 1;
-
-                    return (
-                      <figure
-                        key={image.src}
-                        className="flex flex-col items-center space-y-2"
-                      >
-                        <img
-                          src={image.src}
-                          alt={image.alt}
-                          className={
-                            image.narrow
-                              ? "h-auto w-full max-w-[320px] rounded-xl border border-neutral-200"
-                              : "h-auto w-full max-w-3xl rounded-xl border border-neutral-200"
-                          }
-                        />
-                        <figcaption className="max-w-3xl text-center text-sm leading-6 text-neutral-600">
-                          図{figureNumber}：{image.caption ?? image.alt}
-                        </figcaption>
-                      </figure>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+    <StaticPage
+      current="character"
+      title="使い方（詳細）"
+      lead={`${TOOL_CONFIG.character.toolLabel}でコマンドを生成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}
+      backHref={TOOL_CONFIG.character.href}
+    >
+      <div className="space-y-12">
+        {steps.map((step, stepIndex) => (
+          <StepCard key={step.number} step={step} stepIndex={stepIndex} />
+        ))}
       </div>
-    </main>
+    </StaticPage>
   );
 }
