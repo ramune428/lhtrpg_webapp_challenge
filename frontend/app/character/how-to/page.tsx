@@ -11,6 +11,7 @@ type StepImage = {
 
 type Step = {
   number: string;
+  title: string;
   text: ReactNode;
   images: StepImage[];
 };
@@ -23,6 +24,7 @@ const NARROW_STEP_IMAGE_CLASS =
 const steps: Step[] = [
   {
     number: "1",
+    title: "ログ･ホライズンTRPG冒険者窓口（キャラクターページ）",
     text: (
       <>
         <a
@@ -45,6 +47,7 @@ const steps: Step[] = [
   },
   {
     number: "2",
+    title: "外部ツール参照の許可状態を確認",
     text: (
       <>
         外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
@@ -64,6 +67,7 @@ const steps: Step[] = [
   },
   {
     number: "3",
+    title: "基本情報変更画面を開く",
     text: (
       <>
         外部ツールからのデータ参照が許可されていない場合は、
@@ -79,6 +83,7 @@ const steps: Step[] = [
   },
   {
     number: "4",
+    title: "外部ツール参照を許可する",
     text: (
       <>
         [外部ツールからの〈冒険者〉データ参照を許可する]
@@ -94,6 +99,7 @@ const steps: Step[] = [
   },
   {
     number: "5",
+    title: "キャラクターURLまたはIDをコピーする",
     text: <>キャラクターページのURL、またはURL末尾のIDをコピーする。</>,
     images: [
       {
@@ -104,6 +110,7 @@ const steps: Step[] = [
   },
   {
     number: "6",
+    title: "ツールにURLまたはIDを入力する",
     text: (
       <>
         {TOOL_CONFIG.character.toolLabel}
@@ -119,6 +126,7 @@ const steps: Step[] = [
   },
   {
     number: "7",
+    title: "コマンドを生成してコピーする",
     text: (
       <>
         [コマンドを生成する] をクリックする。
@@ -134,6 +142,7 @@ const steps: Step[] = [
   },
   {
     number: "8",
+    title: "CCFOLIAにコマンドを貼り付ける",
     text: <>CCFOLIAの盤面に、コピーしたコマンドを貼り付ける。</>,
     images: [
       {
@@ -145,6 +154,7 @@ const steps: Step[] = [
   },
   {
     number: "9",
+    title: "キャラクター駒の作成を確認する",
     text: <>キャラクター駒が作成されたことを確認する。</>,
     images: [
       {
@@ -156,6 +166,7 @@ const steps: Step[] = [
   },
   {
     number: "10",
+    title: "必要に応じて立ち絵を変更する",
     text: <>必要に応じて、作成された駒の立ち絵を変更する。</>,
     images: [
       {
@@ -201,7 +212,10 @@ function StepCard({
 
   return (
     <section className="rounded-2xl border border-neutral-300 p-6">
-      <h2 className="mb-4 text-2xl font-semibold">-{step.number}-</h2>
+      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="text-2xl font-semibold">-{step.number}-</h2>
+        <h3 className="text-lg font-semibold text-neutral-900">{step.title}</h3>
+      </div>
 
       <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
 
