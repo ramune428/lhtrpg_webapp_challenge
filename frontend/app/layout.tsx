@@ -12,10 +12,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteName = "LHTRPG Tools";
+const siteUrl = "https://lhtrpg-tools.com";
+const siteDescription =
+  "ログ・ホライズンTRPG（LHTRPG）向けに、キャラクター駒作成やエネミーデータ/駒作成を支援するCCFOLIA用Webツールです。";
+
 export const metadata: Metadata = {
-  title: "LHTRPG 駒作成ツール",
-  description:
-    "ログ・ホライズンTRPG向けのCCFOLIA駒作成ツールです。",
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
+  title: {
+    default: `${siteName} | CCFOLIA用支援ツール`,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  keywords: [
+    "LHTRPG",
+    "ログ・ホライズンTRPG",
+    "CCFOLIA",
+    "ココフォリア",
+    "駒作成",
+    "エネミーデータ",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: `${siteName} | CCFOLIA用支援ツール`,
+    description: siteDescription,
+    url: siteUrl,
+    siteName,
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: `${siteName} | CCFOLIA用支援ツール`,
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({
