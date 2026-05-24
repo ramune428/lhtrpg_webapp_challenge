@@ -323,10 +323,21 @@ function buildCurrentFormData(
 
   return {
     ...form,
-    skills: skills.map(({ id, ...skill }) => skill),
-    items: items.map(({ id, ...item }) => ({
-      ...item,
+    skills: skills.map((skill) => ({
+      name: skill.name,
+      tags: skill.tags,
+      timing: skill.timing,
+      roleAttack: skill.roleAttack,
+      roleDefense: skill.roleDefense,
+      target: skill.target,
+      range: skill.range,
+      limit: skill.limit,
+      effect: skill.effect,
+    })),
+    items: items.map((item) => ({
       dice: formatDropDiceForOutput(item.dice, maxDropDice),
+      name: item.name,
+      description: item.description,
     })),
   };
 }

@@ -385,8 +385,8 @@ function StepImageFigure({
 
   return (
     <figure className={figureClassName}>
-      <img src={image.src} alt={image.alt} className={imageClassName} />
-      <figcaption className={captionClassName}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image.src} alt={image.alt} className={imageClassName} />      <figcaption className={captionClassName}>
         図{figureNumber}：{image.caption ?? image.alt}
       </figcaption>
     </figure>

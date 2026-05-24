@@ -187,6 +187,7 @@ function StepImageFigure({
 }) {
   return (
     <figure className="flex flex-col items-center space-y-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={image.src}
         alt={image.alt}

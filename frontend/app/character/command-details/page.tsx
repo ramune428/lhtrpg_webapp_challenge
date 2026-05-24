@@ -83,6 +83,7 @@ const skillTimingOrder = [
 function CommandImage({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="mt-6 flex justify-center">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} className={`${IMAGE_CLASS} max-w-[720px]`} />
     </div>
   );
@@ -290,6 +291,7 @@ function ChatPaletteDetails() {
       <h3 className="mb-4 text-2xl font-bold">チャットパレット</h3>
 
       <div className="mb-8 flex justify-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/character/command-details/CharacterCommandDetails-04-ChatPalette.png"
           alt="CCFOLIAのキャラクター編集画面のチャットパレット"
