@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import StaticPage from "@/components/static-page";
-import { TOOL_CONFIG } from "@/components/tool-config";
+import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
 
 type StepImage = {
   src: string;
@@ -213,9 +213,11 @@ function StepCard({
 
   return (
     <section className="rounded-2xl border border-neutral-300 p-6">
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="text-2xl font-semibold">-{step.number}-</h2>
-        <h3 className="text-lg font-semibold text-neutral-900">{step.title}</h3>
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="text-2xl font-semibold">-{step.number}-</span>
+        <h2 className="text-2xl font-semibold">
+          {step.title}
+        </h2>
       </div>
 
       <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
@@ -223,7 +225,7 @@ function StepCard({
       <div className="flex flex-wrap justify-center gap-8">
         {step.images.map((image, imageIndex) => (
           <StepImageFigure
-            key={image.src}
+            key={`${step.number}-${image.src}-${imageIndex}`}
             image={image}
             figureNumber={figureOffset + imageIndex + 1}
           />
@@ -238,14 +240,33 @@ export default function CharacterHowToPage() {
     <StaticPage
       current="character"
       title="使い方（詳細）"
-      lead={`${TOOL_CONFIG.character.toolLabel}でコマンドを生成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}
+      /*lead={`${TOOL_CONFIG.character.toolLabel}でコマンドを生成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}*/
       backHref={TOOL_CONFIG.character.href}
     >
-      <div className="space-y-12">
-        {steps.map((step, stepIndex) => (
-          <StepCard key={step.number} step={step} stepIndex={stepIndex} />
-        ))}
-      </div>
+      <section>
+        <div className="mb-10 space-y-4">
+          <p className="text-sm leading-8 text-neutral-800">
+            「
+              <a
+                href={EXTERNAL_LINKS.lhzTop}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4"
+              >
+                ログ・ホライズンTRPG冒険者窓口
+              </a>
+            」
+            に登録されたキャラクターデータを利用して、
+            CCFOLIA用のキャラクター駒を作成するためのコマンドを生成する手順を画像付きで説明します。
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {steps.map((step, stepIndex) => (
+            <StepCard key={step.number} step={step} stepIndex={stepIndex} />
+          ))}
+        </div>
+      </section>
     </StaticPage>
   );
 }

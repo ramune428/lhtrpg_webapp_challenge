@@ -1,6 +1,9 @@
+import Link from "next/link";
 import StaticPage from "@/components/static-page";
 import type { ReactNode } from "react";
-import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
+import { EXTERNAL_LINKS, TOOL_CONFIG,  } from "@/components/tool-config";
+
+const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 
 type BaseDataValue = string | number;
 
@@ -545,23 +548,6 @@ function CoreMaterialTable({ rows }: { rows: CoreMaterialRow[] }) {
   );
 }
 
-function PageLead() {
-  return (
-    <>
-      この計算式は公式（
-      <a
-        href={EXTERNAL_LINKS.enemyDataGuide}
-        target="_blank"
-        rel="noreferrer"
-        className="underline underline-offset-4"
-      >
-        {EXTERNAL_LINKS.enemyDataGuide}
-      </a>
-      ）のJavaScriptから計算式を求めて反映させています。
-    </>
-  );
-}
-
 function BaseDataSection() {
   return (
     <div className="space-y-3">
@@ -703,9 +689,29 @@ export default function EnemyFormulaPage() {
     <StaticPage
       current="enemy"
       title="計算式"
-      lead={<PageLead />}
       backHref={TOOL_CONFIG.enemy.href}
       sections={[
+        {
+          title: "概要",
+          hideTitle: true,
+          paragraphs: [
+            <p key="formula-lead" className={BODY_TEXT_CLASS}>
+              {TOOL_CONFIG.enemy.toolLabel} で使用している計算式をまとめています。
+              CR、ランク、タイプの係数や能力値、識別難易度、特技例などがどのように算出されるかを確認できます。
+              <br />
+              この計算式は公式の
+              <Link
+                href={EXTERNAL_LINKS.enemyDataGuide}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4"
+              >
+                「ログ・ホライズンTRPGエネミーデータガイド（高CR対応拡張版）」
+              </Link>
+              のJavaScriptから計算式を求めて反映させています。
+            </p>,
+          ],
+        },
         {
           title: "各タイプの基本データ",
           paragraphs: [<BaseDataSection key="base-data" />],
