@@ -12,10 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteName = "LHTRPG Tools";
+const siteName = "-LHTRPG- キャラ駒作成ツール（CCFOLIA）";
 const siteUrl = "https://lhtrpg-tools.com";
 const siteDescription =
-  "ログ・ホライズンTRPG（LHTRPG）向けに、キャラクター駒作成やエネミーデータ/駒作成を支援するCCFOLIA用Webツールです。";
+  "ログ・ホライズンTRPG（LHTRPG）向けに、CCFOLIA用のキャラクター駒作成やエネミーデータ/駒作成を支援するWebツールです。";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
