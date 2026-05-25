@@ -9,7 +9,7 @@ type VersionItem = {
 
 const currentVersion: VersionItem = {
   version: "ver 2.0",
-  date: "2026/06",
+  date: "2026/05",
   notes: [
     "Webアプリ版として再構成",
     `「${TOOL_CONFIG.enemy.toolLabel}」を公開`,
