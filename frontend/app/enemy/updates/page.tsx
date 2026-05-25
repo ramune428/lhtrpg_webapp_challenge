@@ -70,9 +70,18 @@ export default function EnemyUpdatesPage() {
     <StaticPage
       current="enemy"
       title="アップデート情報"
-      lead={`${TOOL_CONFIG.enemy.toolLabel}の更新履歴をまとめています。`}
+      /*lead={`${TOOL_CONFIG.enemy.toolLabel}の更新履歴をまとめています。`}*/
       backHref={TOOL_CONFIG.enemy.href}
     >
+      <section>
+          <div className="mb-10 space-y-4">
+            <p className="text-sm leading-8 text-neutral-800">
+              {TOOL_CONFIG.enemy.toolLabel}の更新内容をまとめています。
+              機能追加、表示内容の調整、不具合修正など、これまでの変更履歴を確認できます。
+            </p>
+          </div>
+      </section>
+      
       <section>
         <h2 className="mb-4 text-2xl font-bold">最新バージョン</h2>
         <VersionCard item={currentVersion} />

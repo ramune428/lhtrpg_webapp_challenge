@@ -407,9 +407,11 @@ function StepCard({
 
   return (
     <section className="rounded-2xl border border-neutral-300 p-6">
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="mb-3 text-2xl font-semibold">-{step.number}-</h2>
-        <h3 className="mb-4 text-lg font-semibold text-neutral-900">{step.title}</h3>
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="text-2xl font-semibold">-{step.number}-</span>
+        <h2 className="text-2xl font-semibold">
+          {step.title}
+        </h2>
       </div>
 
       <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
@@ -432,14 +434,21 @@ export default function EnemyHowToPage() {
     <StaticPage
       current="enemy"
       title="使い方（詳細）"
-      lead={`${TOOL_CONFIG.enemy.toolLabel}でエネミーデータを作成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}
       backHref={TOOL_CONFIG.enemy.href}
     >
-      <div className="space-y-12">
-        {steps.map((step, stepIndex) => (
-          <StepCard key={step.number} step={step} stepIndex={stepIndex} />
-        ))}
-      </div>
+      <section>
+        <div className="mb-10 space-y-4">
+          <p className="text-sm leading-8 text-neutral-800">
+            {TOOL_CONFIG.enemy.toolLabel}でエネミーデータの作成やCCFOLIA用のキャラクター駒を作成するコマンドを生成するための手順を画像付きで説明します。
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {steps.map((step, stepIndex) => (
+            <StepCard key={step.number} step={step} stepIndex={stepIndex} />
+          ))}
+        </div>
+      </section>
     </StaticPage>
   );
 }

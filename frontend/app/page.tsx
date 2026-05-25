@@ -112,9 +112,10 @@ export default function HomePage() {
             {TOOL_TITLES.character}
           </h1>
 
-          <p className={BODY_TEXT_CLASS}>
-            この{TOOL_CONFIG.character.toolLabel}は
-            「
+          <p className={`${BODY_TEXT_CLASS} mb-4`}>
+            {TOOL_TITLES.character} は、ログ・ホライズンTRPG（LHTRPG）向けの支援ツールです。
+            <br/>
+            このツールは「
             <a
               href={EXTERNAL_LINKS.lhzTop}
               target="_blank"
@@ -124,7 +125,8 @@ export default function HomePage() {
               ログ・ホライズンTRPG冒険者窓口
             </a>
             」
-            より提供されているJSONデータを利用しています。
+            より提供されているJSONデータを利用し、
+            登録されたキャラクターデータからCCFOLIA用のキャラクター駒を作成するためのコマンドを生成できます。
           </p>
         </header>
 
@@ -171,15 +173,15 @@ export default function HomePage() {
             <p>
               2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
               <br />
-              許可されていない場合は、&lt;基本情報を変更する&gt;を開き、
+              ※ 許可されていない場合は、&lt;基本情報を変更する&gt;を開き、
               「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックを入れる。
             </p>
             <p>
-              3. キャラクターページのURLまたはキャラクターIDを入力する。
+              3. キャラクターページのURLまたはキャラクターIDを下部の「キャラクター駒作成ツール」に入力する。
               <br />
               （例： https://lhrpg.com/lhz/pc?id=xxxxxx または xxxxxx）
             </p>
-            <p>4. 下記 [コマンドを生成する] をクリック。</p>
+            <p>4. [コマンドを生成する] をクリック。</p>
             <p>5. [コピー] をクリックしてコマンドをコピーする。</p>
             <p>6. CCFOLIAに貼り付ける。</p>
           </div>
@@ -279,10 +281,15 @@ export default function HomePage() {
           <h2 className="mb-4 text-2xl font-semibold">お知らせ</h2>
 
           <div className="space-y-3 text-sm leading-8 text-neutral-800">
-            <p>コマンド内訳やアップデート情報はこちら</p>
+            <p>使い方、コマンド内訳、アップデート情報はこちら</p>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <PageLinkCard
+              href={CHARACTER_PAGE_LINKS.howTo.href}
+              title={CHARACTER_PAGE_LINKS.howTo.label}
+              description="キャラクター駒を作成するまでの手順の詳細（画像付き）を確認できます。"
+            />
             <PageLinkCard
               href={CHARACTER_PAGE_LINKS.commandDetails.href}
               title={CHARACTER_PAGE_LINKS.commandDetails.label}
@@ -315,7 +322,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
+        {/*<section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
           <h2 className="mb-3 text-lg font-semibold">💡参考情報</h2>
           <p className={BODY_TEXT_CLASS}>
             このツールは「LHTRPGのチャットパレットを作るやつ」を参考に作成しています。
@@ -331,7 +338,7 @@ export default function HomePage() {
               {EXTERNAL_LINKS.referenceChatPalette}
             </a>
           </p>
-        </section>
+        </section>*/}
       </div>
     </main>
   );

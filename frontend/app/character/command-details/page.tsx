@@ -342,10 +342,8 @@ export default function CharacterCommandDetailsPage() {
       <section>
         <div className="mb-10 space-y-4">
           <p className={BODY_TEXT_CLASS}>
-            ログ・ホライズンTRPG冒険者窓口に登録されたキャラクターデータをもとに、
-            CCFOLIAに貼り付けるためのコマンドを作成します。
-            <br />
-            ※ パーソナルファクターと画像は、コマンド作成の参照対象に含まれません。
+            キャラクター駒作成時に出力されるCCFOLIA用コマンドの内訳を確認できます。
+            ステータス、パラメータ、チャットパレットなど、項目ごとの内容を説明します。
           </p>
         </div>
 
