@@ -9,7 +9,7 @@ type VersionItem = {
 
 const currentVersion: VersionItem = {
   version: "ver 3.0",
-  date: "2026/06",
+  date: "2026/05",
   notes: [
     "Webアプリ版として再構成",
     `「${TOOL_CONFIG.character.toolLabel}」を公開`,
