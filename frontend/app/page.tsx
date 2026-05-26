@@ -305,19 +305,14 @@ export default function HomePage() {
           <div className="mt-6 space-y-3 text-sm leading-8 text-neutral-800">
             <p>
               「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
-              下記Googleフォームにてご連絡ください。
+              下記お問い合わせフォームにてご連絡ください。
               ご意見・ご要望をお送りいただけますと、今後の改善や機能追加の参考にさせていただきます。
             </p>
             <p>
-              Googleフォーム →
-              <a
-                href={EXTERNAL_LINKS.feedbackForm}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-2 underline underline-offset-4"
-              >
-                {EXTERNAL_LINKS.feedbackForm}
-              </a>
+              お問い合わせフォーム →{" "}
+              <Link href="/contact" className={BODY_LINK_CLASS}>
+                こちら
+              </Link>
             </p>
           </div>
         </section>
