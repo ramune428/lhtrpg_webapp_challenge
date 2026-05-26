@@ -114,5 +114,6 @@ export const EXTERNAL_LINKS = {
   lhzDatabase: "https://lhrpg.com/lhz/database",
   enemyDataGuide: "https://lhrpg.com/data/enemy_data_guide2.html",
   referenceChatPalette: "http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111",
-  feedbackForm: "https://forms.gle/76AvTAYyxM5DLQtL8",
+  feedbackForm: "https://forms.gle/96dgnY3rsvDxAKbM9",
+  
 } as const;
