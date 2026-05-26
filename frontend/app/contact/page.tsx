@@ -5,8 +5,6 @@ import { EXTERNAL_LINKS, TOOL_CONFIG, TOOL_TITLES } from "@/components/tool-conf
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 const BODY_LINK_CLASS =
   "font-medium text-neutral-900 underline underline-offset-4";
-const BUTTON_LINK_CLASS =
-  "inline-flex rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50";
 
 const contactItems = [
   {
@@ -138,14 +136,29 @@ export default function ContactPage() {
           下記のフォームから、使い方の質問、不具合報告、機能要望などを送信できます。
         </p>
 
-        <a
-          href={EXTERNAL_LINKS.feedbackForm}
-          target="_blank"
-          rel="noreferrer"
-          className={BUTTON_LINK_CLASS}
-        >
-          お問い合わせフォームを開く
-        </a>
+        <div className="overflow-hidden rounded-xl border border-neutral-200">
+          <iframe
+            src={EXTERNAL_LINKS.feedbackForm}
+            title="お問い合わせフォーム"
+            className="h-[900px] w-full border-0"
+            loading="lazy"
+          >
+            読み込んでいます...
+          </iframe>
+        </div>
+
+        <p className="mt-4 text-sm leading-8 text-neutral-700">
+          フォームが表示されない場合は{" "}
+          <a
+            href={EXTERNAL_LINKS.feedbackForm}
+            target="_blank"
+            rel="noreferrer"
+            className={BODY_LINK_CLASS}
+          >
+            こちら
+          </a>
+          から開いてください。
+        </p>
       </section>
 
       <section className="rounded-2xl border border-neutral-300 p-6">
