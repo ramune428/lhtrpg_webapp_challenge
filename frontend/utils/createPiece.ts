@@ -791,14 +791,14 @@ function createSkillSection(
       currentTiming = entry.timing;
     }
 
-    lines.push(`特技名：${entry.skillName}`);
+    lines.push(entry.skillName);
 
     if (options.includeSkillDescriptions && entry.description) {
-      lines.push(`説明：${entry.description}`);
+      lines.push(entry.description);
     }
 
     for (const command of entry.commands) {
-      lines.push(`特技コマンド：${command}`);
+      lines.push(command);
     }
 
     lines.push("");
