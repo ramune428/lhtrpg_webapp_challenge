@@ -22,10 +22,15 @@ type EquipmentData = {
   hand2: AnyRecord | null;
 };
 
+type SkillChatPaletteEntry = {
+  timing: string;
+  skillName: string;
+  description: string;
+  commands: string[];
+};
+
 type SkillChatPaletteData = {
-  skillNames: string;
-  skillDescriptions: string;
-  skillCommands: string;
+  entries: SkillChatPaletteEntry[];
   basicActions: string;
 };
 
@@ -316,17 +321,28 @@ function groupTiming(skillsArray: AnyRecord[]): Record<string, AnyRecord[]> {
 }
 
 function formatSkillName(skill: AnyRecord): string {
-  const tags = asArray(skill.tags).map((tag) => `[${asString(tag)}]`).join(" ");
-
-  return (
-    `《${asString(skill.name)}》 ${tags} SR:${asString(skill.skill_rank)}/${asString(skill.skill_max_rank)} ` +
-    `タイミング:${asString(skill.timing)} 判定:${asString(skill.roll)} 対象:${asString(skill.target)} ` +
-    `射程:${asString(skill.range)} コスト:${asString(skill.cost)} 制限:${asString(skill.limit)}`
-  ).replace(/\s+/g, " ");
+  return `《${asString(skill.name)}》`;
 }
 
 function formatSkillDescription(skill: AnyRecord): string {
-  return `《${asString(skill.name)}》 効果:${asString(skill.function)}`;
+  const tags = asArray(skill.tags)
+    .map((tag) => `[${asString(tag)}]`)
+    .join(" ");
+  const baseText = [
+    `SR:${asString(skill.skill_rank)}/${asString(skill.skill_max_rank)}`,
+    `タイミング:${asString(skill.timing)}`,
+    `判定:${asString(skill.roll)}`,
+    `対象:${asString(skill.target)}`,
+    `射程:${asString(skill.range)}`,
+    `コスト:${asString(skill.cost)}`,
+    `制限:${asString(skill.limit)}`,
+    tags,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const effectText = asString(skill.function);
+
+  return effectText ? `${baseText} 効果:${effectText}` : baseText;
 }
 
 function getValueByCharacterRank(characterRank: number, values: CrValues): number {
@@ -631,28 +647,21 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
     .filter((skill): skill is AnyRecord => skill !== null);
   const skillTimingData = groupTiming(skills);
   const characterRank = asNumber(jsonData.character_rank);
-  const skillNameLines: string[] = [];
-  const skillDescriptionLines: string[] = [];
-  const skillCommandLines: string[] = [];
+  const entries: SkillChatPaletteEntry[] = [];
 
   for (const timing of Object.keys(skillTimingData)) {
-    skillNameLines.push(`● ${timing}`);
-    skillDescriptionLines.push(`● ${timing}`);
-
     for (const skill of skillTimingData[timing]) {
-      skillNameLines.push(formatSkillName(skill));
-      skillDescriptionLines.push(formatSkillDescription(skill));
-      skillCommandLines.push(...buildSkillCommandLines(skill, hand1, hand2, characterRank));
+      entries.push({
+        timing,
+        skillName: formatSkillName(skill),
+        description: formatSkillDescription(skill),
+        commands: buildSkillCommandLines(skill, hand1, hand2, characterRank),
+      });
     }
-
-    skillNameLines.push("");
-    skillDescriptionLines.push("");
   }
 
   return {
-    skillNames: skillNameLines.join("\n").trim(),
-    skillDescriptions: skillDescriptionLines.join("\n").trim(),
-    skillCommands: skillCommandLines.join("\n").trim(),
+    entries,
     basicActions: createBasicActions(),
   };
 }
@@ -766,6 +775,38 @@ function createDamageCalculator(): string {
   ].join("\n");
 }
 
+function createSkillSection(
+  skillData: SkillChatPaletteData,
+  options: ChatPaletteOptions
+): string {
+  const lines: string[] = [];
+  let currentTiming = "";
+
+  for (const entry of skillData.entries) {
+    if (entry.timing !== currentTiming) {
+      if (lines.length > 0) {
+        lines.push("");
+      }
+      lines.push(`● ${entry.timing}`);
+      currentTiming = entry.timing;
+    }
+
+    lines.push(`特技名：${entry.skillName}`);
+
+    if (options.includeSkillDescriptions && entry.description) {
+      lines.push(`説明：${entry.description}`);
+    }
+
+    for (const command of entry.commands) {
+      lines.push(`特技コマンド：${command}`);
+    }
+
+    lines.push("");
+  }
+
+  return buildSection("○特技", lines.join("\n"));
+}
+
 function createEquipmentEffects(equipmentData: string[]): string {
   return buildSection("○装備アイテム効果", equipmentData.join("\n"));
 }
@@ -812,13 +853,7 @@ function createChatPalette(
     sections.push(createDamageCalculator());
   }
 
-  sections.push(buildSection("○特技名", skillData.skillNames));
-
-  if (outputOptions.includeSkillDescriptions) {
-    sections.push(buildSection("○特技の説明", skillData.skillDescriptions));
-  }
-
-  sections.push(buildSection("○特技コマンド", skillData.skillCommands));
+  sections.push(createSkillSection(skillData, outputOptions));
 
   if (outputOptions.includeBasicActions) {
     sections.push(buildSection("○基本動作", skillData.basicActions));
