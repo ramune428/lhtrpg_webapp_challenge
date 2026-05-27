@@ -11,7 +11,13 @@ import {
   TOOL_CONFIG,
   TOOL_TITLES,
 } from "@/components/tool-config";
-import { createPiece } from "@/utils/createPiece";
+import {
+  createPieceFromJson,
+  defaultChatPaletteOptions,
+  fetchCharacterJson,
+  normalizeCharacterId,
+  type ChatPaletteOptions,
+} from "@/utils/createPiece";
 
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 const BODY_LINK_CLASS =
@@ -19,25 +25,37 @@ const BODY_LINK_CLASS =
 const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
-function extractCharacterId(input: string): string {
-  const trimmed = input.trim();
+type OutputOptionItem = {
+  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands";
+  label: string;
+  alwaysOn?: boolean;
+};
 
-  if (!trimmed) {
-    return "";
-  }
+const outputOptionItems: OutputOptionItem[] = [
+  { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
+  { key: "includeDamageCalculator", label: "被ダメージ計算用" },
+  { key: "skillNames", label: "特技名", alwaysOn: true },
+  { key: "includeSkillDescriptions", label: "特技の説明" },
+  { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
+  { key: "includeBasicActions", label: "基本動作" },
+  { key: "includeEquipmentEffects", label: "装備アイテム効果" },
+  { key: "includeItemList", label: "所持アイテム一覧" },
+  { key: "includeAbilityChecks", label: "各種判定" },
+  { key: "includeConsumeTables", label: "消耗表" },
+  { key: "includeTreasureTables", label: "財宝表" },
+];
 
-  try {
-    const url = new URL(trimmed);
-    const idFromQuery = url.searchParams.get("id");
-    if (idFromQuery) {
-      return idFromQuery;
-    }
-
-    const segments = url.pathname.split("/").filter(Boolean);
-    return segments[segments.length - 1] ?? "";
-  } catch {
-    return trimmed;
-  }
+function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
+  return {
+    includeDamageCalculator: checked,
+    includeSkillDescriptions: checked,
+    includeBasicActions: checked,
+    includeEquipmentEffects: checked,
+    includeItemList: checked,
+    includeAbilityChecks: checked,
+    includeConsumeTables: checked,
+    includeTreasureTables: checked,
+  };
 }
 
 export default function HomePage() {
@@ -45,9 +63,47 @@ export default function HomePage() {
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [options, setOptions] = useState<ChatPaletteOptions>(defaultChatPaletteOptions);
+  const [lastJsonData, setLastJsonData] = useState<unknown | null>(null);
+  const [lastCharacterId, setLastCharacterId] = useState("");
+
+  const refreshPreview = (
+    nextOptions: ChatPaletteOptions,
+    jsonData: unknown | null = lastJsonData,
+    characterId: string = lastCharacterId
+  ) => {
+    if (!jsonData || !characterId) {
+      return;
+    }
+
+    try {
+      const nextResult = createPieceFromJson(jsonData, characterId, nextOptions);
+      setResult(nextResult);
+      setStatusMessage("プレビューを更新しました。");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("プレビューの更新に失敗しました。");
+    }
+  };
+
+  const updateOption = (key: keyof ChatPaletteOptions, checked: boolean) => {
+    const nextOptions = {
+      ...options,
+      [key]: checked,
+    };
+
+    setOptions(nextOptions);
+    refreshPreview(nextOptions);
+  };
+
+  const handleSetAllOptionalOptions = (checked: boolean) => {
+    const nextOptions = createAllOptionalOptions(checked);
+    setOptions(nextOptions);
+    refreshPreview(nextOptions);
+  };
 
   const handleGenerate = async () => {
-    const characterId = extractCharacterId(inputValue);
+    const characterId = normalizeCharacterId(inputValue);
 
     if (!characterId) {
       setStatusMessage("キャラクターURLまたはIDを入力してください。");
@@ -58,14 +114,22 @@ export default function HomePage() {
     setStatusMessage("コマンドを生成中です...");
 
     try {
-      const generated = await createPiece(characterId);
+      const jsonData = await fetchCharacterJson(characterId);
+      const generated = createPieceFromJson(jsonData, characterId, options);
+
       setResult(String(generated ?? ""));
+      setLastJsonData(jsonData);
+      setLastCharacterId(characterId);
       setStatusMessage("コマンドの生成が完了しました。");
     } catch (error) {
       console.error(error);
       setResult("");
+      setLastJsonData(null);
+      setLastCharacterId("");
       setStatusMessage(
-        "コマンドの生成に失敗しました。入力内容を確認してください。"
+        error instanceof Error
+          ? error.message
+          : "コマンドの生成に失敗しました。入力内容を確認してください。"
       );
     } finally {
       setIsLoading(false);
@@ -76,6 +140,8 @@ export default function HomePage() {
     setInputValue("");
     setResult("");
     setStatusMessage("");
+    setLastJsonData(null);
+    setLastCharacterId("");
   };
 
   const handleCopy = async () => {
@@ -114,7 +180,7 @@ export default function HomePage() {
 
           <p className={`${BODY_TEXT_CLASS} mb-4`}>
             {TOOL_TITLES.character} は、ログ・ホライズンTRPG（LHTRPG）向けの支援ツールです。
-            <br/>
+            <br />
             このツールは「
             <a
               href={EXTERNAL_LINKS.lhzTop}
@@ -124,32 +190,19 @@ export default function HomePage() {
             >
               ログ・ホライズンTRPG冒険者窓口
             </a>
-            」
-            より提供されているJSONデータを利用し、
-            登録されたキャラクターデータからCCFOLIA用のキャラクター駒を作成するためのコマンドを生成できます。
+            」より提供されているJSONデータを利用し、登録されたキャラクターデータからCCFOLIA用のキャラクター駒を作成するためのコマンドを生成できます。
           </p>
         </header>
 
         <section className="mb-8 rounded-2xl border border-amber-300 bg-amber-50 p-5">
           <h2 className="mb-3 text-lg font-semibold">💡【重要なお知らせ】</h2>
           <p className={BODY_TEXT_CLASS}>
-            「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックがついていても、
-            JSONデータを取得できず、エラーが発生する場合があります。
+            「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックがついていても、JSONデータを取得できず、エラーが発生する場合があります。
             一度チェックを外して、「外部ツールからの&lt;冒険者&gt;データ参照を許可する」を更新してください。
             <br />
             ※ 古いキャラクターはエラーになる傾向があります。
           </p>
         </section>
-
-        {/*
-        <section className="mb-8">
-          <p className="text-sm font-semibold leading-8 text-neutral-900">
-            このページは検索エンジンに表示されない
-            （または、現在一時的に表示されている）ので、
-            ブックマークやショートカットを作成するなどしてください。
-          </p>
-        </section>
-        */}
 
         <section className="mb-10 rounded-2xl border border-neutral-300 p-5">
           <p className={BODY_TEXT_CLASS}>
@@ -173,8 +226,7 @@ export default function HomePage() {
             <p>
               2. 外部ツールからの〈冒険者〉データ参照が許可されているか確認する。
               <br />
-              ※ 許可されていない場合は、&lt;基本情報を変更する&gt;を開き、
-              「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックを入れる。
+              ※ 許可されていない場合は、&lt;基本情報を変更する&gt;を開き、「外部ツールからの&lt;冒険者&gt;データ参照を許可する」にチェックを入れる。
             </p>
             <p>
               3. キャラクターページのURLまたはキャラクターIDを下部の「キャラクター駒作成ツール」に入力する。
@@ -182,8 +234,8 @@ export default function HomePage() {
               （例： https://lhrpg.com/lhz/pc?id=xxxxxx または xxxxxx）
             </p>
             <p>4. [コマンドを生成する] をクリック。</p>
-            <p>5. [コピー] をクリックしてコマンドをコピーする。</p>
-            <p>6. CCFOLIAに貼り付ける。</p>
+            <p>5. 必要に応じて出力オプションを変更し、プレビューを確認する。</p>
+            <p>6. [コピー] をクリックしてコマンドをコピーし、CCFOLIAに貼り付ける。</p>
           </div>
 
           <div className="mt-5">
@@ -225,10 +277,6 @@ export default function HomePage() {
             />
           </div>
 
-          {/* <p className="mb-5 text-sm leading-7 text-neutral-600">
-            キャラクターURLまたはキャラクターIDを入力してください。
-          </p> */}
-
           <div className="mb-6 flex flex-wrap gap-3">
             <button
               type="button"
@@ -258,13 +306,72 @@ export default function HomePage() {
             </button>
           </div>
 
+          <section className="mb-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold">チャットパレット出力オプション</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSetAllOptionalOptions(true)}
+                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
+                >
+                  任意項目をすべてON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSetAllOptionalOptions(false)}
+                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
+                >
+                  任意項目をすべてOFF
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-2">
+              {outputOptionItems.map((item) => {
+                const checked = item.alwaysOn
+                  ? true
+                  : options[item.key as keyof ChatPaletteOptions];
+
+                return (
+                  <label
+                    key={item.key}
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                      item.alwaysOn
+                        ? "border-neutral-200 bg-neutral-100 text-neutral-500"
+                        : "border-neutral-300 bg-white text-neutral-800"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={item.alwaysOn}
+                        onChange={(event) => {
+                          if (!item.alwaysOn) {
+                            updateOption(
+                              item.key as keyof ChatPaletteOptions,
+                              event.target.checked
+                            );
+                          }
+                        }}
+                      />
+                      {item.label}
+                    </span>
+                    {item.alwaysOn && <span className="text-xs">常に出力</span>}
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
           <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
             {statusMessage}
           </p>
 
           <div className="mb-2 flex items-center justify-between gap-3">
             <label htmlFor="result-area" className="block text-lg font-semibold">
-              CCFOLIA用 キャラクター駒作成コマンド
+              CCFOLIA用 キャラクター駒作成コマンド / プレビュー
             </label>
           </div>
 
@@ -273,7 +380,7 @@ export default function HomePage() {
             value={result}
             readOnly
             placeholder="ここに生成されたコマンドが表示されます"
-            className="min-h-[320px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
+            className="min-h-[360px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
           />
         </section>
 
@@ -304,8 +411,7 @@ export default function HomePage() {
 
           <div className="mt-6 space-y-3 text-sm leading-8 text-neutral-800">
             <p>
-              「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、
-              下記Googleフォームにてご連絡ください。
+              「コマンドが表示されない」、「CCFOLIAに貼り付けできない」などのエラーが発生した場合は、下記Googleフォームにてご連絡ください。
               ご意見・ご要望をお送りいただけますと、今後の改善や機能追加の参考にさせていただきます。
             </p>
             <p>
@@ -321,24 +427,6 @@ export default function HomePage() {
             </p>
           </div>
         </section>
-
-        {/*<section className="mb-8 rounded-2xl border border-sky-300 bg-sky-50 p-5">
-          <h2 className="mb-3 text-lg font-semibold">💡参考情報</h2>
-          <p className={BODY_TEXT_CLASS}>
-            このツールは「LHTRPGのチャットパレットを作るやつ」を参考に作成しています。
-          </p>
-          <p className="mt-2 text-sm leading-8 text-neutral-800">
-            「LHTRPGのチャットパレットを作るやつ」 →
-            <a
-              href={EXTERNAL_LINKS.referenceChatPalette}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-2 underline underline-offset-4"
-            >
-              {EXTERNAL_LINKS.referenceChatPalette}
-            </a>
-          </p>
-        </section>*/}
       </div>
     </main>
   );
