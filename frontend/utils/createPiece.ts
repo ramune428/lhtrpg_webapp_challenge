@@ -321,7 +321,13 @@ function groupTiming(skillsArray: AnyRecord[]): Record<string, AnyRecord[]> {
 }
 
 function formatSkillName(skill: AnyRecord): string {
-  return `《${asString(skill.name)}》`;
+  const tags = asArray(skill.tags)
+    .map((tag) => `[${asString(tag)}]`)
+    .join(" ");
+
+  return [`《${asString(skill.name)}》`, tags]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function formatSkillDescription(skill: AnyRecord): string {
