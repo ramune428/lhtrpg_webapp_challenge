@@ -300,7 +300,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="grid gap-2">
               {outputOptionItems.map((item) => {
                 const checked = item.alwaysOn
                   ? true
