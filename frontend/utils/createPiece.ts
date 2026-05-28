@@ -81,6 +81,13 @@ type RegenerationSkillRule = {
   label: string;
 };
 
+type ShieldSkillRule = {
+  skillId: number;
+  skillName: string;
+  label: string;
+  buildCommand: (skill: AnyRecord) => string;
+};
+
 const causalityCostSkillRules: CausalityCostSkillRule[] = [
   {
     skillId: 4601,
@@ -143,6 +150,36 @@ const regenerationSkillRules: RegenerationSkillRule[] = [
     skillName: "クラウンオブミスルトゥ",
     command: "C(0+{魔力})",
     label: "再生強度=現在再生+魔力",
+  },
+];
+
+const shieldSkillRules: ShieldSkillRule[] = [
+  {
+    skillId: 3602,
+    skillName: "禊ぎの障壁",
+    label: "(障壁)",
+    buildCommand: () => "C({魔力}+{回復力}+15)",
+  },
+  {
+    skillId: 3620,
+    skillName: "禊ぎの障壁Ⅱ",
+    label: "(障壁)",
+    buildCommand: () => "C({魔力}*2+{回復力})",
+  },
+  {
+    skillId: 3607,
+    skillName: "四方拝",
+    label: "(障壁)",
+    buildCommand: () => "C({魔力}+{回復力}+4D)",
+  },
+  {
+    skillId: 3614,
+    skillName: "鈴音の障壁",
+    label: "(障壁/加算)",
+    buildCommand: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return `C({回復力}+${skillRank * 4})`;
+    },
   },
 ];
 
@@ -537,6 +574,19 @@ function buildRegenerationSkillCommandLines(rule: RegenerationSkillRule): string
   return [`${rule.command} ${rule.skillName} ${rule.label}`.trim()];
 }
 
+function findShieldSkillRule(skillId: number): ShieldSkillRule | undefined {
+  return shieldSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function buildShieldSkillCommandLines(
+  skill: AnyRecord,
+  rule: ShieldSkillRule
+): string[] {
+  return [
+    `${rule.buildCommand(skill)} ${rule.skillName} ${rule.label}`.trim(),
+  ];
+}
+
 function buildCausalityCostCommandLines(
   skill: AnyRecord,
   characterRank: number,
@@ -768,16 +818,20 @@ function buildSkillCommandLines(
   const skillId = asNumber(skill.id);
   const skillName = asString(skill.name);
   const functionText = asString(skill.function);
-  const causalityCostRule = findCausalityCostSkillRule(skillId);
 
+  const causalityCostRule = findCausalityCostSkillRule(skillId);
   if (causalityCostRule) {
     return buildCausalityCostCommandLines(skill, characterRank, causalityCostRule);
   }
 
   const regenerationRule = findRegenerationSkillRule(skillId);
-
   if (regenerationRule) {
     return buildRegenerationSkillCommandLines(regenerationRule);
+  }
+
+  const shieldRule = findShieldSkillRule(skillId);
+  if (shieldRule) {
+    return buildShieldSkillCommandLines(skill, shieldRule);
   }
 
   if (skillId === 4029 || functionText.includes("【攻撃力】点の直接ダメージ")) {
