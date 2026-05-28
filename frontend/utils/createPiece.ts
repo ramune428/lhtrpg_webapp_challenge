@@ -153,7 +153,7 @@ function formatCharacterTags(values: unknown): string {
   return `タグ：${tags.map((tag) => `[${tag}]`).join(" ")}`;
 }
 
-function convertDToLH(value: string): string {
+function convertCheckDiceToLH(value: string): string {
   return value
     .replace(/D/g, "LH")
     .replace(/^(\d+)\+(\d+LH.*)$/, "$2+$1");
@@ -375,9 +375,7 @@ function buildCausalityCostCommandLines(
   const lines: string[] = [];
 
   for (let cost = 0; cost <= rule.maxCost; cost += 1) {
-    lines.push(
-      `C((${cost}+${skillRank})*${multiplier}) ${rule.skillName} ${rule.label} 消費因果力${cost}`
-    );
+    lines.push(`C((${cost}+${skillRank})*${multiplier}) ${rule.skillName}_消費因果力${cost}`);
   }
 
   return lines;
@@ -473,7 +471,7 @@ function createSkillCommandBuilder(skill: AnyRecord, hand1: AnyRecord | null, ha
           }
         }
 
-        return diceValue.replace(/D/g, "LH");
+        return diceValue;
       }
     }
 
@@ -731,7 +729,7 @@ function createAbilityData(jsonData: AnyRecord): AbilityEntry[] {
 
   return abilityData.map((ability) => ({
     ...ability,
-    value: convertDToLH(ability.value.replace(/\s*>=0\s*$/, "")),
+    value: convertCheckDiceToLH(ability.value.replace(/\s*>=0\s*$/, "")),
   }));
 }
 
@@ -761,8 +759,8 @@ function createCombatBasics(abilityData: AbilityEntry[]): string {
     `${avoid}>=0 回避値(ヘイトアンダー)`,
     `${resist}>=0 抵抗値(ヘイトトップ)`,
     `${resist}>=0 抵抗値(ヘイトアンダー)`,
-    "1LH+{攻撃力} 基本武器攻撃、物理ダメージ",
-    "1LH+{魔力} 基本魔法攻撃、魔法ダメージ",
+    "1D+{攻撃力} 基本武器攻撃、物理ダメージ",
+    "1D+{魔力} 基本魔法攻撃、魔法ダメージ",
   ].join("\n");
 }
 
