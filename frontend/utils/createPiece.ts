@@ -381,14 +381,49 @@ function getRollLabel(roll: string): string | null {
   return matchedRoll[1];
 }
 
-function toCheckDiceBonus(value: string, skillRank: number): string {
+function normalizeCheckBonus(value: string, skillRank: number): string {
   return value
     .replace(/SR/g, String(skillRank))
-    .replace(/Ｄ/g, "D")
-    .replace(/D/g, "LH");
+    .replace(/ＳＲ/g, String(skillRank))
+    .replace(/Ｄ/g, "D");
 }
 
-function getCheckExpressionByRollLabel(rollLabel: string, skillRank: number): string | null {
+function getAbilityLabelByCheckName(checkName: string): string | null {
+  if (checkName === "命中") return "命中値";
+  if (checkName === "回避") return "回避値";
+  if (checkName === "抵抗") return "抵抗値";
+  if (checkName === "運動") return "運動値";
+  if (checkName === "耐久") return "耐久値";
+  if (checkName === "解除") return "解除値";
+  if (checkName === "操作") return "操作値";
+  if (checkName === "知覚") return "知覚値";
+  if (checkName === "交渉") return "交渉値";
+  if (checkName === "知識") return "知識値";
+  if (checkName === "解析") return "解析値";
+
+  return null;
+}
+
+function getAbilityDiceExpression(
+  abilityData: AbilityEntry[],
+  abilityLabel: string
+): string | null {
+  const abilityValue = abilityData.find(
+    (ability) => ability.label === abilityLabel
+  )?.value;
+
+  if (!abilityValue) {
+    return null;
+  }
+
+  return abilityValue.replace(/LH/g, "D");
+}
+
+function getCheckExpressionByRollLabel(
+  rollLabel: string,
+  skillRank: number,
+  abilityData: AbilityEntry[]
+): string | null {
   const checkText = rollLabel.split("/")[0]?.trim() ?? "";
   const matchedCheck = checkText.match(
     /^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/
@@ -399,24 +434,26 @@ function getCheckExpressionByRollLabel(rollLabel: string, skillRank: number): st
   }
 
   const checkName = matchedCheck[1];
-  const bonus = toCheckDiceBonus(matchedCheck[2] ?? "", skillRank);
+  const abilityLabel = getAbilityLabelByCheckName(checkName);
 
-  if (checkName === "命中") return `{命中値}${bonus}`;
-  if (checkName === "回避") return `{回避値}${bonus}`;
-  if (checkName === "抵抗") return `{抵抗値}${bonus}`;
-  if (checkName === "運動") return `{運動値}${bonus}`;
-  if (checkName === "耐久") return `{耐久値}${bonus}`;
-  if (checkName === "解除") return `{解除値}${bonus}`;
-  if (checkName === "操作") return `{操作値}${bonus}`;
-  if (checkName === "知覚") return `{知覚値}${bonus}`;
-  if (checkName === "交渉") return `{交渉値}${bonus}`;
-  if (checkName === "知識") return `{知識値}${bonus}`;
-  if (checkName === "解析") return `{解析値}${bonus}`;
+  if (!abilityLabel) {
+    return null;
+  }
 
-  return null;
+  const bonus = normalizeCheckBonus(matchedCheck[2] ?? "", skillRank);
+
+  if (bonus.includes("D")) {
+    const diceExpression = getAbilityDiceExpression(abilityData, abilityLabel);
+    return `${diceExpression ?? `{${abilityLabel}}`}${bonus}`;
+  }
+
+  return `{${abilityLabel}}${bonus}`;
 }
 
-function buildSkillCheckCommand(skill: AnyRecord): string | null {
+function buildSkillCheckCommand(
+  skill: AnyRecord,
+  abilityData: AbilityEntry[]
+): string | null {
   const skillName = asString(skill.name);
   const skillRank = asNumber(skill.skill_rank);
   const rollLabel = getRollLabel(asString(skill.roll));
@@ -425,7 +462,11 @@ function buildSkillCheckCommand(skill: AnyRecord): string | null {
     return null;
   }
 
-  const checkExpression = getCheckExpressionByRollLabel(rollLabel, skillRank);
+  const checkExpression = getCheckExpressionByRollLabel(
+    rollLabel,
+    skillRank,
+    abilityData
+  );
 
   if (!checkExpression) {
     return null;
@@ -728,7 +769,12 @@ function buildSkillCommandLines(
   return [`${diceRoll} ${skillName} ${label}`.trim()];
 }
 
-function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: AnyRecord | null): SkillChatPaletteData {
+function createSkillData(
+  jsonData: AnyRecord,
+  hand1: AnyRecord | null,
+  hand2: AnyRecord | null,
+  abilityData: AbilityEntry[]
+): SkillChatPaletteData {
   const skills = asArray(jsonData.skills)
     .map((skill) => asRecord(skill))
     .filter((skill): skill is AnyRecord => skill !== null);
@@ -742,7 +788,7 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
         timing,
         skillName: formatSkillName(skill),
         description: formatSkillDescription(skill),
-        checkCommand: buildSkillCheckCommand(skill),
+        checkCommand: buildSkillCheckCommand(skill, abilityData),
         commands: buildSkillCommandLines(skill, hand1, hand2, characterRank),
       });
     }
@@ -1009,9 +1055,14 @@ export function createPieceFromJson(
   const statusData = createStatusData(jsonData);
   const paramsData = createParamsData(jsonData);
   const equipmentData = createEquipmentData(jsonData);
-  const skillData = createSkillData(jsonData, equipmentData.hand1, equipmentData.hand2);
-  const itemData = createItemData(jsonData);
   const abilityData = createAbilityData(jsonData);
+  const skillData = createSkillData(
+    jsonData,
+    equipmentData.hand1,
+    equipmentData.hand2,
+    abilityData
+  );
+  const itemData = createItemData(jsonData);
   const commands = createChatPalette(
     skillData,
     equipmentData.effects,
