@@ -74,6 +74,13 @@ type CausalityCostSkillRule = {
   maxCost: number;
 };
 
+type RegenerationSkillRule = {
+  skillId: number;
+  skillName: string;
+  command: string;
+  label: string;
+};
+
 const causalityCostSkillRules: CausalityCostSkillRule[] = [
   {
     skillId: 4601,
@@ -109,6 +116,33 @@ const causalityCostSkillRules: CausalityCostSkillRule[] = [
     label: "ダメージ増加",
     crValues: { default: 5, cr11: 10, cr21: 15 },
     maxCost: 3,
+  },
+];
+
+const regenerationSkillRules: RegenerationSkillRule[] = [
+  {
+    skillId: 3402,
+    skillName: "ハートビートヒーリング",
+    command: "C({魔力}+10)",
+    label: "(再生)",
+  },
+  {
+    skillId: 3426,
+    skillName: "ハートビートヒーリングⅡ",
+    command: "C({魔力}*2)",
+    label: "(再生)",
+  },
+  {
+    skillId: 3403,
+    skillName: "ガイアビートヒーリング",
+    command: "C({魔力})",
+    label: "(再生)",
+  },
+  {
+    skillId: 3421,
+    skillName: "クラウンオブミスルトゥ",
+    command: "C(0+{魔力})",
+    label: "再生強度=現在再生+魔力",
   },
 ];
 
@@ -495,6 +529,14 @@ function findCausalityCostSkillRule(skillId: number): CausalityCostSkillRule | u
   return causalityCostSkillRules.find((rule) => rule.skillId === skillId);
 }
 
+function findRegenerationSkillRule(skillId: number): RegenerationSkillRule | undefined {
+  return regenerationSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function buildRegenerationSkillCommandLines(rule: RegenerationSkillRule): string[] {
+  return [`${rule.command} ${rule.skillName} ${rule.label}`.trim()];
+}
+
 function buildCausalityCostCommandLines(
   skill: AnyRecord,
   characterRank: number,
@@ -732,6 +774,12 @@ function buildSkillCommandLines(
     return buildCausalityCostCommandLines(skill, characterRank, causalityCostRule);
   }
 
+  const regenerationRule = findRegenerationSkillRule(skillId);
+
+  if (regenerationRule) {
+    return buildRegenerationSkillCommandLines(regenerationRule);
+  }
+
   if (skillId === 4029 || functionText.includes("【攻撃力】点の直接ダメージ")) {
     return [`C({攻撃力}) ${skillName} (直接ダメージ)`];
   }
@@ -889,8 +937,6 @@ function createCombatBasics(): string {
     "{回避値}+2 回避値(ヘイトアンダー時)",
     "{抵抗値} 抵抗値(ヘイトトップ時)",
     "{抵抗値}+2 抵抗値(ヘイトアンダー時)",
-    // "1D+{攻撃力} 基本武器攻撃、物理ダメージ",
-    // "1D+{魔力} 基本魔法攻撃、魔法ダメージ",
   ].join("\n");
 }
 
