@@ -17,7 +17,7 @@ import {
   fetchCharacterJson,
   normalizeCharacterId,
   type ChatPaletteOptions,
-} from "@/utils/createPiece";
+} from "@/utils/createPieceUi";
 
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 const BODY_LINK_CLASS =
@@ -35,8 +35,8 @@ const outputOptionItems: OutputOptionItem[] = [
   { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
   { key: "includeSkillChecks", label: "判定がある特技" },
-  { key: "skillNames", label: "特技名", alwaysOn: true },
-  { key: "includeSkillDescriptions", label: "特技の説明" },
+  { key: "skillNames", label: "特技名・宣言情報", alwaysOn: true },
+  { key: "includeSkillDescriptions", label: "効果" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
   { key: "includeBasicActions", label: "基本動作" },
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
