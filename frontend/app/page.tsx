@@ -233,8 +233,8 @@ export default function HomePage() {
               <br />
               （例： https://lhrpg.com/lhz/pc?id=xxxxxx または xxxxxx）
             </p>
-            <p>4. [コマンドを生成する] をクリック。</p>
-            <p>5. 必要に応じて出力オプションを変更し、プレビューを確認する。</p>
+            <p>4. 必要に応じて出力オプションを変更する。</p>
+            <p>5. [コマンドを生成する] をクリックし、プレビューを確認する。</p>
             <p>6. [コピー] をクリックしてコマンドをコピーし、CCFOLIAに貼り付ける。</p>
           </div>
 
@@ -258,7 +258,7 @@ export default function HomePage() {
         </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
-          <div className="mb-3">
+          <div className="mb-6">
             <label
               htmlFor="character-input"
               className="mb-2 block text-lg font-semibold"
@@ -275,35 +275,6 @@ export default function HomePage() {
               placeholder="https://lhrpg.com/lhz/pc?id=123456 / 123456"
               className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none transition focus:border-neutral-500"
             />
-          </div>
-
-          <div className="mb-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={isLoading}
-              className={FORM_BUTTON_CLASS}
-            >
-              {isLoading ? "生成中..." : "コマンドを生成する"}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={isLoading}
-              className={FORM_BUTTON_CLASS}
-            >
-              クリア
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopy}
-              disabled={!result}
-              className={FORM_BUTTON_CLASS}
-            >
-              コピー
-            </button>
           </div>
 
           <section className="mb-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
@@ -364,6 +335,35 @@ export default function HomePage() {
               })}
             </div>
           </section>
+
+          <div className="mb-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={isLoading}
+              className={FORM_BUTTON_CLASS}
+            >
+              {isLoading ? "生成中..." : "コマンドを生成する"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={isLoading}
+              className={FORM_BUTTON_CLASS}
+            >
+              クリア
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={!result}
+              className={FORM_BUTTON_CLASS}
+            >
+              コピー
+            </button>
+          </div>
 
           <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
             {statusMessage}
