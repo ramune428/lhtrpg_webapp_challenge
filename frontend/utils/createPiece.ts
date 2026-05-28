@@ -250,6 +250,11 @@ function createStatusData(jsonData: AnyRecord): StatusEntry[] {
 }
 
 function createParamsData(jsonData: AnyRecord): ParamEntry[] {
+  const abilityParams = createAbilityData(jsonData).map((ability) => ({
+    label: ability.label,
+    value: ability.value,
+  }));
+
   return [
     { label: "CR", value: asString(jsonData.character_rank) },
     { label: "攻撃力", value: asString(jsonData.physical_attack) },
@@ -265,6 +270,7 @@ function createParamsData(jsonData: AnyRecord): ParamEntry[] {
     { label: "DEX", value: asString(jsonData.dex_value) },
     { label: "POW", value: asString(jsonData.pow_value) },
     { label: "INT", value: asString(jsonData.int_value) },
+    ...abilityParams,
   ];
 }
 
@@ -739,10 +745,6 @@ function createAbilityData(jsonData: AnyRecord): AbilityEntry[] {
   }));
 }
 
-function getAbilityValue(abilityData: AbilityEntry[], label: string): string {
-  return abilityData.find((ability) => ability.label === label)?.value ?? "0";
-}
-
 function buildSection(title: string, body: string): string {
   const trimmedBody = body.trim();
 
@@ -753,18 +755,14 @@ function buildSection(title: string, body: string): string {
   return `${title}\n${trimmedBody}`;
 }
 
-function createCombatBasics(abilityData: AbilityEntry[]): string {
-  const hit = getAbilityValue(abilityData, "命中値");
-  const avoid = getAbilityValue(abilityData, "回避値");
-  const resist = getAbilityValue(abilityData, "抵抗値");
-
+function createCombatBasics(): string {
   return [
     "○戦闘の基本",
-    `${hit}>=0 命中値`,
-    `${avoid}>=0 回避値(ヘイトトップ)`,
-    `${avoid}>=0 回避値(ヘイトアンダー)`,
-    `${resist}>=0 抵抗値(ヘイトトップ)`,
-    `${resist}>=0 抵抗値(ヘイトアンダー)`,
+    "{命中値} 命中値",
+    "{回避値} 回避値(ヘイトトップ時)",
+    "{回避値}+2 回避値(ヘイトアンダー時)",
+    "{抵抗値} 抵抗値(ヘイトトップ時)",
+    "{抵抗値}+2 抵抗値(ヘイトアンダー時)",
     "1D+{攻撃力} 基本武器攻撃、物理ダメージ",
     "1D+{魔力} 基本魔法攻撃、魔法ダメージ",
   ].join("\n");
@@ -818,7 +816,7 @@ function createEquipmentEffects(equipmentData: string[]): string {
 function createAbilityChecks(abilityData: AbilityEntry[]): string {
   return buildSection(
     "○各種判定",
-    abilityData.map((ability) => `${ability.value}>=0 ${ability.label}`).join("\n")
+    abilityData.map((ability) => `{${ability.label}} ${ability.label}`).join("\n")
   );
 }
 
@@ -851,7 +849,7 @@ function createChatPalette(
   const outputOptions = mergeChatPaletteOptions(options);
   const sections: string[] = [];
 
-  sections.push(createCombatBasics(abilityData));
+  sections.push(createCombatBasics());
 
   if (outputOptions.includeDamageCalculator) {
     sections.push(createDamageCalculator());
