@@ -642,9 +642,9 @@ function createChatPalette(
     "○戦闘の基本\n" +
     `${abilityData[10]?.value ?? ""}>=0 命中値\n` +
     `${abilityData[8]?.value ?? ""}>=0 回避値(ヘイトトップ)\n` +
-    `${abilityData[8]?.value ?? ""}>=0 回避値(ヘイトアンダー)\n` +
+    `${abilityData[8]?.value ?? ""}+2>=0 回避値(ヘイトアンダー)\n` +
     `${abilityData[9]?.value ?? ""}>=0 抵抗値(ヘイトトップ)\n` +
-    `${abilityData[9]?.value ?? ""}>=0 抵抗値(ヘイトアンダー)\n` +
+    `${abilityData[9]?.value ?? ""}+2>=0 抵抗値(ヘイトアンダー)\n` +
     "{攻撃力}+1D6 基本武器攻撃、物理ダメージ\n" +
     "{魔力}+1D6 基本魔法攻撃、魔法ダメージ\n";
 
