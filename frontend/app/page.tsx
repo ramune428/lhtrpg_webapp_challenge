@@ -34,6 +34,7 @@ type OutputOptionItem = {
 const outputOptionItems: OutputOptionItem[] = [
   { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
+  { key: "includeSkillChecks", label: "判定がある特技" },
   { key: "skillNames", label: "特技名", alwaysOn: true },
   { key: "includeSkillDescriptions", label: "特技の説明" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
@@ -48,6 +49,7 @@ const outputOptionItems: OutputOptionItem[] = [
 function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
   return {
     includeDamageCalculator: checked,
+    includeSkillChecks: checked,
     includeSkillDescriptions: checked,
     includeBasicActions: checked,
     includeEquipmentEffects: checked,
