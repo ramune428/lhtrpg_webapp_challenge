@@ -35,7 +35,7 @@ const outputOptionItems: OutputOptionItem[] = [
   { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
   { key: "includeSkillChecks", label: "判定がある特技" },
-  { key: "skillNames", label: "特技名・宣言情報", alwaysOn: true },
+  { key: "skillNames", label: "特技", alwaysOn: true },
   { key: "includeSkillDescriptions", label: "効果" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
   { key: "includeBasicActions", label: "基本動作" },
