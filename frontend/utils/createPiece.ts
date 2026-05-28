@@ -88,6 +88,35 @@ type ShieldSkillRule = {
   buildCommand: (skill: AnyRecord) => string;
 };
 
+type WeaknessCommand = {
+  command: string;
+  nameSuffix?: string;
+};
+
+type WeaknessSkillRule = {
+  skillId: number;
+  skillName: string;
+  condition: string;
+  buildCommands: (skill: AnyRecord, characterRank: number) => WeaknessCommand[];
+};
+
+type ReductionCommand = {
+  command: string;
+  nameSuffix?: string;
+};
+
+type ReductionSkillRule = {
+  skillId: number;
+  skillName: string;
+  condition: string;
+  buildCommands: (
+    skill: AnyRecord,
+    characterRank: number,
+    hand1: AnyRecord | null,
+    hand2: AnyRecord | null
+  ) => ReductionCommand[];
+};
+
 const causalityCostSkillRules: CausalityCostSkillRule[] = [
   {
     skillId: 4601,
@@ -179,6 +208,184 @@ const shieldSkillRules: ShieldSkillRule[] = [
     buildCommand: (skill) => {
       const skillRank = asNumber(skill.skill_rank);
       return `C({回復力}+${skillRank * 4})`;
+    },
+  },
+];
+
+const weaknessSkillRules: WeaknessSkillRule[] = [
+  {
+    skillId: 2621,
+    skillName: "アーマークラッシュⅡ",
+    condition: "物理ダメージ",
+    buildCommands: (_skill, characterRank) => {
+      const baseValue = characterRank >= 21 ? 15 : 10;
+      return [
+        { command: `C(${baseValue})` },
+        { command: `C(${baseValue * 2})`, nameSuffix: "_因果力1" },
+      ];
+    },
+  },
+  {
+    skillId: 4022,
+    skillName: "クレイズクラック",
+    condition: "物理ダメージ",
+    buildCommands: () => [{ command: "C({INT})" }],
+  },
+  {
+    skillId: 3626,
+    skillName: "翔鶴の凶祓い",
+    condition: "白兵攻撃",
+    buildCommands: () => [{ command: "C({STR})" }],
+  },
+  {
+    skillId: 3431,
+    skillName: "フィアースモールド",
+    condition: "魔法ダメージ",
+    buildCommands: (_skill, characterRank) => {
+      const baseValue = characterRank >= 16 ? 15 : 10;
+      return [
+        { command: `C(${baseValue})` },
+        { command: `C(${baseValue * 2})`, nameSuffix: "_因果力1" },
+      ];
+    },
+  },
+  {
+    skillId: 2218,
+    skillName: "レイザーエッジⅡ",
+    condition: "物理ダメージ",
+    buildCommands: () => [{ command: "C(10)" }],
+  },
+];
+
+const reductionSkillRules: ReductionSkillRule[] = [
+  {
+    skillId: 2602,
+    skillName: "アンカーハウル",
+    condition: "",
+    buildCommands: () => [{ command: "C({STR})" }],
+  },
+  {
+    skillId: 2620,
+    skillName: "アンカーハウルⅡ",
+    condition: "",
+    buildCommands: () => [{ command: "C({STR})" }],
+  },
+  {
+    skillId: 3621,
+    skillName: "石凝の鏡",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({POW}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 2821,
+    skillName: "血戦の陣",
+    condition: "",
+    buildCommands: (skill, characterRank) => {
+      const skillRank = asNumber(skill.skill_rank);
+      const multiplier = characterRank >= 21 ? 15 : characterRank >= 11 ? 10 : 5;
+      return [{ command: `C(${skillRank * multiplier})` }];
+    },
+  },
+  {
+    skillId: 3203,
+    skillName: "シールドパクト",
+    condition: "",
+    buildCommands: (_skill, _characterRank, hand1, hand2) => [
+      { command: `C(${getShieldDefenseValue(hand1, hand2)})` },
+    ],
+  },
+  {
+    skillId: 4622,
+    skillName: "従者召喚：ゴーレム",
+    condition: "物理ダメージ",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({INT}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 4623,
+    skillName: "従者召喚：スライム",
+    condition: "魔法ダメージ",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({INT}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 3624,
+    skillName: "厄除けの護り",
+    condition: "選択タグ",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({POW}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 1701,
+    skillName: "タトゥーパターン：エンプレス",
+    condition: "",
+    buildCommands: () => [{ command: "C(5)" }],
+  },
+  {
+    skillId: 3027,
+    skillName: "アイアンリノ・スタンス",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({INT}+${skillRank * 5})` }];
+    },
+  },
+  {
+    skillId: 2104,
+    skillName: "ウォーターブリージング",
+    condition: "水棲",
+    buildCommands: () => [{ command: "C(10)" }],
+  },
+  {
+    skillId: 2112,
+    skillName: "ウォーターブリージングⅡ",
+    condition: "水棲",
+    buildCommands: (_skill, characterRank) => {
+      const value = characterRank >= 21 ? 30 : 20;
+      return [{ command: `C(${value})` }];
+    },
+  },
+  {
+    skillId: 2103,
+    skillName: "エナジープロテクション",
+    condition: "選択タグ",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank * 5})` }];
+    },
+  },
+  {
+    skillId: 2111,
+    skillName: "エナジープロテクションⅡ",
+    condition: "選択タグ",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({INT}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 2505,
+    skillName: "エレメンタルシェル",
+    condition: "選択タグ",
+    buildCommands: () => [{ command: "C(40)" }],
+  },
+  {
+    skillId: 4223,
+    skillName: "風纏う乙女のロンド",
+    condition: "至近以外からの攻撃",
+    buildCommands: (_skill, characterRank) => {
+      const value =
+        characterRank >= 29 ? 50 : characterRank >= 22 ? 40 : characterRank >= 15 ? 30 : characterRank >= 8 ? 20 : 10;
+      return [{ command: `C(${value})` }];
     },
   },
 ];
@@ -475,13 +682,8 @@ function getAbilityLabelByCheckName(checkName: string): string | null {
   return null;
 }
 
-function getAbilityDiceExpression(
-  abilityData: AbilityEntry[],
-  abilityLabel: string
-): string | null {
-  const abilityValue = abilityData.find(
-    (ability) => ability.label === abilityLabel
-  )?.value;
+function getAbilityDiceExpression(abilityData: AbilityEntry[], abilityLabel: string): string | null {
+  const abilityValue = abilityData.find((ability) => ability.label === abilityLabel)?.value;
 
   if (!abilityValue) {
     return null;
@@ -533,11 +735,7 @@ function buildSkillCheckCommand(
     return null;
   }
 
-  const checkExpression = getCheckExpressionByRollLabel(
-    rollLabel,
-    skillRank,
-    abilityData
-  );
+  const checkExpression = getCheckExpressionByRollLabel(rollLabel, skillRank, abilityData);
 
   if (!checkExpression) {
     return null;
@@ -587,6 +785,50 @@ function buildShieldSkillCommandLines(
   ];
 }
 
+function findWeaknessSkillRule(skillId: number): WeaknessSkillRule | undefined {
+  return weaknessSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function formatWeaknessLabel(condition: string): string {
+  return condition ? `弱点[${condition}]` : "弱点";
+}
+
+function buildWeaknessSkillCommandLines(
+  skill: AnyRecord,
+  characterRank: number,
+  rule: WeaknessSkillRule
+): string[] {
+  const label = formatWeaknessLabel(rule.condition);
+
+  return rule.buildCommands(skill, characterRank).map((weaknessCommand) => {
+    const skillName = `${rule.skillName}${weaknessCommand.nameSuffix ?? ""}`;
+    return `${weaknessCommand.command} ${skillName} ${label}`;
+  });
+}
+
+function findReductionSkillRule(skillId: number): ReductionSkillRule | undefined {
+  return reductionSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function formatReductionLabel(condition: string): string {
+  return condition ? `軽減[${condition}]` : "軽減";
+}
+
+function buildReductionSkillCommandLines(
+  skill: AnyRecord,
+  characterRank: number,
+  hand1: AnyRecord | null,
+  hand2: AnyRecord | null,
+  rule: ReductionSkillRule
+): string[] {
+  const label = formatReductionLabel(rule.condition);
+
+  return rule.buildCommands(skill, characterRank, hand1, hand2).map((reductionCommand) => {
+    const skillName = `${rule.skillName}${reductionCommand.nameSuffix ?? ""}`;
+    return `${reductionCommand.command} ${skillName} ${label}`;
+  });
+}
+
 function buildCausalityCostCommandLines(
   skill: AnyRecord,
   characterRank: number,
@@ -595,9 +837,12 @@ function buildCausalityCostCommandLines(
   const skillRank = asNumber(skill.skill_rank);
   const multiplier = getValueByCharacterRank(characterRank, rule.crValues);
   const lines: string[] = [];
+  const suffix = rule.skillId === 4601 ? " 弱点" : "";
 
   for (let cost = 0; cost <= rule.maxCost; cost += 1) {
-    lines.push(`C((${cost}+${skillRank})*${multiplier}) ${rule.skillName}_消費因果力${cost}`);
+    lines.push(
+      `C((${cost}+${skillRank})*${multiplier}) ${rule.skillName}_消費因果力${cost}${suffix}`
+    );
   }
 
   return lines;
@@ -818,24 +1063,37 @@ function buildSkillCommandLines(
   const skillId = asNumber(skill.id);
   const skillName = asString(skill.name);
   const functionText = asString(skill.function);
-
   const causalityCostRule = findCausalityCostSkillRule(skillId);
+
   if (causalityCostRule) {
     return buildCausalityCostCommandLines(skill, characterRank, causalityCostRule);
   }
 
   const regenerationRule = findRegenerationSkillRule(skillId);
+
   if (regenerationRule) {
     return buildRegenerationSkillCommandLines(regenerationRule);
   }
 
   const shieldRule = findShieldSkillRule(skillId);
+
   if (shieldRule) {
     return buildShieldSkillCommandLines(skill, shieldRule);
   }
 
+  const reductionRule = findReductionSkillRule(skillId);
+
+  if (reductionRule) {
+    return buildReductionSkillCommandLines(skill, characterRank, hand1, hand2, reductionRule);
+  }
+
+  const weaknessRule = findWeaknessSkillRule(skillId);
+  const weaknessCommandLines = weaknessRule
+    ? buildWeaknessSkillCommandLines(skill, characterRank, weaknessRule)
+    : [];
+
   if (skillId === 4029 || functionText.includes("【攻撃力】点の直接ダメージ")) {
-    return [`C({攻撃力}) ${skillName} (直接ダメージ)`];
+    return [`C({攻撃力}) ${skillName} (直接ダメージ)`, ...weaknessCommandLines];
   }
 
   const rollKeywords = ["の物理", "の魔法", "の貫通", "点回復", "点まで回復"];
@@ -865,10 +1123,10 @@ function buildSkillCommandLines(
   }
 
   if (!diceRoll) {
-    return [];
+    return weaknessCommandLines;
   }
 
-  return [`${diceRoll} ${skillName} ${label}`.trim()];
+  return [`${diceRoll} ${skillName} ${label}`.trim(), ...weaknessCommandLines];
 }
 
 function createSkillData(
@@ -1158,12 +1416,7 @@ export function createPieceFromJson(
   const paramsData = createParamsData(jsonData);
   const equipmentData = createEquipmentData(jsonData);
   const abilityData = createAbilityData(jsonData);
-  const skillData = createSkillData(
-    jsonData,
-    equipmentData.hand1,
-    equipmentData.hand2,
-    abilityData
-  );
+  const skillData = createSkillData(jsonData, equipmentData.hand1, equipmentData.hand2, abilityData);
   const itemData = createItemData(jsonData);
   const commands = createChatPalette(
     skillData,
