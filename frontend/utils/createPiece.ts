@@ -381,11 +381,14 @@ function getRollLabel(roll: string): string | null {
   return matchedRoll[1];
 }
 
-function toCheckDiceBonus(value: string): string {
-  return value.replace(/D/g, "LH");
+function toCheckDiceBonus(value: string, skillRank: number): string {
+  return value
+    .replace(/SR/g, String(skillRank))
+    .replace(/Ｄ/g, "D")
+    .replace(/D/g, "LH");
 }
 
-function getCheckExpressionByRollLabel(rollLabel: string): string | null {
+function getCheckExpressionByRollLabel(rollLabel: string, skillRank: number): string | null {
   const checkText = rollLabel.split("/")[0]?.trim() ?? "";
   const matchedCheck = checkText.match(
     /^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/
@@ -396,7 +399,7 @@ function getCheckExpressionByRollLabel(rollLabel: string): string | null {
   }
 
   const checkName = matchedCheck[1];
-  const bonus = toCheckDiceBonus(matchedCheck[2] ?? "");
+  const bonus = toCheckDiceBonus(matchedCheck[2] ?? "", skillRank);
 
   if (checkName === "命中") return `{命中値}${bonus}`;
   if (checkName === "回避") return `{回避値}${bonus}`;
@@ -415,13 +418,14 @@ function getCheckExpressionByRollLabel(rollLabel: string): string | null {
 
 function buildSkillCheckCommand(skill: AnyRecord): string | null {
   const skillName = asString(skill.name);
+  const skillRank = asNumber(skill.skill_rank);
   const rollLabel = getRollLabel(asString(skill.roll));
 
   if (!rollLabel) {
     return null;
   }
 
-  const checkExpression = getCheckExpressionByRollLabel(rollLabel);
+  const checkExpression = getCheckExpressionByRollLabel(rollLabel, skillRank);
 
   if (!checkExpression) {
     return null;
