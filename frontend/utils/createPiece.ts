@@ -1,6 +1,7 @@
 import {
   causalityCostSkillRules,
   directDamageSkillRules,
+  pursuitSkillRules,
   reductionSkillRules,
   regenerationSkillRules,
   shieldSkillRules,
@@ -10,6 +11,7 @@ import type {
   CausalityCostSkillRule,
   CrValues,
   DirectDamageSkillRule,
+  PursuitSkillRule,
   ReductionSkillRule,
   RegenerationSkillRule,
   ShieldSkillRule,
@@ -538,6 +540,28 @@ function buildDirectDamageSkillCommandLines(
   });
 }
 
+function findPursuitSkillRule(skillId: number): PursuitSkillRule | undefined {
+  return pursuitSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function formatPursuitLabel(condition: string): string {
+  return condition ? `追撃[${condition}]` : "追撃";
+}
+
+function buildPursuitSkillCommandLines(
+  skill: AnyRecord,
+  characterRank: number,
+  rule: PursuitSkillRule
+): string[] {
+  const defaultLabel = formatPursuitLabel(rule.condition);
+
+  return rule.buildCommands(skill, characterRank).map((pursuitCommand) => {
+    const skillName = `${rule.skillName}${pursuitCommand.nameSuffix ?? ""}`;
+    const label = pursuitCommand.label ?? defaultLabel;
+    return `${pursuitCommand.command} ${skillName} ${label}`;
+  });
+}
+
 function buildCausalityCostCommandLines(
   skill: AnyRecord,
   characterRank: number,
@@ -800,6 +824,12 @@ function buildSkillCommandLines(
 
   if (directDamageRule) {
     return buildDirectDamageSkillCommandLines(skill, characterRank, directDamageRule);
+  }
+
+  const pursuitRule = findPursuitSkillRule(skillId);
+
+  if (pursuitRule) {
+    return buildPursuitSkillCommandLines(skill, characterRank, pursuitRule);
   }
 
   const weaknessRule = findWeaknessSkillRule(skillId);

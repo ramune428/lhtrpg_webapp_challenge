@@ -103,6 +103,19 @@ export type DirectDamageSkillRule = {
   buildCommands: (skill: AnyRecord, characterRank: number) => DirectDamageCommand[];
 };
 
+export type PursuitCommand = {
+  command: string;
+  nameSuffix?: string;
+  label?: string;
+};
+
+export type PursuitSkillRule = {
+  skillId: number;
+  skillName: string;
+  condition: string;
+  buildCommands: (skill: AnyRecord, characterRank: number) => PursuitCommand[];
+};
+
 export const causalityCostSkillRules: CausalityCostSkillRule[] = [
   {
     skillId: 4601,
@@ -517,3 +530,112 @@ export const directDamageSkillRules: DirectDamageSkillRule[] = [
     buildCommands: () => [{ command: "C(5)" }],
   },
 ];
+
+export const pursuitSkillRules: PursuitSkillRule[] = [
+  {
+    skillId: 3420,
+    skillName: "従者召喚：グレイウルフ",
+    condition: "HPダメージ時",
+    buildCommands: (skill, characterRank) => {
+      const skillRank = asNumber(skill.skill_rank);
+      const multiplier = characterRank >= 21 ? 8 : characterRank >= 11 ? 6 : 4;
+      return [{ command: `C(${skillRank * multiplier})` }];
+    },
+  },
+  {
+    skillId: 4620,
+    skillName: "従者召喚：スケルトン",
+    condition: "二次対象",
+    buildCommands: () => [{ command: "C(7)" }],
+  },
+  {
+    skillId: 4011,
+    skillName: "アーリースラスト",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank * 4})` }];
+    },
+  },
+  {
+    skillId: 4025,
+    skillName: "アーリースラストⅡ",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({INT}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 2002,
+    skillName: "アシストアタック",
+    condition: "",
+    buildCommands: () => [{ command: "C({攻撃力})" }],
+  },
+  {
+    skillId: 2625,
+    skillName: "クロススラッシュ",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({攻撃力}+${skillRank * 2})`, label: "追撃×2個" }];
+    },
+  },
+  {
+    skillId: 4812,
+    skillName: "ソーンバインドホステージ",
+    condition: "",
+    buildCommands: () => [
+      { command: "C({INT}+8)", label: "追撃×2個" },
+      { command: "C({INT}+8)", nameSuffix: "_因果力1", label: "追撃×3個" },
+    ],
+  },
+  {
+    skillId: 4828,
+    skillName: "ソーンバインドホステージⅡ",
+    condition: "",
+    buildCommands: () => [
+      { command: "C({INT基本値})", label: "追撃×2個" },
+      { command: "C({INT基本値})", nameSuffix: "_因果力1", label: "追撃×3個" },
+    ],
+  },
+  {
+    skillId: 3016,
+    skillName: "オリオンディレイブロウ",
+    condition: "",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: "C(10)", label: `追撃×${skillRank}個` }];
+    },
+  },
+  {
+    skillId: 4002,
+    skillName: "オープニングギャンビット",
+    condition: "",
+    buildCommands: (skill, characterRank) => {
+      const skillRank = asNumber(skill.skill_rank);
+      const strength = characterRank >= 21 ? 24 : characterRank >= 11 ? 15 : 7;
+      return [
+        { command: `C(${strength})`, label: `追撃×${skillRank}個` },
+        { command: `C(${strength})`, nameSuffix: "_因果力1", label: `追撃×${skillRank + 1}個` },
+        { command: `C(${strength})`, nameSuffix: "_因果力2", label: `追撃×${skillRank + 2}個` },
+      ];
+    },
+  },
+  {
+    skillId: 4431,
+    skillName: "インパティエンスボルト",
+    condition: "",
+    buildCommands: (_skill, characterRank) => {
+      const multiplier = characterRank >= 21 ? 9 : characterRank >= 11 ? 6 : 3;
+      return [{ command: `C({ヘイト}*${multiplier})` }];
+    },
+  },
+  {
+    skillId: 33,
+    skillName: "ウィークポイント",
+    condition: "識別済",
+    buildCommands: () => [{ command: "C({INT})" }],
+  },
+];
+
