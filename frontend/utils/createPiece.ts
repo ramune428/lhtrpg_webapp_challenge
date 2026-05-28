@@ -381,20 +381,34 @@ function getRollLabel(roll: string): string | null {
   return matchedRoll[1];
 }
 
-function getCheckParamByRollLabel(rollLabel: string): string | null {
-  const checkName = rollLabel.split("/")[0]?.trim();
+function toCheckDiceBonus(value: string): string {
+  return value.replace(/D/g, "LH");
+}
 
-  if (checkName === "命中") return "{命中値}";
-  if (checkName === "回避") return "{回避値}";
-  if (checkName === "抵抗") return "{抵抗値}";
-  if (checkName === "運動") return "{運動値}";
-  if (checkName === "耐久") return "{耐久値}";
-  if (checkName === "解除") return "{解除値}";
-  if (checkName === "操作") return "{操作値}";
-  if (checkName === "知覚") return "{知覚値}";
-  if (checkName === "交渉") return "{交渉値}";
-  if (checkName === "知識") return "{知識値}";
-  if (checkName === "解析") return "{解析値}";
+function getCheckExpressionByRollLabel(rollLabel: string): string | null {
+  const checkText = rollLabel.split("/")[0]?.trim() ?? "";
+  const matchedCheck = checkText.match(
+    /^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/
+  );
+
+  if (!matchedCheck) {
+    return null;
+  }
+
+  const checkName = matchedCheck[1];
+  const bonus = toCheckDiceBonus(matchedCheck[2] ?? "");
+
+  if (checkName === "命中") return `{命中値}${bonus}`;
+  if (checkName === "回避") return `{回避値}${bonus}`;
+  if (checkName === "抵抗") return `{抵抗値}${bonus}`;
+  if (checkName === "運動") return `{運動値}${bonus}`;
+  if (checkName === "耐久") return `{耐久値}${bonus}`;
+  if (checkName === "解除") return `{解除値}${bonus}`;
+  if (checkName === "操作") return `{操作値}${bonus}`;
+  if (checkName === "知覚") return `{知覚値}${bonus}`;
+  if (checkName === "交渉") return `{交渉値}${bonus}`;
+  if (checkName === "知識") return `{知識値}${bonus}`;
+  if (checkName === "解析") return `{解析値}${bonus}`;
 
   return null;
 }
@@ -407,13 +421,13 @@ function buildSkillCheckCommand(skill: AnyRecord): string | null {
     return null;
   }
 
-  const checkParam = getCheckParamByRollLabel(rollLabel);
+  const checkExpression = getCheckExpressionByRollLabel(rollLabel);
 
-  if (!checkParam) {
+  if (!checkExpression) {
     return null;
   }
 
-  return `${checkParam} ${skillName}(${rollLabel})`;
+  return `${checkExpression} ${skillName}(${rollLabel})`;
 }
 
 function getValueByCharacterRank(characterRank: number, values: CrValues): number {
