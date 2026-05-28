@@ -26,6 +26,7 @@ type SkillChatPaletteEntry = {
   timing: string;
   skillName: string;
   description: string;
+  checkCommand: string | null;
   commands: string[];
 };
 
@@ -36,6 +37,7 @@ type SkillChatPaletteData = {
 
 export type ChatPaletteOptions = {
   includeDamageCalculator: boolean;
+  includeSkillChecks: boolean;
   includeSkillDescriptions: boolean;
   includeBasicActions: boolean;
   includeEquipmentEffects: boolean;
@@ -47,6 +49,7 @@ export type ChatPaletteOptions = {
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: true,
+  includeSkillChecks: true,
   includeSkillDescriptions: true,
   includeBasicActions: true,
   includeEquipmentEffects: true,
@@ -357,6 +360,62 @@ function formatSkillDescription(skill: AnyRecord): string {
   return effectText ? `${baseText} 効果:${effectText}` : baseText;
 }
 
+function normalizeRollText(roll: string): string {
+  return roll
+    .replace(/^判定[:：]/, "")
+    .replace(/（/g, "(")
+    .replace(/）/g, ")")
+    .replace(/／/g, "/")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function getRollLabel(roll: string): string | null {
+  const normalizedRoll = normalizeRollText(roll);
+  const matchedRoll = normalizedRoll.match(/^(?:対決|基本)\(([^)]+)\)$/);
+
+  if (!matchedRoll) {
+    return null;
+  }
+
+  return matchedRoll[1];
+}
+
+function getCheckParamByRollLabel(rollLabel: string): string | null {
+  const checkName = rollLabel.split("/")[0]?.trim();
+
+  if (checkName === "命中") return "{命中値}";
+  if (checkName === "回避") return "{回避値}";
+  if (checkName === "抵抗") return "{抵抗値}";
+  if (checkName === "運動") return "{運動値}";
+  if (checkName === "耐久") return "{耐久値}";
+  if (checkName === "解除") return "{解除値}";
+  if (checkName === "操作") return "{操作値}";
+  if (checkName === "知覚") return "{知覚値}";
+  if (checkName === "交渉") return "{交渉値}";
+  if (checkName === "知識") return "{知識値}";
+  if (checkName === "解析") return "{解析値}";
+
+  return null;
+}
+
+function buildSkillCheckCommand(skill: AnyRecord): string | null {
+  const skillName = asString(skill.name);
+  const rollLabel = getRollLabel(asString(skill.roll));
+
+  if (!rollLabel) {
+    return null;
+  }
+
+  const checkParam = getCheckParamByRollLabel(rollLabel);
+
+  if (!checkParam) {
+    return null;
+  }
+
+  return `${checkParam} ${skillName}(${rollLabel})`;
+}
+
 function getValueByCharacterRank(characterRank: number, values: CrValues): number {
   if (values.cr21 !== undefined && characterRank >= 21) {
     return values.cr21;
@@ -665,6 +724,7 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
         timing,
         skillName: formatSkillName(skill),
         description: formatSkillDescription(skill),
+        checkCommand: buildSkillCheckCommand(skill),
         commands: buildSkillCommandLines(skill, hand1, hand2, characterRank),
       });
     }
@@ -777,6 +837,29 @@ function createDamageCalculator(): string {
   ].join("\n");
 }
 
+function createSkillCheckSection(skillData: SkillChatPaletteData): string {
+  const lines: string[] = [];
+  let currentTiming = "";
+
+  for (const entry of skillData.entries) {
+    if (!entry.checkCommand) {
+      continue;
+    }
+
+    if (entry.timing !== currentTiming) {
+      if (lines.length > 0) {
+        lines.push("");
+      }
+      lines.push(`● ${entry.timing}`);
+      currentTiming = entry.timing;
+    }
+
+    lines.push(entry.checkCommand);
+  }
+
+  return buildSection("○判定がある特技", lines.join("\n"));
+}
+
 function createSkillSection(
   skillData: SkillChatPaletteData,
   options: ChatPaletteOptions
@@ -797,6 +880,10 @@ function createSkillSection(
 
     if (options.includeSkillDescriptions && entry.description) {
       lines.push(entry.description);
+    }
+
+    if (entry.checkCommand) {
+      lines.push(entry.checkCommand);
     }
 
     for (const command of entry.commands) {
@@ -853,6 +940,10 @@ function createChatPalette(
 
   if (outputOptions.includeDamageCalculator) {
     sections.push(createDamageCalculator());
+  }
+
+  if (outputOptions.includeSkillChecks) {
+    sections.push(createSkillCheckSection(skillData));
   }
 
   sections.push(createSkillSection(skillData, outputOptions));
