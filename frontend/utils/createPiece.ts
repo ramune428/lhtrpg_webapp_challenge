@@ -117,6 +117,18 @@ type ReductionSkillRule = {
   ) => ReductionCommand[];
 };
 
+type DirectDamageCommand = {
+  command: string;
+  nameSuffix?: string;
+};
+
+type DirectDamageSkillRule = {
+  skillId: number;
+  skillName: string;
+  labelSuffix?: string;
+  buildCommands: (skill: AnyRecord, characterRank: number) => DirectDamageCommand[];
+};
+
 const causalityCostSkillRules: CausalityCostSkillRule[] = [
   {
     skillId: 4601,
@@ -387,6 +399,148 @@ const reductionSkillRules: ReductionSkillRule[] = [
         characterRank >= 29 ? 50 : characterRank >= 22 ? 40 : characterRank >= 15 ? 30 : characterRank >= 8 ? 20 : 10;
       return [{ command: `C(${value})` }];
     },
+  },
+];
+
+const directDamageSkillRules: DirectDamageSkillRule[] = [
+  {
+    skillId: 4603,
+    skillName: "従者召喚：ウンディーネ",
+    buildCommands: () => [{ command: "C(5)" }],
+  },
+  {
+    skillId: 4625,
+    skillName: "従者召喚：ウンディーネⅡ",
+    buildCommands: () => [{ command: "C({INT})" }],
+  },
+  {
+    skillId: 4602,
+    skillName: "従者召喚：サラマンダー",
+    buildCommands: () => [{ command: "C(5)" }],
+  },
+  {
+    skillId: 4624,
+    skillName: "従者召喚：サラマンダーⅡ",
+    buildCommands: () => [{ command: "C({INT})" }],
+  },
+  {
+    skillId: 3405,
+    skillName: "従者召喚：ワイルドボア",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank * 4})` }];
+    },
+  },
+  {
+    skillId: 3429,
+    skillName: "従者召喚：ワイルドボアⅡ",
+    buildCommands: (skill, characterRank) => {
+      const skillRank = asNumber(skill.skill_rank);
+      const multiplier = characterRank >= 21 ? 10 : 7;
+      return [{ command: `C(${skillRank * multiplier})` }];
+    },
+  },
+  {
+    skillId: 4616,
+    skillName: "エレメンタルボルト",
+    labelSuffix: "弱点起動",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank * 2 + 2})` }];
+    },
+  },
+  {
+    skillId: 4632,
+    skillName: "エレメンタルボルトⅡ",
+    labelSuffix: "弱点起動",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({STR}*${skillRank})` }];
+    },
+  },
+  {
+    skillId: 4630,
+    skillName: "トランプルコマンド",
+    labelSuffix: "弱点起動",
+    buildCommands: () => [{ command: "C({POW}+5)" }],
+  },
+  {
+    skillId: 4026,
+    skillName: "ヒルトブレイク",
+    labelSuffix: "追撃起動",
+    buildCommands: () => [{ command: "C({STR基本値})" }],
+  },
+  {
+    skillId: 4815,
+    skillName: "パルスブリット",
+    labelSuffix: "追撃起動",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank + 2})` }];
+    },
+  },
+  {
+    skillId: 4829,
+    skillName: "パルスブリットⅡ",
+    labelSuffix: "追撃起動",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C({POW}+${skillRank})` }];
+    },
+  },
+  {
+    skillId: 17,
+    skillName: "ラヴェージ",
+    buildCommands: (_skill, characterRank) => {
+      const value = characterRank >= 21 ? 30 : characterRank >= 11 ? 20 : 10;
+      return [{ command: `C(${value})` }];
+    },
+  },
+  {
+    skillId: 2816,
+    skillName: "木霊返し",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      const baseValue = skillRank * 4;
+      return [
+        { command: `C(${baseValue})` },
+        { command: `C(${baseValue + 6})`, nameSuffix: "_因果力1" },
+      ];
+    },
+  },
+  {
+    skillId: 2830,
+    skillName: "木霊返しⅡ",
+    buildCommands: (skill, characterRank) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [
+        { command: `C({DEX}*${skillRank})` },
+        { command: `C({DEX}*${skillRank}+${characterRank})`, nameSuffix: "_因果力1" },
+      ];
+    },
+  },
+  {
+    skillId: 1818,
+    skillName: "ディスタービングアタック",
+    buildCommands: () => [{ command: "C({攻撃力})" }],
+  },
+  {
+    skillId: 4029,
+    skillName: "パラードリポスト",
+    buildCommands: () => [{ command: "C({攻撃力})" }],
+  },
+  {
+    skillId: 3019,
+    skillName: "サイレントパーム",
+    buildCommands: (skill) => {
+      const skillRank = asNumber(skill.skill_rank);
+      return [{ command: `C(${skillRank * 5})` }];
+    },
+  },
+  {
+    skillId: 3031,
+    skillName: "ビートアップ",
+    buildCommands: () => [{ command: "C(5)" }],
   },
 ];
 
@@ -829,6 +983,27 @@ function buildReductionSkillCommandLines(
   });
 }
 
+function findDirectDamageSkillRule(skillId: number): DirectDamageSkillRule | undefined {
+  return directDamageSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function formatDirectDamageLabel(labelSuffix?: string): string {
+  return labelSuffix ? `直接ダメージ/${labelSuffix}` : "直接ダメージ";
+}
+
+function buildDirectDamageSkillCommandLines(
+  skill: AnyRecord,
+  characterRank: number,
+  rule: DirectDamageSkillRule
+): string[] {
+  const label = formatDirectDamageLabel(rule.labelSuffix);
+
+  return rule.buildCommands(skill, characterRank).map((directDamageCommand) => {
+    const skillName = `${rule.skillName}${directDamageCommand.nameSuffix ?? ""}`;
+    return `${directDamageCommand.command} ${skillName} ${label}`;
+  });
+}
+
 function buildCausalityCostCommandLines(
   skill: AnyRecord,
   characterRank: number,
@@ -1085,6 +1260,12 @@ function buildSkillCommandLines(
 
   if (reductionRule) {
     return buildReductionSkillCommandLines(skill, characterRank, hand1, hand2, reductionRule);
+  }
+
+  const directDamageRule = findDirectDamageSkillRule(skillId);
+
+  if (directDamageRule) {
+    return buildDirectDamageSkillCommandLines(skill, characterRank, directDamageRule);
   }
 
   const weaknessRule = findWeaknessSkillRule(skillId);
