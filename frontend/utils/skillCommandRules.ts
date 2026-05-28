@@ -638,4 +638,3 @@ export const pursuitSkillRules: PursuitSkillRule[] = [
     buildCommands: () => [{ command: "C({INT})" }],
   },
 ];
-
