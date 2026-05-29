@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 const siteName = "LHTRPG キャラクター駒作成ツール";
 const siteUrl = "https://lhtrpg-tools.com";
 const siteDescription =
-  "ログ・ホライズンTRPG（LHTRPG）向けに、CCFOLIA用のキャラクター駒作成やエネミーデータ/駒作成を支援するWebツールです。";
+  "ログ・ホライズンTRPG（LHTRPG）向けに、CCFOLIA用のキャラクター駒作成を支援するWebツールです。";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: siteName,
   title: {
-    default: `${siteName} | CCFOLIA用支援ツール`,
+    default: `${siteName} | CCFOLIA用`,
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
@@ -31,15 +31,15 @@ export const metadata: Metadata = {
     "ログ・ホライズンTRPG",
     "CCFOLIA",
     "ココフォリア",
-    "駒作成",
-    "エネミーデータ",
+    "キャラクター駒作成",
+    "キャラクター駒",
   ],
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
-    title: `${siteName} | CCFOLIA用支援ツール`,
+    title: `${siteName} | CCFOLIA用`,
     description: siteDescription,
     url: siteUrl,
     siteName,
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: `${siteName} | CCFOLIA用支援ツール`,
+    title: `${siteName} | CCFOLIA用`,
     description: siteDescription,
   },
 };
