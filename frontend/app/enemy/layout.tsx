@@ -3,14 +3,17 @@ import type { ReactNode } from "react";
 
 const enemyTitle = "LHTRPG エネミーデータ/駒作成ツール";
 const enemyDescription =
-  "ログ・ホライズンTRPG向けに、エネミーデータの作成やCCFOLIA用の駒作成を支援するWebツールです。";
+  "ログ・ホライズンTRPG向けに、エネミーデータの作成やCCFOLIA用のエネミー駒作成を支援するWebツールです。";
 
 export const metadata: Metadata = {
   title: {
-    default: enemyTitle,
+    default: `${enemyTitle} | CCFOLIA用`,
     template: `%s | ${enemyTitle}`,
   },
   description: enemyDescription,
+  alternates: {
+    canonical: "https://lhtrpg-tools.com/enemy",
+  },
   keywords: [
     "LHTRPG",
     "ログ・ホライズンTRPG",
@@ -20,7 +23,7 @@ export const metadata: Metadata = {
     "ココフォリア",
   ],
   openGraph: {
-    title: enemyTitle,
+    title: `${enemyTitle} | CCFOLIA用`,
     description: enemyDescription,
     url: "https://lhtrpg-tools.com/enemy",
     siteName: enemyTitle,
@@ -29,7 +32,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: enemyTitle,
+    title: `${enemyTitle} | CCFOLIA用`,
     description: enemyDescription,
   },
 };
