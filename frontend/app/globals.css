@@ -75,3 +75,8 @@ input[type="checkbox"]:disabled:checked {
   border-color: #d4d4d4;
   background: #d4d4d4;
 }
+
+.grid.items-stretch [class~="min-h-[640px]"],
+.grid.items-stretch [class~="min-h-[520px]"] {
+  min-height: 0 !important;
+}
