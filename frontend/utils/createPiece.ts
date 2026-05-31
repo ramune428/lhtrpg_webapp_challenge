@@ -13,12 +13,20 @@ type StatusEntry = { label: string; value: number; max: number };
 type ParamEntry = { label: string; value: string };
 type AbilityEntry = { label: string; value: string };
 type EquipmentData = { effects: string[]; hand1: AnyRecord | null; hand2: AnyRecord | null };
-type SkillEntry = { timing: string; skillName: string; description: string; checkCommand: string | null; commands: string[] };
+type SkillEntry = {
+  timing: string;
+  skillName: string;
+  description: string;
+  checkCommand: string | null;
+  commands: string[];
+  supportCommands: string[];
+};
 type SkillData = { entries: SkillEntry[]; basicActions: string };
 
 export type ChatPaletteOptions = {
   includeDamageCalculator: boolean;
   includeSkillChecks: boolean;
+  includeSkillSupportCalculations: boolean;
   includeSkillDescriptions: boolean;
   includeBasicActions: boolean;
   includeEquipmentEffects: boolean;
@@ -31,6 +39,7 @@ export type ChatPaletteOptions = {
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: true,
   includeSkillChecks: false,
+  includeSkillSupportCalculations: false,
   includeSkillDescriptions: true,
   includeBasicActions: true,
   includeEquipmentEffects: true,
@@ -41,11 +50,33 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
 };
 
 const PARAM_LABELS = [
-  "STR基本値", "DEX基本値", "POW基本値", "INT基本値",
-  "攻撃力", "魔力", "回復力", "物防", "魔防",
-  "STR", "DEX", "POW", "INT",
-  "命中値", "回避値", "抵抗値", "運動値", "耐久値", "解除値", "操作値", "知覚値", "交渉値", "知識値", "解析値",
-  "ヘイト", "因果力", "CR",
+  "STR基本値",
+  "DEX基本値",
+  "POW基本値",
+  "INT基本値",
+  "攻撃力",
+  "魔力",
+  "回復力",
+  "物防",
+  "魔防",
+  "STR",
+  "DEX",
+  "POW",
+  "INT",
+  "命中値",
+  "回避値",
+  "抵抗値",
+  "運動値",
+  "耐久値",
+  "解除値",
+  "操作値",
+  "知覚値",
+  "交渉値",
+  "知識値",
+  "解析値",
+  "ヘイト",
+  "因果力",
+  "CR",
 ] as const;
 
 function asString(value: unknown): string {
@@ -62,7 +93,9 @@ function asArray<T = unknown>(value: unknown): T[] {
 }
 
 function asRecord(value: unknown): AnyRecord | null {
-  return value !== null && value !== undefined && typeof value === "object" && !Array.isArray(value) ? (value as AnyRecord) : null;
+  return value !== null && value !== undefined && typeof value === "object" && !Array.isArray(value)
+    ? (value as AnyRecord)
+    : null;
 }
 
 function firstLine(value: unknown): string {
@@ -237,7 +270,15 @@ function createParamsData(jsonData: AnyRecord): ParamEntry[] {
 function createEquipmentData(jsonData: AnyRecord): EquipmentData {
   const hand1 = asRecord(jsonData.hand1);
   const hand2 = asRecord(jsonData.hand2);
-  const equipment = [hand1, hand2, asRecord(jsonData.armor), asRecord(jsonData.support_item1), asRecord(jsonData.support_item2), asRecord(jsonData.support_item3), asRecord(jsonData.bag)];
+  const equipment = [
+    hand1,
+    hand2,
+    asRecord(jsonData.armor),
+    asRecord(jsonData.support_item1),
+    asRecord(jsonData.support_item2),
+    asRecord(jsonData.support_item3),
+    asRecord(jsonData.bag),
+  ];
   const effects: string[] = [];
   for (const item of equipment) {
     if (!item) continue;
@@ -298,7 +339,19 @@ function rollLabel(roll: string): string | null {
 }
 
 function abilityLabelByCheckName(name: string): string | null {
-  const map: Record<string, string> = { 命中: "命中値", 回避: "回避値", 抵抗: "抵抗値", 運動: "運動値", 耐久: "耐久値", 解除: "解除値", 操作: "操作値", 知覚: "知覚値", 交渉: "交渉値", 知識: "知識値", 解析: "解析値" };
+  const map: Record<string, string> = {
+    命中: "命中値",
+    回避: "回避値",
+    抵抗: "抵抗値",
+    運動: "運動値",
+    耐久: "耐久値",
+    解除: "解除値",
+    操作: "操作値",
+    知覚: "知覚値",
+    交渉: "交渉値",
+    知識: "知識値",
+    解析: "解析値",
+  };
   return map[name] ?? null;
 }
 
@@ -319,16 +372,39 @@ function pushUnique(lines: string[], line: string): void {
   if (trimmed && !lines.includes(trimmed)) lines.push(trimmed);
 }
 
+function getRankValue(characterRank: number, values: { default: number; cr11?: number; cr16?: number; cr21?: number }): number {
+  if (values.cr21 !== undefined && characterRank >= 21) return values.cr21;
+  if (values.cr16 !== undefined && characterRank >= 16) return values.cr16;
+  if (values.cr11 !== undefined && characterRank >= 11) return values.cr11;
+  return values.default;
+}
+
+function buildCausalityCostCommand(skill: AnyRecord, characterRank: number, includeDamageIncrease: boolean): string[] {
+  const id = asNumber(skill.id);
+  const rank = asNumber(skill.skill_rank);
+  const rule = causalityCostSkillRules.find((item) => item.skillId === id);
+  const lines: string[] = [];
+
+  if (!rule) return lines;
+
+  const isDamageIncrease = asString(rule.label).includes("ダメージ増加");
+  if (isDamageIncrease !== includeDamageIncrease) return lines;
+
+  const multiplier = getRankValue(characterRank, rule.crValues);
+  for (let cost = 0; cost <= rule.maxCost; cost += 1) {
+    const label = isDamageIncrease ? `補助計算:${rule.label}` : rule.skillId === 4601 ? "弱点" : rule.label;
+    pushUnique(lines, `C((${cost}+${rank})*${multiplier}) ${rule.skillName}_消費因果力${cost} ${label}`);
+  }
+
+  return lines;
+}
+
 function buildRuleCommands(skill: AnyRecord, characterRank: number, hand1: AnyRecord | null, hand2: AnyRecord | null): string[] {
   const id = asNumber(skill.id);
   const rank = asNumber(skill.skill_rank);
   const lines: string[] = [];
-  const causalityRule = causalityCostSkillRules.find((rule) => rule.skillId === id);
-  if (causalityRule && !asString(causalityRule.label).includes("ダメージ増加")) {
-    const values = causalityRule.crValues;
-    const multiplier = values.cr21 !== undefined && characterRank >= 21 ? values.cr21 : values.cr16 !== undefined && characterRank >= 16 ? values.cr16 : values.cr11 !== undefined && characterRank >= 11 ? values.cr11 : values.default;
-    for (let cost = 0; cost <= causalityRule.maxCost; cost += 1) pushUnique(lines, `C((${cost}+${rank})*${multiplier}) ${causalityRule.skillName}_消費因果力${cost} ${causalityRule.skillId === 4601 ? "弱点" : causalityRule.label}`);
-  }
+
+  for (const line of buildCausalityCostCommand(skill, characterRank, false)) pushUnique(lines, line);
 
   const regenerationRule = regenerationSkillRules.find((rule) => rule.skillId === id);
   if (regenerationRule) pushUnique(lines, `${regenerationRule.command} ${regenerationRule.skillName} ${regenerationRule.label}`);
@@ -337,20 +413,40 @@ function buildRuleCommands(skill: AnyRecord, characterRank: number, hand1: AnyRe
   if (shieldRule) pushUnique(lines, `${shieldRule.buildCommand(skill)} ${shieldRule.skillName} ${shieldRule.label}`);
 
   const reductionRule = reductionSkillRules.find((rule) => rule.skillId === id);
-  if (reductionRule) for (const command of reductionRule.buildCommands(skill, characterRank, hand1, hand2)) pushUnique(lines, `${command.command} ${reductionRule.skillName}${command.nameSuffix ?? ""} ${reductionRule.condition ? `軽減[${reductionRule.condition}]` : "軽減"}`);
+  if (reductionRule) {
+    for (const command of reductionRule.buildCommands(skill, characterRank, hand1, hand2)) {
+      pushUnique(lines, `${command.command} ${reductionRule.skillName}${command.nameSuffix ?? ""} ${reductionRule.condition ? `軽減[${reductionRule.condition}]` : "軽減"}`);
+    }
+  }
 
   const directRule = directDamageSkillRules.find((rule) => rule.skillId === id);
-  if (directRule) for (const command of directRule.buildCommands(skill, characterRank)) pushUnique(lines, `${command.command} ${directRule.skillName}${command.nameSuffix ?? ""} ${directRule.labelSuffix ? `直接ダメージ/${directRule.labelSuffix}` : "直接ダメージ"}`);
+  if (directRule) {
+    for (const command of directRule.buildCommands(skill, characterRank)) {
+      pushUnique(lines, `${command.command} ${directRule.skillName}${command.nameSuffix ?? ""} ${directRule.labelSuffix ? `直接ダメージ/${directRule.labelSuffix}` : "直接ダメージ"}`);
+    }
+  }
 
   const pursuitRule = pursuitSkillRules.find((rule) => rule.skillId === id);
-  if (pursuitRule) for (const command of pursuitRule.buildCommands(skill, characterRank)) pushUnique(lines, `${command.command} ${pursuitRule.skillName}${command.nameSuffix ?? ""} ${command.label ?? (pursuitRule.condition ? `追撃[${pursuitRule.condition}]` : "追撃")}`);
+  if (pursuitRule) {
+    for (const command of pursuitRule.buildCommands(skill, characterRank)) {
+      pushUnique(lines, `${command.command} ${pursuitRule.skillName}${command.nameSuffix ?? ""} ${command.label ?? (pursuitRule.condition ? `追撃[${pursuitRule.condition}]` : "追撃")}`);
+    }
+  }
 
   const weaknessRule = weaknessSkillRules.find((rule) => rule.skillId === id);
-  if (weaknessRule) for (const command of weaknessRule.buildCommands(skill, characterRank)) pushUnique(lines, `${command.command} ${weaknessRule.skillName}${command.nameSuffix ?? ""} ${weaknessRule.condition ? `弱点[${weaknessRule.condition}]` : "弱点"}`);
+  if (weaknessRule) {
+    for (const command of weaknessRule.buildCommands(skill, characterRank)) {
+      pushUnique(lines, `${command.command} ${weaknessRule.skillName}${command.nameSuffix ?? ""} ${weaknessRule.condition ? `弱点[${weaknessRule.condition}]` : "弱点"}`);
+    }
+  }
 
   if (id === 2624) pushUnique(lines, `(${rank})D+${getShieldDefenseValue(hand1, hand2)} ${asString(skill.name)} 貫通ダメージ`);
   if (id === 701) pushUnique(lines, `C({STR基本値}*2) ${asString(skill.name)} 回復`);
   return lines;
+}
+
+function buildSupportCommands(skill: AnyRecord, characterRank: number): string[] {
+  return buildCausalityCostCommand(skill, characterRank, true);
 }
 
 function buildGenericCommands(skill: AnyRecord): string[] {
@@ -382,9 +478,15 @@ function buildGenericCommands(skill: AnyRecord): string[] {
   }
 
   for (const status of ["追撃", "衰弱", "再生", "障壁", "軽減", "弱点"]) {
-    for (const match of text.matchAll(new RegExp(`［${status}：([^］]+)］`, "g"))) pushUnique(lines, `${calcCommand(match[1], rank)} ${name} ${status}`);
-    for (const match of text.matchAll(new RegExp(`［${status}］[^。]*。[^。]*強度は［([^］]+)］`, "g"))) pushUnique(lines, `${calcCommand(match[1], rank)} ${name} ${status}`);
-    for (const match of text.matchAll(new RegExp(`［${status}］[^。]*。[^。]*強度は【([^】]+)】`, "g"))) pushUnique(lines, `${calcCommand(`【${match[1]}】`, rank)} ${name} ${status}`);
+    for (const match of text.matchAll(new RegExp(`［${status}：([^］]+)］`, "g"))) {
+      pushUnique(lines, `${calcCommand(match[1], rank)} ${name} ${status}`);
+    }
+    for (const match of text.matchAll(new RegExp(`［${status}］[^。]*。[^。]*強度は［([^］]+)］`, "g"))) {
+      pushUnique(lines, `${calcCommand(match[1], rank)} ${name} ${status}`);
+    }
+    for (const match of text.matchAll(new RegExp(`［${status}］[^。]*。[^。]*強度は【([^】]+)】`, "g"))) {
+      pushUnique(lines, `${calcCommand(`【${match[1]}】`, rank)} ${name} ${status}`);
+    }
   }
 
   return lines;
@@ -402,7 +504,16 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
   const characterRank = asNumber(jsonData.character_rank);
   const entries: SkillEntry[] = [];
   for (const [timing, timingSkills] of Object.entries(groupByTiming(skills))) {
-    for (const skill of timingSkills) entries.push({ timing, skillName: formatSkillName(skill), description: formatSkillDescription(skill), checkCommand: buildSkillCheckCommand(skill, abilityData), commands: buildSkillCommands(skill, characterRank, hand1, hand2) });
+    for (const skill of timingSkills) {
+      entries.push({
+        timing,
+        skillName: formatSkillName(skill),
+        description: formatSkillDescription(skill),
+        checkCommand: buildSkillCheckCommand(skill, abilityData),
+        commands: buildSkillCommands(skill, characterRank, hand1, hand2),
+        supportCommands: buildSupportCommands(skill, characterRank),
+      });
+    }
   }
   return { entries, basicActions: createBasicActions() };
 }
@@ -484,6 +595,9 @@ function createSkillSection(skillData: SkillData, options: ChatPaletteOptions): 
     lines.push(entry.skillName);
     if (options.includeSkillDescriptions && entry.description) lines.push(entry.description);
     for (const command of entry.commands) lines.push(command);
+    if (options.includeSkillSupportCalculations) {
+      for (const command of entry.supportCommands) lines.push(command);
+    }
     lines.push("");
   }
   return section("○特技", lines.join("\n"));
