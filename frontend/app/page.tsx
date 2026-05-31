@@ -13,7 +13,6 @@ import {
 } from "@/components/tool-config";
 import {
   createPieceFromJson,
-  defaultChatPaletteOptions,
   fetchCharacterJson,
   normalizeCharacterId,
   type ChatPaletteOptions,
@@ -37,7 +36,7 @@ const outputOptionItems: OutputOptionItem[] = [
   { key: "skillNames", label: "特技", alwaysOn: true },
   { key: "includeSkillDescriptions", label: "効果" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
-  { key: "includeSkillSupportCalculations", label: "補助計算" },
+  { key: "includeSkillSupportCalculations", label: "追加条件・補助計算" },
   { key: "includeBasicActions", label: "基本動作" },
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
   { key: "includeItemList", label: "所持アイテム一覧" },
@@ -61,12 +60,108 @@ function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
   };
 }
 
+const initialChatPaletteOptions = createAllOptionalOptions(true);
+
+function createChatPaletteReview(options: ChatPaletteOptions): string {
+  const sections: string[] = [];
+
+  sections.push([
+    "○戦闘の基本",
+    "{命中値} 命中値",
+    "{回避値} 回避値(ヘイトトップ時)",
+    "{回避値}+2 回避値(ヘイトアンダー時)",
+    "{抵抗値} 抵抗値(ヘイトトップ時)",
+    "{抵抗値}+2 抵抗値(ヘイトアンダー時)",
+  ].join("\n"));
+
+  if (options.includeDamageCalculator) {
+    sections.push([
+      "○被ダメージ計算用",
+      "C(0-{物防}-0) 被ダメージ=物理ダメージ-物防-軽減",
+      "C(0-{魔防}-0) 被ダメージ=魔法ダメージ-魔防-軽減",
+      "C(({HP}+{障壁})-0-{ヘイト}*0-0) 残HP=(HP+障壁)-ダメージ-ヘイトダメージ-その他",
+    ].join("\n"));
+  }
+
+  if (options.includeSkillChecks) {
+    sections.push([
+      "○判定がある特技",
+      "● メジャー",
+      "{命中値} ブラッディピアッシング(命中/回避)",
+      "3D+2+1D ブラッドレター(命中+1D/回避)",
+    ].join("\n"));
+  }
+
+  const skillLines = ["○特技", "● メジャー", "《ステルスブレイド》 [武器攻撃]"];
+  if (options.includeSkillDescriptions) {
+    skillLines.push("SR:3/5 タイミング:メジャー 判定:対決(命中/回避) 対象:単体 射程:武器 コスト:本文 制限:- 効果:対象に［【攻撃力】＋３Ｄ］の物理ダメージを与える。ヘイトアンダー時、ダメージロールに＋［ＳＲ×４］する。");
+  }
+  skillLines.push("{攻撃力}+3D ステルスブレイド 物理ダメージ");
+  if (options.includeSkillSupportCalculations) {
+    skillLines.push("{攻撃力}+3D+C(3*4) ステルスブレイド_ヘイトアンダー 物理ダメージ");
+    skillLines.push("C((1+2)*7) アサシネイト_消費因果力1 ダメージ増加");
+  }
+  sections.push(skillLines.join("\n"));
+
+  if (options.includeBasicActions) {
+    sections.push([
+      "○基本動作",
+      "《基本武器攻撃》 [基本動作] [武器攻撃] ...",
+      "{攻撃力}+1D 基本武器攻撃",
+    ].join("\n"));
+  }
+
+  if (options.includeEquipmentEffects) {
+    sections.push([
+      "○装備アイテム効果",
+      "装備名 ネームド効果: 効果文の1行目を表示",
+    ].join("\n"));
+  }
+
+  if (options.includeItemList) {
+    sections.push([
+      "○所持アイテム一覧",
+      "アイテム名 [タグ] 効果:効果文の1行目を表示",
+    ].join("\n"));
+  }
+
+  if (options.includeAbilityChecks) {
+    sections.push([
+      "○各種判定",
+      "{運動値} 運動値",
+      "{耐久値} 耐久値",
+      "{解析値} 解析値",
+    ].join("\n"));
+  }
+
+  if (options.includeConsumeTables) {
+    sections.push([
+      "○消耗表",
+      "PCT{CR}+0 体力消耗表",
+      "ECT{CR}+0 気力消耗表",
+      "GCT{CR}+0 物品消耗表",
+      "CCT{CR}+0 金銭消耗表",
+    ].join("\n"));
+  }
+
+  if (options.includeTreasureTables) {
+    sections.push([
+      "○財宝表",
+      "CTRS{CR}+0 金銭財宝表",
+      "MTRS{CR}+0 魔法素材財宝表",
+      "ITRS{CR}+0 換金アイテム財宝表",
+    ].join("\n"));
+  }
+
+  return sections.join("\n\n");
+}
+
 export default function HomePage() {
   const [inputValue, setInputValue] = useState("");
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [options, setOptions] = useState<ChatPaletteOptions>(defaultChatPaletteOptions);
+  const [options, setOptions] = useState<ChatPaletteOptions>(initialChatPaletteOptions);
   const [lastJsonData, setLastJsonData] = useState<unknown | null>(null);
   const [lastCharacterId, setLastCharacterId] = useState("");
 
@@ -284,36 +379,48 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-2">
-              {outputOptionItems.map((item) => {
-                const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+              <div className="grid content-start gap-2">
+                {outputOptionItems.map((item) => {
+                  const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
 
-                return (
-                  <label
-                    key={item.key}
-                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
-                      item.alwaysOn
-                        ? "border-neutral-200 bg-neutral-100 text-neutral-500"
-                        : "border-neutral-300 bg-white text-neutral-800"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={item.alwaysOn}
-                        onChange={(event) => {
-                          if (!item.alwaysOn) {
-                            updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
-                          }
-                        }}
-                      />
-                      {item.label}
-                    </span>
-                    {item.alwaysOn && <span className="text-xs">常に出力</span>}
-                  </label>
-                );
-              })}
+                  return (
+                    <label
+                      key={item.key}
+                      className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                        item.alwaysOn
+                          ? "border-neutral-200 bg-neutral-100 text-neutral-500"
+                          : "border-neutral-300 bg-white text-neutral-800"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={item.alwaysOn}
+                          onChange={(event) => {
+                            if (!item.alwaysOn) {
+                              updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
+                            }
+                          }}
+                        />
+                        {item.label}
+                      </span>
+                      {item.alwaysOn && <span className="text-xs">常に出力</span>}
+                    </label>
+                  );
+                })}
+              </div>
+
+              <div className="rounded-2xl border border-neutral-300 bg-white p-4">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
+                  <span className="text-xs text-neutral-500">出力イメージ</span>
+                </div>
+                <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
+                  {createChatPaletteReview(options)}
+                </pre>
+              </div>
             </div>
           </section>
 
