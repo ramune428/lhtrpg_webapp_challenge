@@ -20,27 +20,10 @@ import type {
 
 type AnyRecord = Record<string, unknown>;
 
-type StatusEntry = {
-  label: string;
-  value: number;
-  max: number;
-};
-
-type ParamEntry = {
-  label: string;
-  value: string;
-};
-
-type AbilityEntry = {
-  label: string;
-  value: string;
-};
-
-type EquipmentData = {
-  effects: string[];
-  hand1: AnyRecord | null;
-  hand2: AnyRecord | null;
-};
+type StatusEntry = { label: string; value: number; max: number };
+type ParamEntry = { label: string; value: string };
+type AbilityEntry = { label: string; value: string };
+type EquipmentData = { effects: string[]; hand1: AnyRecord | null; hand2: AnyRecord | null };
 
 type SkillChatPaletteEntry = {
   timing: string;
@@ -69,7 +52,7 @@ export type ChatPaletteOptions = {
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: true,
-  includeSkillChecks: true,
+  includeSkillChecks: false,
   includeSkillDescriptions: true,
   includeBasicActions: true,
   includeEquipmentEffects: true,
@@ -79,11 +62,38 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeTreasureTables: true,
 };
 
+const PARAM_LABELS = [
+  "攻撃力",
+  "魔力",
+  "回復力",
+  "物防",
+  "魔防",
+  "STR基本値",
+  "DEX基本値",
+  "POW基本値",
+  "INT基本値",
+  "STR",
+  "DEX",
+  "POW",
+  "INT",
+  "命中値",
+  "回避値",
+  "抵抗値",
+  "運動値",
+  "耐久値",
+  "解除値",
+  "操作値",
+  "知覚値",
+  "交渉値",
+  "知識値",
+  "解析値",
+  "ヘイト",
+  "因果力",
+  "CR",
+] as const;
 
 function asString(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
+  if (value === null || value === undefined) return "";
   return String(value);
 }
 
@@ -97,14 +107,8 @@ function asArray<T = unknown>(value: unknown): T[] {
 }
 
 function asRecord(value: unknown): AnyRecord | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "object" || Array.isArray(value)) return null;
   return value as AnyRecord;
 }
 
@@ -112,56 +116,107 @@ function firstLine(value: unknown): string {
   return asString(value).split("\n")[0] ?? "";
 }
 
-function formatCharacterTags(values: unknown): string {
-  const tags = asArray(values)
-    .map((item) => asString(item))
-    .filter(Boolean);
+function fullWidthDigitsToHalfWidth(value: string): string {
+  return value.replace(/[０-９]/g, (char) => String(char.charCodeAt(0) - 0xff10));
+}
 
-  if (tags.length === 0) {
-    return "";
+function normalizeMathText(value: string): string {
+  return fullWidthDigitsToHalfWidth(value)
+    .replace(/[［【]/g, "")
+    .replace(/[］】]/g, "")
+    .replace(/（/g, "(")
+    .replace(/）/g, ")")
+    .replace(/＋/g, "+")
+    .replace(/－/g, "-")
+    .replace(/[×ｘ]/g, "*")
+    .replace(/Ｄ/g, "D")
+    .replace(/ＳＲ/g, "SR")
+    .replace(/ＣＲ/g, "CR")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function stripOuterParentheses(value: string): string {
+  let result = value;
+  while (result.startsWith("(") && result.endsWith(")")) {
+    let depth = 0;
+    let enclosesAll = true;
+    for (let i = 0; i < result.length; i += 1) {
+      const char = result[i];
+      if (char === "(") depth += 1;
+      if (char === ")") depth -= 1;
+      if (depth === 0 && i < result.length - 1) {
+        enclosesAll = false;
+        break;
+      }
+    }
+    if (!enclosesAll) break;
+    result = result.slice(1, -1);
+  }
+  return result;
+}
+
+function normalizeFormula(rawFormula: string, skillRank: number): string {
+  let expression = stripOuterParentheses(normalizeMathText(rawFormula));
+
+  expression = expression
+    .replace(/SR/g, String(skillRank))
+    .replace(/CR/g, "{CR}")
+    .replace(/消費した因果力/g, "因果力")
+    .replace(/あなたの/g, "")
+    .replace(/対象の/g, "")
+    .replace(/([+\-*\/])?0D/g, "")
+    .replace(/^\+/, "");
+
+  for (const label of PARAM_LABELS) {
+    expression = expression.replaceAll(label, `{${label}}`);
   }
 
-  return `タグ：${tags.map((tag) => `[${tag}]`).join(" ")}`;
+  return expression;
+}
+
+function formatCalcCommand(rawFormula: string, skillRank: number): string {
+  let expression = normalizeFormula(rawFormula, skillRank);
+  if (!expression) return "";
+  expression = expression
+    .replace(/\((\d+)\+(\d+)\)D/g, (_match, left: string, right: string) => `${Number(left) + Number(right)}D`)
+    .replace(/\((\d+)\*(\d+)\)D/g, (_match, left: string, right: string) => `${Number(left) * Number(right)}D`)
+    .replace(/\((\d+)\)D/g, "$1D")
+    .replace(/^({[^}]+})\+(\d+D)$/, "$2+$1");
+
+  if (expression.includes("D")) {
+    return expression;
+  }
+  return `C(${expression})`;
+}
+
+function formatCharacterTags(values: unknown): string {
+  const tags = asArray(values).map((item) => asString(item)).filter(Boolean);
+  return tags.length === 0 ? "" : `タグ：${tags.map((tag) => `[${tag}]`).join(" ")}`;
 }
 
 function convertCheckDiceToLH(value: string): string {
-  return value
-    .replace(/D/g, "LH")
-    .replace(/^(\d+)\+(\d+LH.*)$/, "$2+$1");
+  return value.replace(/D/g, "LH").replace(/^(\d+)\+(\d+LH.*)$/, "$2+$1");
 }
 
-function mergeChatPaletteOptions(
-  options: Partial<ChatPaletteOptions> = {}
-): ChatPaletteOptions {
-  return {
-    ...defaultChatPaletteOptions,
-    ...options,
-  };
+function mergeChatPaletteOptions(options: Partial<ChatPaletteOptions> = {}): ChatPaletteOptions {
+  return { ...defaultChatPaletteOptions, ...options };
 }
 
 export function normalizeCharacterId(input: string): string {
   const trimmed = input.trim();
-
-  if (!trimmed) {
-    return "";
-  }
+  if (!trimmed) return "";
 
   try {
     const url = new URL(trimmed);
     const idFromQuery = url.searchParams.get("id");
-
-    if (idFromQuery) {
-      return idFromQuery;
-    }
+    if (idFromQuery) return idFromQuery;
 
     const sheetMatch = url.pathname.match(/sheets\/(\d+)/);
-    if (sheetMatch) {
-      return sheetMatch[1];
-    }
+    if (sheetMatch) return sheetMatch[1];
 
     const segments = url.pathname.split("/").filter(Boolean);
-    const lastSegment = segments[segments.length - 1] ?? "";
-    return lastSegment.replace(/\.html$/, "");
+    return (segments[segments.length - 1] ?? "").replace(/\.html$/, "");
   } catch {
     return trimmed;
   }
@@ -169,22 +224,18 @@ export function normalizeCharacterId(input: string): string {
 
 function validateCharacterId(characterId: string): string {
   const normalizedCharacterId = normalizeCharacterId(characterId);
-
   if (!/^\d+$/.test(normalizedCharacterId)) {
     throw new Error("キャラクターURLまたはキャラクターIDを入力してください。");
   }
-
   return normalizedCharacterId;
 }
 
 export async function fetchCharacterJson(characterId: string): Promise<unknown> {
   const normalizedCharacterId = validateCharacterId(characterId);
   const response = await fetch(`https://lhrpg.com/lhz/api/${normalizedCharacterId}.json`);
-
   if (!response.ok) {
     throw new Error(`キャラクターJSONの取得に失敗しました。status=${response.status}`);
   }
-
   return response.json();
 }
 
@@ -199,10 +250,7 @@ function createCharacterData(jsonData: AnyRecord, characterId: string) {
     name: characterName,
     initiative,
     externalUrl: url,
-    memo:
-      memo === null || memo === undefined
-        ? characterTags
-        : `${characterTags} \n ${asString(memo).replace(/\r\n/g, "\n")}`,
+    memo: memo === null || memo === undefined ? characterTags : `${characterTags} \n ${asString(memo).replace(/\r\n/g, "\n")}`,
   };
 }
 
@@ -221,10 +269,7 @@ function createStatusData(jsonData: AnyRecord): StatusEntry[] {
 }
 
 function createParamsData(jsonData: AnyRecord): ParamEntry[] {
-  const abilityParams = createAbilityData(jsonData).map((ability) => ({
-    label: ability.label,
-    value: ability.value,
-  }));
+  const abilityParams = createAbilityData(jsonData).map((ability) => ({ label: ability.label, value: ability.value }));
 
   return [
     { label: "CR", value: asString(jsonData.character_rank) },
@@ -260,17 +305,11 @@ function createEquipmentData(jsonData: AnyRecord): EquipmentData {
   const effects: string[] = [];
 
   for (const item of equipment) {
-    if (!item) {
-      continue;
-    }
-
+    if (!item) continue;
     const tags = asArray(item.tags).map((tag) => asString(tag));
-    if (!tags.some((tag) => tag.includes("M"))) {
-      continue;
-    }
+    if (!tags.some((tag) => tag.includes("M"))) continue;
 
     const alias = asString(item.alias || item.name);
-
     if (item.prefix_function) {
       effects.push(`${alias} プレフィックスド効果: ${firstLine(item.prefix_function)}`);
     } else {
@@ -283,34 +322,20 @@ function createEquipmentData(jsonData: AnyRecord): EquipmentData {
 
 function groupTiming(skillsArray: AnyRecord[]): Record<string, AnyRecord[]> {
   const result: Record<string, AnyRecord[]> = {};
-
   for (const skill of skillsArray) {
     const timing = asString(skill.timing || "未分類");
-
-    if (result[timing]) {
-      result[timing].push(skill);
-    } else {
-      result[timing] = [skill];
-    }
+    result[timing] = [...(result[timing] ?? []), skill];
   }
-
   return result;
 }
 
 function formatSkillName(skill: AnyRecord): string {
-  const tags = asArray(skill.tags)
-    .map((tag) => `[${asString(tag)}]`)
-    .join(" ");
-
-  return [`《${asString(skill.name)}》`, tags]
-    .filter(Boolean)
-    .join(" ");
+  const tags = asArray(skill.tags).map((tag) => `[${asString(tag)}]`).join(" ");
+  return [`《${asString(skill.name)}》`, tags].filter(Boolean).join(" ");
 }
 
 function formatSkillDescription(skill: AnyRecord): string {
-  const tags = asArray(skill.tags)
-    .map((tag) => `[${asString(tag)}]`)
-    .join(" ");
+  const tags = asArray(skill.tags).map((tag) => `[${asString(tag)}]`).join(" ");
   const baseText = [
     `SR:${asString(skill.skill_rank)}/${asString(skill.skill_max_rank)}`,
     `タイミング:${asString(skill.timing)}`,
@@ -320,40 +345,22 @@ function formatSkillDescription(skill: AnyRecord): string {
     `コスト:${asString(skill.cost)}`,
     `制限:${asString(skill.limit)}`,
     tags,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  ].filter(Boolean).join(" ");
   const effectText = asString(skill.function);
-
   return effectText ? `${baseText} 効果:${effectText}` : baseText;
 }
 
 function normalizeRollText(roll: string): string {
-  return roll
-    .replace(/^判定[:：]/, "")
-    .replace(/（/g, "(")
-    .replace(/）/g, ")")
-    .replace(/／/g, "/")
-    .replace(/\s+/g, "")
-    .trim();
+  return roll.replace(/^判定[:：]/, "").replace(/（/g, "(").replace(/）/g, ")").replace(/／/g, "/").replace(/\s+/g, "").trim();
 }
 
 function getRollLabel(roll: string): string | null {
-  const normalizedRoll = normalizeRollText(roll);
-  const matchedRoll = normalizedRoll.match(/^(?:対決|基本)\(([^)]+)\)$/);
-
-  if (!matchedRoll) {
-    return null;
-  }
-
-  return matchedRoll[1];
+  const matchedRoll = normalizeRollText(roll).match(/^(?:対決|基本)\(([^)]+)\)$/);
+  return matchedRoll ? matchedRoll[1] : null;
 }
 
 function normalizeCheckBonus(value: string, skillRank: number): string {
-  return value
-    .replace(/SR/g, String(skillRank))
-    .replace(/ＳＲ/g, String(skillRank))
-    .replace(/Ｄ/g, "D");
+  return fullWidthDigitsToHalfWidth(value).replace(/SR/g, String(skillRank)).replace(/ＳＲ/g, String(skillRank)).replace(/Ｄ/g, "D");
 }
 
 function getAbilityLabelByCheckName(checkName: string): string | null {
@@ -368,85 +375,40 @@ function getAbilityLabelByCheckName(checkName: string): string | null {
   if (checkName === "交渉") return "交渉値";
   if (checkName === "知識") return "知識値";
   if (checkName === "解析") return "解析値";
-
   return null;
 }
 
 function getAbilityDiceExpression(abilityData: AbilityEntry[], abilityLabel: string): string | null {
-  const abilityValue = abilityData.find((ability) => ability.label === abilityLabel)?.value;
-
-  if (!abilityValue) {
-    return null;
-  }
-
-  return abilityValue.replace(/LH/g, "D");
+  return abilityData.find((ability) => ability.label === abilityLabel)?.value.replace(/LH/g, "D") ?? null;
 }
 
-function getCheckExpressionByRollLabel(
-  rollLabel: string,
-  skillRank: number,
-  abilityData: AbilityEntry[]
-): string | null {
+function getCheckExpressionByRollLabel(rollLabel: string, skillRank: number, abilityData: AbilityEntry[]): string | null {
   const checkText = rollLabel.split("/")[0]?.trim() ?? "";
-  const matchedCheck = checkText.match(
-    /^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/
-  );
+  const matchedCheck = checkText.match(/^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/);
+  if (!matchedCheck) return null;
 
-  if (!matchedCheck) {
-    return null;
-  }
-
-  const checkName = matchedCheck[1];
-  const abilityLabel = getAbilityLabelByCheckName(checkName);
-
-  if (!abilityLabel) {
-    return null;
-  }
+  const abilityLabel = getAbilityLabelByCheckName(matchedCheck[1]);
+  if (!abilityLabel) return null;
 
   const bonus = normalizeCheckBonus(matchedCheck[2] ?? "", skillRank);
-
   if (bonus.includes("D")) {
-    const diceExpression = getAbilityDiceExpression(abilityData, abilityLabel);
-    return `${diceExpression ?? `{${abilityLabel}}`}${bonus}`;
+    return `${getAbilityDiceExpression(abilityData, abilityLabel) ?? `{${abilityLabel}}`}${bonus}`;
   }
-
   return `{${abilityLabel}}${bonus}`;
 }
 
-function buildSkillCheckCommand(
-  skill: AnyRecord,
-  abilityData: AbilityEntry[]
-): string | null {
-  const skillName = asString(skill.name);
-  const skillRank = asNumber(skill.skill_rank);
+function buildSkillCheckCommand(skill: AnyRecord, abilityData: AbilityEntry[]): string | null {
   const rollLabel = getRollLabel(asString(skill.roll));
+  if (!rollLabel) return null;
 
-  if (!rollLabel) {
-    return null;
-  }
-
-  const checkExpression = getCheckExpressionByRollLabel(rollLabel, skillRank, abilityData);
-
-  if (!checkExpression) {
-    return null;
-  }
-
-  return `${checkExpression} ${skillName}(${rollLabel})`;
+  const checkExpression = getCheckExpressionByRollLabel(rollLabel, asNumber(skill.skill_rank), abilityData);
+  return checkExpression ? `${checkExpression} ${asString(skill.name)}(${rollLabel})` : null;
 }
 
 function getValueByCharacterRank(characterRank: number, values: CrValues): number {
-  if (values.cr21 !== undefined && characterRank >= 21) {
-    return values.cr21;
-  }
-
-  if (values.cr16 !== undefined && characterRank >= 16) {
-    return values.cr16;
-  }
-
-  if (values.cr11 !== undefined && characterRank >= 11) {
-    return values.cr11;
-  }
-
+  if (values.cr21 !== undefined && characterRank >= 21) return values.cr21;
+  if (values.cr16 !== undefined && characterRank >= 16) return values.cr16;
+  if (values.cr11 !== undefined && characterRank >= 11) return values.cr11;
   return values.default;
 }
 
@@ -458,50 +420,67 @@ function findRegenerationSkillRule(skillId: number): RegenerationSkillRule | und
   return regenerationSkillRules.find((rule) => rule.skillId === skillId);
 }
 
-function buildRegenerationSkillCommandLines(rule: RegenerationSkillRule): string[] {
-  return [`${rule.command} ${rule.skillName} ${rule.label}`.trim()];
-}
-
 function findShieldSkillRule(skillId: number): ShieldSkillRule | undefined {
   return shieldSkillRules.find((rule) => rule.skillId === skillId);
-}
-
-function buildShieldSkillCommandLines(
-  skill: AnyRecord,
-  rule: ShieldSkillRule
-): string[] {
-  return [
-    `${rule.buildCommand(skill)} ${rule.skillName} ${rule.label}`.trim(),
-  ];
 }
 
 function findWeaknessSkillRule(skillId: number): WeaknessSkillRule | undefined {
   return weaknessSkillRules.find((rule) => rule.skillId === skillId);
 }
 
-function formatWeaknessLabel(condition: string): string {
-  return condition ? `弱点[${condition}]` : "弱点";
-}
-
-function buildWeaknessSkillCommandLines(
-  skill: AnyRecord,
-  characterRank: number,
-  rule: WeaknessSkillRule
-): string[] {
-  const label = formatWeaknessLabel(rule.condition);
-
-  return rule.buildCommands(skill, characterRank).map((weaknessCommand) => {
-    const skillName = `${rule.skillName}${weaknessCommand.nameSuffix ?? ""}`;
-    return `${weaknessCommand.command} ${skillName} ${label}`;
-  });
-}
-
 function findReductionSkillRule(skillId: number): ReductionSkillRule | undefined {
   return reductionSkillRules.find((rule) => rule.skillId === skillId);
 }
 
-function formatReductionLabel(condition: string): string {
-  return condition ? `軽減[${condition}]` : "軽減";
+function findDirectDamageSkillRule(skillId: number): DirectDamageSkillRule | undefined {
+  return directDamageSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function findPursuitSkillRule(skillId: number): PursuitSkillRule | undefined {
+  return pursuitSkillRules.find((rule) => rule.skillId === skillId);
+}
+
+function getShieldDefenseValue(hand1: AnyRecord | null, hand2: AnyRecord | null): number {
+  const shieldsDefense: number[] = [];
+  for (const hand of [hand1, hand2]) {
+    if (!hand) continue;
+    const tags = asArray(hand.tags).map((tag) => asString(tag));
+    if (tags.includes("盾")) shieldsDefense.push(asNumber(hand.physical_defense));
+  }
+  return shieldsDefense.length > 0 ? Math.max(...shieldsDefense) : 0;
+}
+
+function pushUnique(lines: string[], line: string): void {
+  const trimmed = line.trim();
+  if (trimmed && !lines.includes(trimmed)) lines.push(trimmed);
+}
+
+function buildCausalityCostCommandLines(skill: AnyRecord, characterRank: number, rule: CausalityCostSkillRule): string[] {
+  if (rule.label.includes("ダメージ増加")) {
+    return [];
+  }
+
+  const skillRank = asNumber(skill.skill_rank);
+  const multiplier = getValueByCharacterRank(characterRank, rule.crValues);
+  const suffix = rule.skillId === 4601 ? " 弱点" : ` ${rule.label}`;
+  const lines: string[] = [];
+  for (let cost = 0; cost <= rule.maxCost; cost += 1) {
+    lines.push(`C((${cost}+${skillRank})*${multiplier}) ${rule.skillName}_消費因果力${cost}${suffix}`);
+  }
+  return lines;
+}
+
+function buildRegenerationSkillCommandLines(rule: RegenerationSkillRule): string[] {
+  return [`${rule.command} ${rule.skillName} ${rule.label}`.trim()];
+}
+
+function buildShieldSkillCommandLines(skill: AnyRecord, rule: ShieldSkillRule): string[] {
+  return [`${rule.buildCommand(skill)} ${rule.skillName} ${rule.label}`.trim()];
+}
+
+function buildWeaknessSkillCommandLines(skill: AnyRecord, characterRank: number, rule: WeaknessSkillRule): string[] {
+  const label = rule.condition ? `弱点[${rule.condition}]` : "弱点";
+  return rule.buildCommands(skill, characterRank).map((command) => `${command.command} ${rule.skillName}${command.nameSuffix ?? ""} ${label}`);
 }
 
 function buildReductionSkillCommandLines(
@@ -511,280 +490,106 @@ function buildReductionSkillCommandLines(
   hand2: AnyRecord | null,
   rule: ReductionSkillRule
 ): string[] {
-  const label = formatReductionLabel(rule.condition);
-
-  return rule.buildCommands(skill, characterRank, hand1, hand2).map((reductionCommand) => {
-    const skillName = `${rule.skillName}${reductionCommand.nameSuffix ?? ""}`;
-    return `${reductionCommand.command} ${skillName} ${label}`;
-  });
+  const label = rule.condition ? `軽減[${rule.condition}]` : "軽減";
+  return rule.buildCommands(skill, characterRank, hand1, hand2).map((command) => `${command.command} ${rule.skillName}${command.nameSuffix ?? ""} ${label}`);
 }
 
-function findDirectDamageSkillRule(skillId: number): DirectDamageSkillRule | undefined {
-  return directDamageSkillRules.find((rule) => rule.skillId === skillId);
+function buildDirectDamageSkillCommandLines(skill: AnyRecord, characterRank: number, rule: DirectDamageSkillRule): string[] {
+  const label = rule.labelSuffix ? `直接ダメージ/${rule.labelSuffix}` : "直接ダメージ";
+  return rule.buildCommands(skill, characterRank).map((command) => `${command.command} ${rule.skillName}${command.nameSuffix ?? ""} ${label}`);
 }
 
-function formatDirectDamageLabel(labelSuffix?: string): string {
-  return labelSuffix ? `直接ダメージ/${labelSuffix}` : "直接ダメージ";
+function buildPursuitSkillCommandLines(skill: AnyRecord, characterRank: number, rule: PursuitSkillRule): string[] {
+  const defaultLabel = rule.condition ? `追撃[${rule.condition}]` : "追撃";
+  return rule.buildCommands(skill, characterRank).map((command) => `${command.command} ${rule.skillName}${command.nameSuffix ?? ""} ${command.label ?? defaultLabel}`);
 }
 
-function buildDirectDamageSkillCommandLines(
-  skill: AnyRecord,
-  characterRank: number,
-  rule: DirectDamageSkillRule
-): string[] {
-  const label = formatDirectDamageLabel(rule.labelSuffix);
+function extractFirstBracketFormulaBefore(text: string, suffix: string): string | null {
+  const endIndex = text.indexOf(suffix);
+  if (endIndex < 0) return null;
 
-  return rule.buildCommands(skill, characterRank).map((directDamageCommand) => {
-    const skillName = `${rule.skillName}${directDamageCommand.nameSuffix ?? ""}`;
-    return `${directDamageCommand.command} ${skillName} ${label}`;
-  });
+  const beforeSuffix = text.slice(0, endIndex);
+  const startIndex = Math.max(beforeSuffix.lastIndexOf("［"), beforeSuffix.lastIndexOf("【"));
+  if (startIndex < 0) return null;
+
+  return text.slice(startIndex + 1, endIndex);
 }
 
-function findPursuitSkillRule(skillId: number): PursuitSkillRule | undefined {
-  return pursuitSkillRules.find((rule) => rule.skillId === skillId);
-}
-
-function formatPursuitLabel(condition: string): string {
-  return condition ? `追撃[${condition}]` : "追撃";
-}
-
-function buildPursuitSkillCommandLines(
-  skill: AnyRecord,
-  characterRank: number,
-  rule: PursuitSkillRule
-): string[] {
-  const defaultLabel = formatPursuitLabel(rule.condition);
-
-  return rule.buildCommands(skill, characterRank).map((pursuitCommand) => {
-    const skillName = `${rule.skillName}${pursuitCommand.nameSuffix ?? ""}`;
-    const label = pursuitCommand.label ?? defaultLabel;
-    return `${pursuitCommand.command} ${skillName} ${label}`;
-  });
-}
-
-function buildCausalityCostCommandLines(
-  skill: AnyRecord,
-  characterRank: number,
-  rule: CausalityCostSkillRule
-): string[] {
+function buildDamageOrHealCommands(skill: AnyRecord): string[] {
+  const skillName = asString(skill.name);
+  const functionText = asString(skill.function);
   const skillRank = asNumber(skill.skill_rank);
-  const multiplier = getValueByCharacterRank(characterRank, rule.crValues);
   const lines: string[] = [];
-  const suffix = rule.skillId === 4601 ? " 弱点" : "";
 
-  for (let cost = 0; cost <= rule.maxCost; cost += 1) {
-    lines.push(
-      `C((${cost}+${skillRank})*${multiplier}) ${rule.skillName}_消費因果力${cost}${suffix}`
-    );
+  const damageMatch = functionText.match(/［([^］]+)］の(物理|魔法|貫通)(?:または魔法)?ダメージ/);
+  if (damageMatch) {
+    pushUnique(lines, `${formatCalcCommand(damageMatch[1], skillRank)} ${skillName} ${damageMatch[2]}ダメージ`);
+  }
+
+  const healBracketFormula = extractFirstBracketFormulaBefore(functionText, "］点回復");
+  if (healBracketFormula) {
+    pushUnique(lines, `${formatCalcCommand(healBracketFormula, skillRank)} ${skillName} 回復`);
+  }
+
+  const healUntilFormula = extractFirstBracketFormulaBefore(functionText, "］点まで回復");
+  if (healUntilFormula) {
+    pushUnique(lines, `${formatCalcCommand(healUntilFormula, skillRank)} ${skillName} 回復`);
+  }
+
+  const simpleHealMatch = functionText.match(/【([^】]+)】点回復/);
+  if (simpleHealMatch) {
+    pushUnique(lines, `${formatCalcCommand(`【${simpleHealMatch[1]}】`, skillRank)} ${skillName} 回復`);
+  }
+
+  const directPatterns = [
+    /［([^］]+)］点の直接ダメージ/g,
+    /【([^】]+)】点の直接ダメージ/g,
+    /([0-9０-９]+)点の直接ダメージ/g,
+  ];
+
+  for (const pattern of directPatterns) {
+    for (const match of functionText.matchAll(pattern)) {
+      const formula = pattern.source.startsWith("【") ? `【${match[1]}】` : match[1];
+      pushUnique(lines, `${formatCalcCommand(formula, skillRank)} ${skillName} 直接ダメージ`);
+    }
   }
 
   return lines;
 }
 
-function getShieldDefenseValue(hand1: AnyRecord | null, hand2: AnyRecord | null): number {
-  const shieldsDefense: number[] = [];
-
-  for (const hand of [hand1, hand2]) {
-    if (!hand) {
-      continue;
-    }
-
-    const tags = asArray(hand.tags).map((tag) => asString(tag));
-    if (tags.includes("盾")) {
-      shieldsDefense.push(asNumber(hand.physical_defense));
-    }
-  }
-
-  return shieldsDefense.length > 0 ? Math.max(...shieldsDefense) : 0;
-}
-
-function createSkillCommandBuilder(skill: AnyRecord, hand1: AnyRecord | null, hand2: AnyRecord | null) {
-  const diceType = {
-    type0: ["０Ｄ", "１Ｄ", "２Ｄ", "３Ｄ", "４Ｄ", "５Ｄ", "６Ｄ", "７Ｄ", "８Ｄ"],
-    type1: [
-      "（ＳＲ）Ｄ",
-      "（ＳＲ＋１）Ｄ",
-      "（ＳＲ＋２）Ｄ",
-      "（ＳＲ＋３）Ｄ",
-      "（ＳＲ＋４）Ｄ",
-      "（ＳＲ＋５）Ｄ",
-      "（ＳＲ＋６）Ｄ",
-    ],
-    type2: [
-      "（ＳＲ×０）Ｄ",
-      "（ＳＲ×１）Ｄ",
-      "（ＳＲ×２）Ｄ",
-      "（ＳＲ×３）Ｄ",
-      "（ＳＲ×４）Ｄ",
-      "（ＳＲ×５）Ｄ",
-      "（ＳＲ×６）Ｄ",
-    ],
-    type3: ["ＳＲ×０", "ＳＲ×１", "ＳＲ×２", "ＳＲ×３", "ＳＲ×４", "ＳＲ×５", "ＳＲ×６"],
-    type4: ["×０", "×１", "×２", "×３", "×４", "×５", "×６"],
-    type5: ["５", "７", "１０"],
-  };
-  const actionList = ["攻撃力", "魔力", "回復力"];
-  const abilityList = [
-    "STR基本値",
-    "DEX基本値",
-    "POW基本値",
-    "INT基本値",
-    "STR",
-    "DEX",
-    "POW",
-    "INT",
-  ];
-  const shieldDefenseValue = getShieldDefenseValue(hand1, hand2);
-  const skillId = asNumber(skill.id);
+function buildGenericStatusCommands(skill: AnyRecord): string[] {
+  const skillName = asString(skill.name);
+  const functionText = asString(skill.function);
   const skillRank = asNumber(skill.skill_rank);
+  const lines: string[] = [];
 
-  function createDice(diceCheck: string): string {
-    let diceValue = "";
+  const statusLabelMap: Record<string, string> = {
+    追撃: "追撃",
+    衰弱: "衰弱",
+    再生: "再生",
+    障壁: "障壁",
+    軽減: "軽減",
+    弱点: "弱点",
+  };
 
-    for (const [diceTypeKey, diceTypeList] of Object.entries(diceType)) {
-      for (let index = 0; index < diceTypeList.length; index += 1) {
-        const dice = diceTypeList[index];
-
-        if (!diceCheck.includes(dice)) {
-          continue;
-        }
-
-        if (diceTypeKey === "type0") {
-          diceValue = `(${index})D`;
-        } else if (diceTypeKey === "type1") {
-          diceValue = `(${skillRank + index})D`;
-        } else if (diceTypeKey === "type2") {
-          diceValue = `(${skillRank * index})D`;
-        } else if (diceTypeKey === "type3") {
-          diceValue = `(${skillRank * index})`;
-        }
-
-        for (const actionValue of actionList) {
-          if (diceCheck.includes(actionValue)) {
-            diceValue += `+{${actionValue}}`;
-          }
-        }
-
-        for (const abilityValue of abilityList) {
-          if (diceCheck.includes(abilityValue)) {
-            diceValue += `+{${abilityValue}}`;
-          }
-        }
-
-        return diceValue;
-      }
+  for (const [statusName, label] of Object.entries(statusLabelMap)) {
+    const colonPattern = new RegExp(`［${statusName}：([^］]+)］`, "g");
+    for (const match of functionText.matchAll(colonPattern)) {
+      pushUnique(lines, `${formatCalcCommand(match[1], skillRank)} ${skillName} ${label}`);
     }
 
-    diceValue = "C(";
-    for (const actionValue of actionList) {
-      if (diceCheck.includes(actionValue)) {
-        diceValue += `+{${actionValue}}`;
-      }
+    const strengthPattern = new RegExp(`［${statusName}］[^。]*。[^。]*強度は［([^］]+)］`, "g");
+    for (const match of functionText.matchAll(strengthPattern)) {
+      pushUnique(lines, `${formatCalcCommand(match[1], skillRank)} ${skillName} ${label}`);
     }
-    for (const abilityValue of abilityList) {
-      if (diceCheck.includes(abilityValue)) {
-        diceValue += `+{${abilityValue}}`;
-      }
-    }
-    for (let index = 0; index < diceType.type4.length; index += 1) {
-      if (diceCheck.includes(diceType.type4[index])) {
-        diceValue += `+${index}`;
-      }
-    }
-    diceValue += ")";
 
-    return diceValue;
+    const strengthParamPattern = new RegExp(`［${statusName}］[^。]*。[^。]*強度は【([^】]+)】`, "g");
+    for (const match of functionText.matchAll(strengthParamPattern)) {
+      pushUnique(lines, `${formatCalcCommand(`【${match[1]}】`, skillRank)} ${skillName} ${label}`);
+    }
   }
 
-  function createIntensity(diceCheck: string): string {
-    let intensity = createDice(diceCheck);
-
-    if (intensity !== "C()") {
-      return intensity;
-    }
-
-    intensity = "C(";
-    for (const value of diceType.type5) {
-      if (diceCheck.includes(value)) {
-        intensity += `${Number(value)}`;
-      }
-    }
-    for (const actionValue of actionList) {
-      if (diceCheck.includes(actionValue)) {
-        intensity += `+{${actionValue}}`;
-      }
-    }
-    for (const abilityValue of abilityList) {
-      if (diceCheck.includes(abilityValue)) {
-        intensity += `+{${abilityValue}}`;
-      }
-    }
-    for (let index = 0; index < diceType.type4.length; index += 1) {
-      if (diceCheck.includes(diceType.type4[index])) {
-        intensity += `*${index}`;
-      }
-    }
-    if (diceCheck.includes("×SR")) {
-      intensity += `*${skillRank}`;
-    }
-    intensity += ")";
-
-    return intensity;
-  }
-
-  function damageRoll(functionText: string): string {
-    if (functionText.includes("［") && functionText.includes("］の")) {
-      const diceCheck = functionText.slice(functionText.indexOf("［") + 1, functionText.indexOf("］の"));
-      return createDice(diceCheck);
-    }
-
-    if (functionText.includes("［") && functionText.includes("］点回")) {
-      const diceCheck = functionText.slice(functionText.indexOf("［") + 1, functionText.indexOf("］点回"));
-      return createDice(diceCheck);
-    }
-
-    if (functionText.includes("［") && functionText.includes("］点まで回")) {
-      if (skillId === 1814) return "C({回復力}+{STR}*2)";
-      if (skillId === 2105) return "C({回復力}*2+1)";
-      if (skillId === 2006) return "C({魔力}+{回復力})";
-      if (skillId === 2631) return `C(${shieldDefenseValue}*10)`;
-    }
-
-    return "";
-  }
-
-  function badCombatRoll(functionText: string): string {
-    const statusNames = ["再生", "障壁", "衰弱", "追撃"];
-
-    for (const statusName of statusNames) {
-      const startText = `［${statusName}：`;
-      if (functionText.includes(startText) && functionText.includes("］を与える")) {
-        const diceCheck = functionText.slice(functionText.indexOf(startText) + 1, functionText.indexOf("］を与える"));
-        return createIntensity(diceCheck);
-      }
-    }
-
-    if (functionText.includes("［追撃：") && functionText.includes("個与える")) {
-      const diceCheck = functionText.slice(functionText.indexOf("［追撃：") + 1, functionText.indexOf("］を"));
-      let result = createIntensity(diceCheck);
-      const pursuitNums = ["２", "３", "４", "５", "６", "７", "８", "(ＳＲ)"];
-
-      for (let num of pursuitNums) {
-        if (functionText.includes(`${num}個`)) {
-          if (num === "(ＳＲ)") {
-            num = `${skillRank}個`;
-          }
-          result += ` ×${num}`;
-        }
-      }
-
-      return result;
-    }
-
-    return "";
-  }
-
-  return { damageRoll, badCombatRoll };
+  return lines;
 }
 
 function buildSkillCommandLines(
@@ -794,84 +599,55 @@ function buildSkillCommandLines(
   characterRank: number
 ): string[] {
   const skillId = asNumber(skill.id);
-  const skillName = asString(skill.name);
-  const functionText = asString(skill.function);
-  const causalityCostRule = findCausalityCostSkillRule(skillId);
+  const lines: string[] = [];
 
+  for (const line of buildDamageOrHealCommands(skill)) pushUnique(lines, line);
+  for (const line of buildGenericStatusCommands(skill)) pushUnique(lines, line);
+
+  const causalityCostRule = findCausalityCostSkillRule(skillId);
   if (causalityCostRule) {
-    return buildCausalityCostCommandLines(skill, characterRank, causalityCostRule);
+    for (const line of buildCausalityCostCommandLines(skill, characterRank, causalityCostRule)) pushUnique(lines, line);
   }
 
   const regenerationRule = findRegenerationSkillRule(skillId);
-
   if (regenerationRule) {
-    return buildRegenerationSkillCommandLines(regenerationRule);
+    for (const line of buildRegenerationSkillCommandLines(regenerationRule)) pushUnique(lines, line);
   }
 
   const shieldRule = findShieldSkillRule(skillId);
-
   if (shieldRule) {
-    return buildShieldSkillCommandLines(skill, shieldRule);
+    for (const line of buildShieldSkillCommandLines(skill, shieldRule)) pushUnique(lines, line);
   }
 
   const reductionRule = findReductionSkillRule(skillId);
-
   if (reductionRule) {
-    return buildReductionSkillCommandLines(skill, characterRank, hand1, hand2, reductionRule);
+    for (const line of buildReductionSkillCommandLines(skill, characterRank, hand1, hand2, reductionRule)) pushUnique(lines, line);
   }
 
   const directDamageRule = findDirectDamageSkillRule(skillId);
-
   if (directDamageRule) {
-    return buildDirectDamageSkillCommandLines(skill, characterRank, directDamageRule);
+    for (const line of buildDirectDamageSkillCommandLines(skill, characterRank, directDamageRule)) pushUnique(lines, line);
   }
 
   const pursuitRule = findPursuitSkillRule(skillId);
-
   if (pursuitRule) {
-    return buildPursuitSkillCommandLines(skill, characterRank, pursuitRule);
+    for (const line of buildPursuitSkillCommandLines(skill, characterRank, pursuitRule)) pushUnique(lines, line);
   }
 
   const weaknessRule = findWeaknessSkillRule(skillId);
-  const weaknessCommandLines = weaknessRule
-    ? buildWeaknessSkillCommandLines(skill, characterRank, weaknessRule)
-    : [];
-
-  if (skillId === 4029 || functionText.includes("【攻撃力】点の直接ダメージ")) {
-    return [`C({攻撃力}) ${skillName} (直接ダメージ)`, ...weaknessCommandLines];
+  if (weaknessRule) {
+    for (const line of buildWeaknessSkillCommandLines(skill, characterRank, weaknessRule)) pushUnique(lines, line);
   }
-
-  const rollKeywords = ["の物理", "の魔法", "の貫通", "点回復", "点まで回復"];
-  const badCombatStatus = ["追撃", "衰弱", "再生", "障壁"];
-  const builder = createSkillCommandBuilder(skill, hand1, hand2);
-  let diceRoll = "";
-  let label = "";
 
   if (skillId === 2624) {
-    diceRoll = `(${asNumber(skill.skill_rank)})D+${getShieldDefenseValue(hand1, hand2)}`;
-    label = "(貫通ダメージ)";
-  } else if (skillId === 701) {
-    diceRoll = "C({STR基本値}*2)";
-    label = "(回復)";
-  } else if (rollKeywords.some((keyword) => functionText.includes(keyword))) {
-    diceRoll = builder.damageRoll(functionText);
-    if (functionText.includes("の物理ダメージ")) label = "(物理ダメージ)";
-    else if (functionText.includes("の魔法ダメージ")) label = "(魔法ダメージ)";
-    else if (functionText.includes("の貫通ダメージ")) label = "(貫通ダメージ)";
-    else if (functionText.includes("点回復") || functionText.includes("点まで回復")) label = "(回復)";
-  } else if (badCombatStatus.some((keyword) => functionText.includes(keyword))) {
-    diceRoll = builder.badCombatRoll(functionText);
-    if (functionText.includes("追撃")) label = "(追撃)";
-    else if (functionText.includes("衰弱")) label = "(衰弱)";
-    else if (functionText.includes("再生")) label = "(再生)";
-    else if (functionText.includes("障壁")) label = "(障壁)";
+    pushUnique(lines, `(${asNumber(skill.skill_rank)})D+${getShieldDefenseValue(hand1, hand2)} ${asString(skill.name)} 貫通ダメージ`);
   }
 
-  if (!diceRoll) {
-    return weaknessCommandLines;
+  if (skillId === 701) {
+    pushUnique(lines, `C({STR基本値}*2) ${asString(skill.name)} 回復`);
   }
 
-  return [`${diceRoll} ${skillName} ${label}`.trim(), ...weaknessCommandLines];
+  return lines;
 }
 
 function createSkillData(
@@ -880,9 +656,7 @@ function createSkillData(
   hand2: AnyRecord | null,
   abilityData: AbilityEntry[]
 ): SkillChatPaletteData {
-  const skills = asArray(jsonData.skills)
-    .map((skill) => asRecord(skill))
-    .filter((skill): skill is AnyRecord => skill !== null);
+  const skills = asArray(jsonData.skills).map((skill) => asRecord(skill)).filter((skill): skill is AnyRecord => skill !== null);
   const skillTimingData = groupTiming(skills);
   const characterRank = asNumber(jsonData.character_rank);
   const entries: SkillChatPaletteEntry[] = [];
@@ -899,10 +673,7 @@ function createSkillData(
     }
   }
 
-  return {
-    entries,
-    basicActions: createBasicActions(),
-  };
+  return { entries, basicActions: createBasicActions() };
 }
 
 function createBasicActions(): string {
@@ -929,29 +700,19 @@ function createBasicActions(): string {
 }
 
 function createItemData(jsonData: AnyRecord): string {
-  const items = asArray(jsonData.items);
   const itemLines: string[] = [];
-
-  for (const itemValue of items) {
+  for (const itemValue of asArray(jsonData.items)) {
     const item = asRecord(itemValue);
-
-    if (!item) {
-      continue;
-    }
+    if (!item) continue;
 
     const tags = asArray(item.tags).map((tag) => `[${asString(tag)}]`).join(" ");
     const parts = [asString(item.alias || item.name), tags].filter(Boolean);
-
     if (asString(item.timing) !== "－") {
-      parts.push(
-        `タイミング:${asString(item.timing)} 判定:${asString(item.roll)} 対象:${asString(item.target)} 射程:${asString(item.range)}`
-      );
+      parts.push(`タイミング:${asString(item.timing)} 判定:${asString(item.roll)} 対象:${asString(item.target)} 射程:${asString(item.range)}`);
     }
-
     parts.push(`効果:${firstLine(item.function)}`);
     itemLines.push(parts.join(" "));
   }
-
   return itemLines.join("\n");
 }
 
@@ -978,12 +739,7 @@ function createAbilityData(jsonData: AnyRecord): AbilityEntry[] {
 
 function buildSection(title: string, body: string): string {
   const trimmedBody = body.trim();
-
-  if (!trimmedBody) {
-    return "";
-  }
-
-  return `${title}\n${trimmedBody}`;
+  return trimmedBody ? `${title}\n${trimmedBody}` : "";
 }
 
 function createCombatBasics(): string {
@@ -1009,56 +765,32 @@ function createDamageCalculator(): string {
 function createSkillCheckSection(skillData: SkillChatPaletteData): string {
   const lines: string[] = [];
   let currentTiming = "";
-
   for (const entry of skillData.entries) {
-    if (!entry.checkCommand) {
-      continue;
-    }
-
+    if (!entry.checkCommand) continue;
     if (entry.timing !== currentTiming) {
-      if (lines.length > 0) {
-        lines.push("");
-      }
+      if (lines.length > 0) lines.push("");
       lines.push(`● ${entry.timing}`);
       currentTiming = entry.timing;
     }
-
     lines.push(entry.checkCommand);
   }
-
   return buildSection("○判定がある特技", lines.join("\n"));
 }
 
-function createSkillSection(
-  skillData: SkillChatPaletteData,
-  options: ChatPaletteOptions
-): string {
+function createSkillSection(skillData: SkillChatPaletteData, options: ChatPaletteOptions): string {
   const lines: string[] = [];
   let currentTiming = "";
 
   for (const entry of skillData.entries) {
     if (entry.timing !== currentTiming) {
-      if (lines.length > 0) {
-        lines.push("");
-      }
+      if (lines.length > 0) lines.push("");
       lines.push(`● ${entry.timing}`);
       currentTiming = entry.timing;
     }
 
     lines.push(entry.skillName);
-
-    if (options.includeSkillDescriptions && entry.description) {
-      lines.push(entry.description);
-    }
-
-    if (entry.checkCommand) {
-      lines.push(entry.checkCommand);
-    }
-
-    for (const command of entry.commands) {
-      lines.push(command);
-    }
-
+    if (options.includeSkillDescriptions && entry.description) lines.push(entry.description);
+    for (const command of entry.commands) lines.push(command);
     lines.push("");
   }
 
@@ -1070,31 +802,16 @@ function createEquipmentEffects(equipmentData: string[]): string {
 }
 
 function createAbilityChecks(abilityData: AbilityEntry[]): string {
-  return buildSection(
-    "○各種判定",
-    abilityData.map((ability) => `{${ability.label}} ${ability.label}`).join("\n")
-  );
+  return buildSection("○各種判定", abilityData.map((ability) => `{${ability.label}} ${ability.label}`).join("\n"));
 }
 
 function createConsumeTables(): string {
-  return [
-    "○消耗表",
-    "PCT{CR}+0 体力消耗表",
-    "ECT{CR}+0 気力消耗表",
-    "GCT{CR}+0 物品消耗表",
-    "CCT{CR}+0 金銭消耗表",
-  ].join("\n");
+  return ["○消耗表", "PCT{CR}+0 体力消耗表", "ECT{CR}+0 気力消耗表", "GCT{CR}+0 物品消耗表", "CCT{CR}+0 金銭消耗表"].join("\n");
 }
 
 function createTreasureTables(): string {
-  return [
-    "○財宝表",
-    "CTRS{CR}+0 金銭財宝表",
-    "MTRS{CR}+0 魔法素材財宝表",
-    "ITRS{CR}+0 換金アイテム財宝表",
-  ].join("\n");
-}
-
+  return ["○財宝表", "CTRS{CR}+0 金銭財宝表", "MTRS{CR}+0 魔法素材財宝表", "ITRS{CR}+0 換金アイテム財宝表"].join("\n");
+}\n
 function createChatPalette(
   skillData: SkillChatPaletteData,
   equipmentData: string[],
@@ -1106,40 +823,15 @@ function createChatPalette(
   const sections: string[] = [];
 
   sections.push(createCombatBasics());
-
-  if (outputOptions.includeDamageCalculator) {
-    sections.push(createDamageCalculator());
-  }
-
-  if (outputOptions.includeSkillChecks) {
-    sections.push(createSkillCheckSection(skillData));
-  }
-
+  if (outputOptions.includeDamageCalculator) sections.push(createDamageCalculator());
+  if (outputOptions.includeSkillChecks) sections.push(createSkillCheckSection(skillData));
   sections.push(createSkillSection(skillData, outputOptions));
-
-  if (outputOptions.includeBasicActions) {
-    sections.push(buildSection("○基本動作", skillData.basicActions));
-  }
-
-  if (outputOptions.includeEquipmentEffects) {
-    sections.push(createEquipmentEffects(equipmentData));
-  }
-
-  if (outputOptions.includeItemList) {
-    sections.push(buildSection("○所持アイテム一覧", itemData));
-  }
-
-  if (outputOptions.includeAbilityChecks) {
-    sections.push(createAbilityChecks(abilityData));
-  }
-
-  if (outputOptions.includeConsumeTables) {
-    sections.push(createConsumeTables());
-  }
-
-  if (outputOptions.includeTreasureTables) {
-    sections.push(createTreasureTables());
-  }
+  if (outputOptions.includeBasicActions) sections.push(buildSection("○基本動作", skillData.basicActions));
+  if (outputOptions.includeEquipmentEffects) sections.push(createEquipmentEffects(equipmentData));
+  if (outputOptions.includeItemList) sections.push(buildSection("○所持アイテム一覧", itemData));
+  if (outputOptions.includeAbilityChecks) sections.push(createAbilityChecks(abilityData));
+  if (outputOptions.includeConsumeTables) sections.push(createConsumeTables());
+  if (outputOptions.includeTreasureTables) sections.push(createTreasureTables());
 
   return sections.filter((section) => section.trim() !== "").join("\n\n");
 }
@@ -1150,7 +842,6 @@ export function createPieceFromJson(
   options: Partial<ChatPaletteOptions> = {}
 ): string {
   const jsonData = asRecord(jsonDataValue);
-
   if (!jsonData) {
     throw new Error("キャラクターJSONの形式が正しくありません。");
   }
@@ -1163,13 +854,7 @@ export function createPieceFromJson(
   const abilityData = createAbilityData(jsonData);
   const skillData = createSkillData(jsonData, equipmentData.hand1, equipmentData.hand2, abilityData);
   const itemData = createItemData(jsonData);
-  const commands = createChatPalette(
-    skillData,
-    equipmentData.effects,
-    itemData,
-    abilityData,
-    options
-  );
+  const commands = createChatPalette(skillData, equipmentData.effects, itemData, abilityData, options);
 
   return JSON.stringify({
     kind: "character",
@@ -1193,11 +878,9 @@ export async function createPiece(
     return createPieceFromJson(jsonData, normalizedCharacterId, options);
   } catch (error) {
     console.error(error);
-
     if (error instanceof Error) {
       throw new Error(`キャラクター駒データの生成に失敗しました。${error.message}`);
     }
-
     throw new Error("キャラクター駒データの生成に失敗しました。");
   }
 }
