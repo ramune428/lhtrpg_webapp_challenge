@@ -385,10 +385,7 @@ export default function HomePage() {
 
               <div className="rounded-2xl border border-neutral-300 bg-white p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
-                    <p className="mt-1 text-xs text-neutral-500">現在の入力と出力オプションから推定します。</p>
-                  </div>
+                  <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
                   <button
                     type="button"
                     onClick={handleUpdateChatPaletteReview}
