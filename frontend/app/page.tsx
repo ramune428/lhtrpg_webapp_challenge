@@ -350,7 +350,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
+            <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
               <div className="grid content-start gap-2">
                 {outputOptionItems.map((item) => {
                   const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
@@ -383,8 +383,8 @@ export default function HomePage() {
                 })}
               </div>
 
-              <div className="rounded-2xl border border-neutral-300 bg-white p-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex h-full min-h-[640px] flex-col rounded-2xl border border-neutral-300 bg-white p-4">
+                <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
                   <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
                   <button
                     type="button"
@@ -395,8 +395,8 @@ export default function HomePage() {
                     {isReviewLoading ? "更新中..." : "レビューを更新"}
                   </button>
                 </div>
-                <p className="mb-2 min-h-[1rem] text-xs text-neutral-500">{reviewStatusMessage}</p>
-                <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
+                <p className="mb-2 min-h-[1rem] shrink-0 text-xs text-neutral-500">{reviewStatusMessage}</p>
+                <pre className="min-h-[520px] flex-1 overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
                   {chatPaletteReview || "まだレビューは作成されていません。"}
                 </pre>
               </div>
