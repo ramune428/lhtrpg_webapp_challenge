@@ -62,106 +62,10 @@ function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
 
 const initialChatPaletteOptions = createAllOptionalOptions(true);
 
-function createChatPaletteReview(options: ChatPaletteOptions): string {
-  const sections: string[] = [];
-
-  sections.push([
-    "○戦闘の基本",
-    "{命中値} 命中値",
-    "{回避値} 回避値(ヘイトトップ時)",
-    "{回避値}+2 回避値(ヘイトアンダー時)",
-    "{抵抗値} 抵抗値(ヘイトトップ時)",
-    "{抵抗値}+2 抵抗値(ヘイトアンダー時)",
-  ].join("\n"));
-
-  if (options.includeDamageCalculator) {
-    sections.push([
-      "○被ダメージ計算用",
-      "C(0-{物防}-0) 被ダメージ=物理ダメージ-物防-軽減",
-      "C(0-{魔防}-0) 被ダメージ=魔法ダメージ-魔防-軽減",
-      "C(({HP}+{障壁})-0-{ヘイト}*0-0) 残HP=(HP+障壁)-ダメージ-ヘイトダメージ-その他",
-    ].join("\n"));
-  }
-
-  if (options.includeSkillChecks) {
-    sections.push([
-      "○判定がある特技",
-      "● メジャー",
-      "{命中値} ブラッディピアッシング(命中/回避)",
-      "3D+2+1D ブラッドレター(命中+1D/回避)",
-    ].join("\n"));
-  }
-
-  if (options.includeSkillSupportCalculations) {
-    sections.push([
-      "○補助計算の特技",
-      "● ダメージロール",
-      "C((0+2)*5) ダンスマカブル_消費因果力0 ダメージ増加",
-      "C((1+2)*5) ダンスマカブル_消費因果力1 ダメージ増加",
-      "C((2+2)*5) ダンスマカブル_消費因果力2 ダメージ増加",
-      "C((3+2)*5) ダンスマカブル_消費因果力3 ダメージ増加",
-    ].join("\n"));
-  }
-
-  const skillLines = ["○特技", "● メジャー", "《ステルスブレイド》 [武器攻撃]"];
-  if (options.includeSkillDescriptions) {
-    skillLines.push("SR:3/5 タイミング:メジャー 判定:対決(命中/回避) 対象:単体 射程:武器 コスト:本文 制限:- 効果:対象に［【攻撃力】＋３Ｄ］の物理ダメージを与える。ヘイトアンダー時、ダメージロールに＋［ＳＲ×４］する。");
-  }
-  skillLines.push("{攻撃力}+3D ステルスブレイド 物理ダメージ");
-  skillLines.push("{攻撃力}+3D+C(3*4) ステルスブレイド_ヘイトアンダー 物理ダメージ");
-  sections.push(skillLines.join("\n"));
-
-  if (options.includeBasicActions) {
-    sections.push([
-      "○基本動作",
-      "《基本武器攻撃》 [基本動作] [武器攻撃] ...",
-      "{攻撃力}+1D 基本武器攻撃",
-    ].join("\n"));
-  }
-
-  if (options.includeEquipmentEffects) {
-    sections.push([
-      "○装備アイテム効果",
-      "装備名 ネームド効果: 効果文の1行目を表示",
-    ].join("\n"));
-  }
-
-  if (options.includeItemList) {
-    sections.push([
-      "○所持アイテム一覧",
-      "アイテム名 [タグ] 効果:効果文の1行目を表示",
-    ].join("\n"));
-  }
-
-  if (options.includeAbilityChecks) {
-    sections.push([
-      "○各種判定",
-      "{運動値} 運動値",
-      "{耐久値} 耐久値",
-      "{解析値} 解析値",
-    ].join("\n"));
-  }
-
-  if (options.includeConsumeTables) {
-    sections.push([
-      "○消耗表",
-      "PCT{CR}+0 体力消耗表",
-      "ECT{CR}+0 気力消耗表",
-      "GCT{CR}+0 物品消耗表",
-      "CCT{CR}+0 金銭消耗表",
-    ].join("\n"));
-  }
-
-  if (options.includeTreasureTables) {
-    sections.push([
-      "○財宝表",
-      "CTRS{CR}+0 金銭財宝表",
-      "MTRS{CR}+0 魔法素材財宝表",
-      "ITRS{CR}+0 換金アイテム財宝表",
-    ].join("\n"));
-  }
-
-  return sections.join("\n\n");
+function extractChatPalette(pieceJson: string): string {
+  const parsed = JSON.parse(pieceJson) as { data?: { commands?: unknown } };
+  const commands = parsed.data?.commands;
+  return typeof commands === "string" ? commands : "";
 }
 
 export default function HomePage() {
@@ -169,9 +73,14 @@ export default function HomePage() {
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
   const [options, setOptions] = useState<ChatPaletteOptions>(initialChatPaletteOptions);
   const [lastJsonData, setLastJsonData] = useState<unknown | null>(null);
   const [lastCharacterId, setLastCharacterId] = useState("");
+  const [chatPaletteReview, setChatPaletteReview] = useState("");
+  const [reviewStatusMessage, setReviewStatusMessage] = useState(
+    "キャラクターURL/IDを入力し、[チャットパレットのレビューを更新] をクリックすると、推定チャットパレットを表示します。"
+  );
 
   const refreshPreview = (
     nextOptions: ChatPaletteOptions,
@@ -193,12 +102,60 @@ export default function HomePage() {
     const nextOptions = { ...options, [key]: checked };
     setOptions(nextOptions);
     refreshPreview(nextOptions);
+    if (chatPaletteReview) {
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
+    }
   };
 
   const handleSetAllOptionalOptions = (checked: boolean) => {
     const nextOptions = createAllOptionalOptions(checked);
     setOptions(nextOptions);
     refreshPreview(nextOptions);
+    if (chatPaletteReview) {
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
+    }
+  };
+
+  const buildPieceJson = async (characterId: string, nextOptions: ChatPaletteOptions) => {
+    const shouldReuseJson = lastJsonData && lastCharacterId === characterId;
+    const jsonData = shouldReuseJson ? lastJsonData : await fetchCharacterJson(characterId);
+    const generated = createPieceFromJson(jsonData, characterId, nextOptions);
+
+    setLastJsonData(jsonData);
+    setLastCharacterId(characterId);
+
+    return generated;
+  };
+
+  const handleUpdateChatPaletteReview = async () => {
+    const characterId = normalizeCharacterId(inputValue);
+
+    if (!characterId) {
+      setReviewStatusMessage("キャラクターURLまたはIDを入力してください。");
+      setChatPaletteReview("");
+      return;
+    }
+
+    setIsReviewLoading(true);
+    setReviewStatusMessage("チャットパレットのレビューを作成中です...");
+
+    try {
+      const generated = await buildPieceJson(characterId, options);
+      const commands = extractChatPalette(generated);
+
+      setChatPaletteReview(commands || "チャットパレットに表示できる内容がありません。");
+      setReviewStatusMessage("チャットパレットのレビューを更新しました。");
+    } catch (error) {
+      console.error(error);
+      setChatPaletteReview("");
+      setReviewStatusMessage(
+        error instanceof Error
+          ? error.message
+          : "チャットパレットのレビュー更新に失敗しました。入力内容を確認してください。"
+      );
+    } finally {
+      setIsReviewLoading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -213,16 +170,17 @@ export default function HomePage() {
     setStatusMessage("コマンドを生成中です...");
 
     try {
-      const jsonData = await fetchCharacterJson(characterId);
-      const generated = createPieceFromJson(jsonData, characterId, options);
+      const generated = await buildPieceJson(characterId, options);
+      const commands = extractChatPalette(generated);
 
       setResult(String(generated ?? ""));
-      setLastJsonData(jsonData);
-      setLastCharacterId(characterId);
+      setChatPaletteReview(commands || "チャットパレットに表示できる内容がありません。");
       setStatusMessage("コマンドの生成が完了しました。");
+      setReviewStatusMessage("チャットパレットのレビューを更新しました。");
     } catch (error) {
       console.error(error);
       setResult("");
+      setChatPaletteReview("");
       setLastJsonData(null);
       setLastCharacterId("");
       setStatusMessage(
@@ -230,6 +188,7 @@ export default function HomePage() {
           ? error.message
           : "コマンドの生成に失敗しました。入力内容を確認してください。"
       );
+      setReviewStatusMessage("チャットパレットのレビューを更新できませんでした。");
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +200,10 @@ export default function HomePage() {
     setStatusMessage("");
     setLastJsonData(null);
     setLastCharacterId("");
+    setChatPaletteReview("");
+    setReviewStatusMessage(
+      "キャラクターURL/IDを入力し、[チャットパレットのレビューを更新] をクリックすると、推定チャットパレットを表示します。"
+    );
   };
 
   const handleCopy = async () => {
@@ -406,7 +369,6 @@ export default function HomePage() {
                           type="checkbox"
                           checked={checked}
                           disabled={item.alwaysOn}
-                          className="h-4 w-4 shrink-0 rounded border-neutral-300 accent-violet-500 disabled:cursor-not-allowed"
                           onChange={(event) => {
                             if (!item.alwaysOn) {
                               updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
@@ -422,12 +384,23 @@ export default function HomePage() {
               </div>
 
               <div className="rounded-2xl border border-neutral-300 bg-white p-4">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
-                  <span className="text-xs text-neutral-500">出力イメージ</span>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
+                    <p className="mt-1 text-xs text-neutral-500">現在の入力と出力オプションから推定します。</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUpdateChatPaletteReview}
+                    disabled={isReviewLoading || isLoading}
+                    className="rounded-xl border border-neutral-300 px-3 py-2 text-xs font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isReviewLoading ? "更新中..." : "レビューを更新"}
+                  </button>
                 </div>
+                <p className="mb-2 min-h-[1rem] text-xs text-neutral-500">{reviewStatusMessage}</p>
                 <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
-                  {createChatPaletteReview(options)}
+                  {chatPaletteReview || "まだレビューは作成されていません。"}
                 </pre>
               </div>
             </div>
