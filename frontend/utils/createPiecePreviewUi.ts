@@ -4,7 +4,7 @@ import {
   fetchCharacterJson,
   normalizeCharacterId,
   type ChatPaletteOptions,
-} from "./createPiece";
+} from "./createPiecePreview";
 
 export { defaultChatPaletteOptions, fetchCharacterJson, normalizeCharacterId };
 export type { ChatPaletteOptions };
