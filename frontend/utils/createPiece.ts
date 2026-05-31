@@ -445,7 +445,26 @@ function buildRuleCommands(skill: AnyRecord, characterRank: number, hand1: AnyRe
   return lines;
 }
 
-function buildSupportCommands(skill: AnyRecord, characterRank: number): string[] {
+function buildAdditionalConditionDamageCommands(
+  baseCommands: string[],
+  skillName: string,
+  condition: string,
+  additionExpression: string,
+  damageLabel: string
+): string[] {
+  const suffix = ` ${skillName} ${damageLabel}`;
+  const lines: string[] = [];
+
+  for (const command of baseCommands) {
+    if (!command.endsWith(suffix)) continue;
+    const baseExpression = command.slice(0, -suffix.length);
+    pushUnique(lines, `${baseExpression}+${additionExpression} ${skillName}_${condition} ${damageLabel}`);
+  }
+
+  return lines;
+}
+
+function buildSupportCommands(skill: AnyRecord, characterRank: number, baseCommands: string[]): string[] {
   const id = asNumber(skill.id);
   const rank = asNumber(skill.skill_rank);
   const name = asString(skill.name);
@@ -453,9 +472,17 @@ function buildSupportCommands(skill: AnyRecord, characterRank: number): string[]
 
   for (const line of buildCausalityCostCommand(skill, characterRank, true)) pushUnique(lines, line);
 
-  if (id === 2) pushUnique(lines, `2D ${name}_クリティカル 物理ダメージ`);
-  if (id === 2413) pushUnique(lines, `2D ${name}_クリティカル 魔法ダメージ`);
-  if (id === 2213) pushUnique(lines, `C(${rank}*4) ${name}_ヘイトアンダー 物理ダメージ`);
+  if (id === 2) {
+    for (const line of buildAdditionalConditionDamageCommands(baseCommands, name, "クリティカル", "2D", "物理ダメージ")) pushUnique(lines, line);
+  }
+
+  if (id === 2413) {
+    for (const line of buildAdditionalConditionDamageCommands(baseCommands, name, "クリティカル", "2D", "魔法ダメージ")) pushUnique(lines, line);
+  }
+
+  if (id === 2213) {
+    for (const line of buildAdditionalConditionDamageCommands(baseCommands, name, "ヘイトアンダー", `C(${rank}*4)`, "物理ダメージ")) pushUnique(lines, line);
+  }
 
   return lines;
 }
@@ -516,13 +543,14 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
   const entries: SkillEntry[] = [];
   for (const [timing, timingSkills] of Object.entries(groupByTiming(skills))) {
     for (const skill of timingSkills) {
+      const commands = buildSkillCommands(skill, characterRank, hand1, hand2);
       entries.push({
         timing,
         skillName: formatSkillName(skill),
         description: formatSkillDescription(skill),
         checkCommand: buildSkillCheckCommand(skill, abilityData),
-        commands: buildSkillCommands(skill, characterRank, hand1, hand2),
-        supportCommands: buildSupportCommands(skill, characterRank),
+        commands,
+        supportCommands: buildSupportCommands(skill, characterRank, commands),
       });
     }
   }
