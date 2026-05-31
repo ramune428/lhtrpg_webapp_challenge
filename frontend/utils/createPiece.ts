@@ -392,7 +392,7 @@ function buildCausalityCostCommand(skill: AnyRecord, characterRank: number, incl
 
   const multiplier = getRankValue(characterRank, rule.crValues);
   for (let cost = 0; cost <= rule.maxCost; cost += 1) {
-    const label = isDamageIncrease ? `補助計算:${rule.label}` : rule.skillId === 4601 ? "弱点" : rule.label;
+    const label = isDamageIncrease ? rule.label : rule.skillId === 4601 ? "弱点" : rule.label;
     pushUnique(lines, `C((${cost}+${rank})*${multiplier}) ${rule.skillName}_消費因果力${cost} ${label}`);
   }
 
@@ -446,7 +446,18 @@ function buildRuleCommands(skill: AnyRecord, characterRank: number, hand1: AnyRe
 }
 
 function buildSupportCommands(skill: AnyRecord, characterRank: number): string[] {
-  return buildCausalityCostCommand(skill, characterRank, true);
+  const id = asNumber(skill.id);
+  const rank = asNumber(skill.skill_rank);
+  const name = asString(skill.name);
+  const lines: string[] = [];
+
+  for (const line of buildCausalityCostCommand(skill, characterRank, true)) pushUnique(lines, line);
+
+  if (id === 2) pushUnique(lines, `2D ${name}_クリティカル 物理ダメージ`);
+  if (id === 2413) pushUnique(lines, `2D ${name}_クリティカル 魔法ダメージ`);
+  if (id === 2213) pushUnique(lines, `C(${rank}*4) ${name}_ヘイトアンダー 物理ダメージ`);
+
+  return lines;
 }
 
 function buildGenericCommands(skill: AnyRecord): string[] {
