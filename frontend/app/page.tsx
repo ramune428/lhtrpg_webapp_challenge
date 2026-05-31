@@ -33,10 +33,10 @@ const outputOptionItems: OutputOptionItem[] = [
   { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
   { key: "includeSkillChecks", label: "判定がある特技" },
+  { key: "includeSkillSupportCalculations", label: "補助計算の特技" },
   { key: "skillNames", label: "特技", alwaysOn: true },
   { key: "includeSkillDescriptions", label: "効果" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
-  { key: "includeSkillSupportCalculations", label: "追加条件・補助計算" },
   { key: "includeBasicActions", label: "基本動作" },
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
   { key: "includeItemList", label: "所持アイテム一覧" },
@@ -92,15 +92,23 @@ function createChatPaletteReview(options: ChatPaletteOptions): string {
     ].join("\n"));
   }
 
+  if (options.includeSkillSupportCalculations) {
+    sections.push([
+      "○補助計算の特技",
+      "● ダメージロール",
+      "C((0+2)*5) ダンスマカブル_消費因果力0 ダメージ増加",
+      "C((1+2)*5) ダンスマカブル_消費因果力1 ダメージ増加",
+      "C((2+2)*5) ダンスマカブル_消費因果力2 ダメージ増加",
+      "C((3+2)*5) ダンスマカブル_消費因果力3 ダメージ増加",
+    ].join("\n"));
+  }
+
   const skillLines = ["○特技", "● メジャー", "《ステルスブレイド》 [武器攻撃]"];
   if (options.includeSkillDescriptions) {
     skillLines.push("SR:3/5 タイミング:メジャー 判定:対決(命中/回避) 対象:単体 射程:武器 コスト:本文 制限:- 効果:対象に［【攻撃力】＋３Ｄ］の物理ダメージを与える。ヘイトアンダー時、ダメージロールに＋［ＳＲ×４］する。");
   }
   skillLines.push("{攻撃力}+3D ステルスブレイド 物理ダメージ");
-  if (options.includeSkillSupportCalculations) {
-    skillLines.push("{攻撃力}+3D+C(3*4) ステルスブレイド_ヘイトアンダー 物理ダメージ");
-    skillLines.push("C((1+2)*7) アサシネイト_消費因果力1 ダメージ増加");
-  }
+  skillLines.push("{攻撃力}+3D+C(3*4) ステルスブレイド_ヘイトアンダー 物理ダメージ");
   sections.push(skillLines.join("\n"));
 
   if (options.includeBasicActions) {
