@@ -20,8 +20,7 @@ import {
 } from "@/utils/createPieceUi";
 
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
-const BODY_LINK_CLASS =
-  "text-sm font-medium text-neutral-700 underline underline-offset-4";
+const BODY_LINK_CLASS = "text-sm font-medium text-neutral-700 underline underline-offset-4";
 const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -38,6 +37,7 @@ const outputOptionItems: OutputOptionItem[] = [
   { key: "skillNames", label: "特技", alwaysOn: true },
   { key: "includeSkillDescriptions", label: "効果" },
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
+  { key: "includeSkillSupportCalculations", label: "補助計算" },
   { key: "includeBasicActions", label: "基本動作" },
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
   { key: "includeItemList", label: "所持アイテム一覧" },
@@ -50,6 +50,7 @@ function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
   return {
     includeDamageCalculator: checked,
     includeSkillChecks: checked,
+    includeSkillSupportCalculations: checked,
     includeSkillDescriptions: checked,
     includeBasicActions: checked,
     includeEquipmentEffects: checked,
@@ -74,13 +75,10 @@ export default function HomePage() {
     jsonData: unknown | null = lastJsonData,
     characterId: string = lastCharacterId
   ) => {
-    if (!jsonData || !characterId) {
-      return;
-    }
+    if (!jsonData || !characterId) return;
 
     try {
-      const nextResult = createPieceFromJson(jsonData, characterId, nextOptions);
-      setResult(nextResult);
+      setResult(createPieceFromJson(jsonData, characterId, nextOptions));
       setStatusMessage("プレビューを更新しました。");
     } catch (error) {
       console.error(error);
@@ -89,11 +87,7 @@ export default function HomePage() {
   };
 
   const updateOption = (key: keyof ChatPaletteOptions, checked: boolean) => {
-    const nextOptions = {
-      ...options,
-      [key]: checked,
-    };
-
+    const nextOptions = { ...options, [key]: checked };
     setOptions(nextOptions);
     refreshPreview(nextOptions);
   };
@@ -161,9 +155,7 @@ export default function HomePage() {
     }
   };
 
-  const handleKeyDown = async (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
+  const handleKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
       event.preventDefault();
       await handleGenerate();
@@ -243,10 +235,7 @@ export default function HomePage() {
           <div className="mt-5">
             <p className={BODY_TEXT_CLASS}>
               詳しい使い方についてはこちら →{" "}
-              <Link
-                href={CHARACTER_PAGE_LINKS.howTo.href}
-                className={BODY_LINK_CLASS}
-              >
+              <Link href={CHARACTER_PAGE_LINKS.howTo.href} className={BODY_LINK_CLASS}>
                 {CHARACTER_PAGE_LINKS.howTo.label}
               </Link>
             </p>
@@ -254,17 +243,12 @@ export default function HomePage() {
         </section>
 
         <section className="mb-4">
-          <h2 className="text-2xl font-semibold">
-            {TOOL_CONFIG.character.toolLabel}
-          </h2>
+          <h2 className="text-2xl font-semibold">{TOOL_CONFIG.character.toolLabel}</h2>
         </section>
 
         <section className="mb-12 rounded-2xl border border-neutral-300 p-6">
           <div className="mb-6">
-            <label
-              htmlFor="character-input"
-              className="mb-2 block text-lg font-semibold"
-            >
+            <label htmlFor="character-input" className="mb-2 block text-lg font-semibold">
               キャラクターURL/キャラクターID
             </label>
 
@@ -302,9 +286,7 @@ export default function HomePage() {
 
             <div className="grid gap-2">
               {outputOptionItems.map((item) => {
-                const checked = item.alwaysOn
-                  ? true
-                  : options[item.key as keyof ChatPaletteOptions];
+                const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
 
                 return (
                   <label
@@ -322,10 +304,7 @@ export default function HomePage() {
                         disabled={item.alwaysOn}
                         onChange={(event) => {
                           if (!item.alwaysOn) {
-                            updateOption(
-                              item.key as keyof ChatPaletteOptions,
-                              event.target.checked
-                            );
+                            updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
                           }
                         }}
                       />
@@ -339,37 +318,20 @@ export default function HomePage() {
           </section>
 
           <div className="mb-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleGenerate}
-              disabled={isLoading}
-              className={FORM_BUTTON_CLASS}
-            >
+            <button type="button" onClick={handleGenerate} disabled={isLoading} className={FORM_BUTTON_CLASS}>
               {isLoading ? "生成中..." : "コマンドを生成する"}
             </button>
 
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={isLoading}
-              className={FORM_BUTTON_CLASS}
-            >
+            <button type="button" onClick={handleClear} disabled={isLoading} className={FORM_BUTTON_CLASS}>
               クリア
             </button>
 
-            <button
-              type="button"
-              onClick={handleCopy}
-              disabled={!result}
-              className={FORM_BUTTON_CLASS}
-            >
+            <button type="button" onClick={handleCopy} disabled={!result} className={FORM_BUTTON_CLASS}>
               コピー
             </button>
           </div>
 
-          <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">
-            {statusMessage}
-          </p>
+          <p className="mb-4 min-h-[1.5rem] text-sm text-neutral-600">{statusMessage}</p>
 
           <div className="mb-2 flex items-center justify-between gap-3">
             <label htmlFor="result-area" className="block text-lg font-semibold">
