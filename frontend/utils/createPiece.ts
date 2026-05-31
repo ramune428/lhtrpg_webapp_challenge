@@ -19,7 +19,8 @@ type SkillEntry = {
   description: string;
   checkCommand: string | null;
   commands: string[];
-  supportCommands: string[];
+  additionalConditionCommands: string[];
+  supportCalculationCommands: string[];
 };
 type SkillData = { entries: SkillEntry[]; basicActions: string };
 
@@ -38,8 +39,8 @@ export type ChatPaletteOptions = {
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: true,
-  includeSkillChecks: false,
-  includeSkillSupportCalculations: false,
+  includeSkillChecks: true,
+  includeSkillSupportCalculations: true,
   includeSkillDescriptions: true,
   includeBasicActions: true,
   includeEquipmentEffects: true,
@@ -152,8 +153,7 @@ function normalizeExpression(value: string, skillRank: number): string {
   return expression
     .replace(/\((\d+)\+(\d+)\)D/g, (_match, left: string, right: string) => `${Number(left) + Number(right)}D`)
     .replace(/\((\d+)\*(\d+)\)D/g, (_match, left: string, right: string) => `${Number(left) * Number(right)}D`)
-    .replace(/\((\d+)\)D/g, "$1D")
-    .replace(/^({[^}]+})\+(\d+D)$/, "$2+$1");
+    .replace(/\((\d+)\)D/g, "$1D");
 }
 
 function calcCommand(formula: string, skillRank: number): string {
@@ -384,7 +384,6 @@ function buildCausalityCostCommand(skill: AnyRecord, characterRank: number, incl
   const rank = asNumber(skill.skill_rank);
   const rule = causalityCostSkillRules.find((item) => item.skillId === id);
   const lines: string[] = [];
-
   if (!rule) return lines;
 
   const isDamageIncrease = asString(rule.label).includes("ダメージ増加");
@@ -395,7 +394,6 @@ function buildCausalityCostCommand(skill: AnyRecord, characterRank: number, incl
     const label = isDamageIncrease ? rule.label : rule.skillId === 4601 ? "弱点" : rule.label;
     pushUnique(lines, `C((${cost}+${rank})*${multiplier}) ${rule.skillName}_消費因果力${cost} ${label}`);
   }
-
   return lines;
 }
 
@@ -454,23 +452,19 @@ function buildAdditionalConditionDamageCommands(
 ): string[] {
   const suffix = ` ${skillName} ${damageLabel}`;
   const lines: string[] = [];
-
   for (const command of baseCommands) {
     if (!command.endsWith(suffix)) continue;
     const baseExpression = command.slice(0, -suffix.length);
     pushUnique(lines, `${baseExpression}+${additionExpression} ${skillName}_${condition} ${damageLabel}`);
   }
-
   return lines;
 }
 
-function buildSupportCommands(skill: AnyRecord, characterRank: number, baseCommands: string[]): string[] {
+function buildAdditionalConditionCommands(skill: AnyRecord, baseCommands: string[]): string[] {
   const id = asNumber(skill.id);
   const rank = asNumber(skill.skill_rank);
   const name = asString(skill.name);
   const lines: string[] = [];
-
-  for (const line of buildCausalityCostCommand(skill, characterRank, true)) pushUnique(lines, line);
 
   if (id === 2) {
     for (const line of buildAdditionalConditionDamageCommands(baseCommands, name, "クリティカル", "2D", "物理ダメージ")) pushUnique(lines, line);
@@ -485,6 +479,10 @@ function buildSupportCommands(skill: AnyRecord, characterRank: number, baseComma
   }
 
   return lines;
+}
+
+function buildSupportCalculationCommands(skill: AnyRecord, characterRank: number): string[] {
+  return buildCausalityCostCommand(skill, characterRank, true);
 }
 
 function buildGenericCommands(skill: AnyRecord): string[] {
@@ -550,7 +548,8 @@ function createSkillData(jsonData: AnyRecord, hand1: AnyRecord | null, hand2: An
         description: formatSkillDescription(skill),
         checkCommand: buildSkillCheckCommand(skill, abilityData),
         commands,
-        supportCommands: buildSupportCommands(skill, characterRank, commands),
+        additionalConditionCommands: buildAdditionalConditionCommands(skill, commands),
+        supportCalculationCommands: buildSupportCalculationCommands(skill, characterRank),
       });
     }
   }
@@ -622,6 +621,21 @@ function createSkillCheckSection(skillData: SkillData): string {
   return section("○判定がある特技", lines.join("\n"));
 }
 
+function createSupportSkillSection(skillData: SkillData): string {
+  const lines: string[] = [];
+  let currentTiming = "";
+  for (const entry of skillData.entries) {
+    if (entry.supportCalculationCommands.length === 0) continue;
+    if (entry.timing !== currentTiming) {
+      if (lines.length > 0) lines.push("");
+      lines.push(`● ${entry.timing}`);
+      currentTiming = entry.timing;
+    }
+    for (const command of entry.supportCalculationCommands) lines.push(command);
+  }
+  return section("○補助計算の特技", lines.join("\n"));
+}
+
 function createSkillSection(skillData: SkillData, options: ChatPaletteOptions): string {
   const lines: string[] = [];
   let currentTiming = "";
@@ -634,9 +648,8 @@ function createSkillSection(skillData: SkillData, options: ChatPaletteOptions): 
     lines.push(entry.skillName);
     if (options.includeSkillDescriptions && entry.description) lines.push(entry.description);
     for (const command of entry.commands) lines.push(command);
-    if (options.includeSkillSupportCalculations) {
-      for (const command of entry.supportCommands) lines.push(command);
-    }
+    for (const command of entry.additionalConditionCommands) lines.push(command);
+    for (const command of entry.supportCalculationCommands) lines.push(command);
     lines.push("");
   }
   return section("○特技", lines.join("\n"));
@@ -651,6 +664,7 @@ function createChatPalette(skillData: SkillData, equipmentData: string[], itemDa
   const sections: string[] = [createCombatBasics()];
   if (outputOptions.includeDamageCalculator) sections.push(createDamageCalculator());
   if (outputOptions.includeSkillChecks) sections.push(createSkillCheckSection(skillData));
+  if (outputOptions.includeSkillSupportCalculations) sections.push(createSupportSkillSection(skillData));
   sections.push(createSkillSection(skillData, outputOptions));
   if (outputOptions.includeBasicActions) sections.push(section("○基本動作", skillData.basicActions));
   if (outputOptions.includeEquipmentEffects) sections.push(section("○装備アイテム効果", equipmentData.join("\n")));
