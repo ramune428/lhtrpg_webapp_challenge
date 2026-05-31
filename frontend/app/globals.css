@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.grid.items-stretch [class~="min-h-[640px]"] {
+  height: 720px !important;
+  min-height: 720px !important;
+  max-height: 720px !important;
+  overflow: hidden;
+}
+
+.grid.items-stretch [class~="min-h-[640px]"] [class~="min-h-[520px]"] {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: auto !important;
+}
