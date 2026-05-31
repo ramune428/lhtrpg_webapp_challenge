@@ -387,7 +387,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+            <div className="grid gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
               <div className="grid content-start gap-2">
                 {outputOptionItems.map((item) => {
                   const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
@@ -395,26 +395,27 @@ export default function HomePage() {
                   return (
                     <label
                       key={item.key}
-                      className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm ${
+                      className={`flex min-h-12 items-center justify-between rounded-xl border px-3 text-sm ${
                         item.alwaysOn
                           ? "border-neutral-200 bg-neutral-100 text-neutral-500"
                           : "border-neutral-300 bg-white text-neutral-800"
                       }`}
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-3">
                         <input
                           type="checkbox"
                           checked={checked}
                           disabled={item.alwaysOn}
+                          className="h-4 w-4 shrink-0 rounded border-neutral-300 accent-violet-500 disabled:cursor-not-allowed"
                           onChange={(event) => {
                             if (!item.alwaysOn) {
                               updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
                             }
                           }}
                         />
-                        {item.label}
+                        <span className="truncate leading-none">{item.label}</span>
                       </span>
-                      {item.alwaysOn && <span className="text-xs">常に出力</span>}
+                      {item.alwaysOn && <span className="ml-3 shrink-0 text-xs leading-none">常に出力</span>}
                     </label>
                   );
                 })}
