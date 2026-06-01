@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import CharacterPage from "./character/page";
 
 export default function HomePage() {
-  redirect("/character");
+  return <CharacterPage />;
 }
