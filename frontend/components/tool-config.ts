@@ -22,7 +22,7 @@ export const TOOL_CONFIG: Record<ToolKey, ToolConfig> = {
   character: {
     navLabel: "キャラクター駒作成",
     toolLabel: "キャラクター駒作成ツール",
-    href: "/",
+    href: "/character",
     backLabel: "キャラクター駒作成ツールに戻る",
   },
   enemy: {
@@ -115,5 +115,4 @@ export const EXTERNAL_LINKS = {
   enemyDataGuide: "https://lhrpg.com/data/enemy_data_guide2.html",
   referenceChatPalette: "http://unonek.sakura.ne.jp/lh/chatpad.cgi?11111111",
   feedbackForm: "https://forms.gle/96dgnY3rsvDxAKbM9",
-  
 } as const;
