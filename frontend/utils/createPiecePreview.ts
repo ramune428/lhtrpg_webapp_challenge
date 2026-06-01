@@ -603,7 +603,7 @@ function createCombatBasics(): string {
 }
 
 function createDamageCalculator(): string {
-  return ["○被ダメージ計算用", "C(0-{物防}-0) 被ダメージ=物理ダメージ-物防-軽減", "C(0-{魔防}-0) 被ダメージ=魔法ダメージ-魔防-軽減", "C(({HP}+{障壁})-0-{ヘイト}*0-0) 残HP=(HP+障壁)-ダメージ-ヘイトダメージ-その他"].join("\n");
+  return ["○被ダメージ計算用", "C(0-{物防}-0) 被ダメージ=物理ダメージ-物防-軽減", "C(0-{魔防}-0) 被ダメージ=魔法ダメージ-魔防-軽減", "C(({HP}+{障壁})-0-{ヘイト}*0-0) 残HP=(HP+障壁)-ダメージ-ヘイト値*倍率-その他"].join("\n");
 }
 
 function createSkillCheckSection(skillData: SkillData): string {
