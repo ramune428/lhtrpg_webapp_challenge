@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://lhtrpg-tools.com/enemy",
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
   keywords: [
     "LHTRPG",
     "ログ・ホライズンTRPG",
