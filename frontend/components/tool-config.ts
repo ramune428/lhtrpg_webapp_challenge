@@ -22,7 +22,7 @@ export const TOOL_CONFIG: Record<ToolKey, ToolConfig> = {
   character: {
     navLabel: "キャラクター駒作成",
     toolLabel: "キャラクター駒作成ツール",
-    href: "/",
+    href: "/character",
     backLabel: "キャラクター駒作成ツールに戻る",
   },
   enemy: {
