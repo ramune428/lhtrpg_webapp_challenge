@@ -220,6 +220,7 @@ export default function HomePage() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
+              maxLength={40}
               placeholder="https://lhrpg.com/lhz/pc?id=123456 / 123456"
               className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-base outline-none transition focus:border-neutral-500"
             />
