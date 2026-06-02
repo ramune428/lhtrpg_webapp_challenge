@@ -14,9 +14,11 @@ function replaceRequired(pattern, replacement, label) {
 
 replaceRequired(
   /import \{ useMemo, useState, type ChangeEvent \} from "react";/,
-  'import { useMemo } from "react";',
-  "replace React imports",
+  "",
+  "remove React imports",
 );
+
+source = source.replace(/\ntype TabKey = "basic" \| "skills" \| "output";\n/, "\n");
 
 if (!source.includes('from "@/hooks/useEnemyForm";')) {
   replaceRequired(
@@ -34,6 +36,7 @@ replaceRequired(
   enemyRanks,
   enemyRaces,
   enemyTypes,
+  formatDiceAboveSelection,
   getCombinedTagText,
   getDiceRangeBoundaryValues,
   getDropDiceAboveStartValue,
