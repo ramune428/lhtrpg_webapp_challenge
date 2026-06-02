@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import AppNav from "@/components/app-nav";
 import PageLinkCard from "@/components/page-link-card";
+import { TabButton } from "@/components/enemy";
 import {
   CHARACTER_PAGE_LINKS,
   ENEMY_PAGE_LINKS,
@@ -11,7 +12,9 @@ import {
   TOOL_CONFIG,
   TOOL_TITLES,
 } from "@/components/tool-config";
+import { downloadBlobFile, downloadTextFile } from "@/utils/downloadFile";
 import {
+  buildCurrentFormData,
   calculateEnemyValues,
   calculateIdentification,
   createEmptyDropItemInput,
@@ -19,26 +22,40 @@ import {
   createEnemyXlsx,
   createEnemyJson,
   createEnemyPiece,
-  parseEnemyXlsx,
+  diceButtonValues,
   enemyRanks,
   enemyRaces,
   enemyTypes,
+  formatDiceAboveSelection,
   getCombinedTagText,
   getDefaultEnemyForm,
   getDefaultTags,
+  getDiceRangeBoundaryValues,
+  getDropDiceAboveStartValue,
+  getDropDicePreview,
   getEnemyTypeExplanation,
   getGimmickSkill,
+  getMaxDropDice,
+  getSelectedDiceValues,
   getSkillExample,
+  isDiceButtonEnabled,
+  isNumericDiceButton,
+  normalizeCount,
+  normalizeCr,
+  normalizeDiceRangeSelection,
   parseEnemyJson,
+  parseEnemyXlsx,
   popularityList,
   skillTimings,
-  type EnemyDropItemInput,
+  toFullWidthNumber,
+  toNonNegativeNumber,
+  withDropRowId,
+  withSkillRowId,
+  type EnemyDropItemRow,
   type EnemyFormData,
-  type EnemySkillInput,
-} from "@/utils/createEnemyPiece";
+  type EnemySkillRow,
+} from "@/utils/enemy";
 
-type EnemySkillRow = EnemySkillInput & { id: string };
-type EnemyDropItemRow = EnemyDropItemInput & { id: string };
 
 type TabKey = "basic" | "skills" | "output";
 
@@ -46,324 +63,6 @@ const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
 const BODY_LINK_CLASS =
   "text-sm font-medium text-neutral-700 underline underline-offset-4";
 
-const diceButtonValues = [
-  "固定",
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "以上",
-] as const;
-
-type DiceButtonValue = (typeof diceButtonValues)[number];
-
-function getMaxDropDice(rank: EnemyFormData["rank"]) {
-  return rank === "レイド" ? 10 : 6;
-}
-
-function normalizeDropDiceText(dice: string): string {
-  return dice
-    .replace(/[０-９]/g, (value) =>
-      String.fromCharCode(value.charCodeAt(0) - 0xfee0),
-    )
-    .replace(/[，、]/g, ",")
-    .replace(/[～〜－―ー−]/g, "~");
-}
-
-function toFullWidthNumber(value: number): string {
-  return String(value).replace(/[0-9]/g, (digit) =>
-    String.fromCharCode("０".charCodeAt(0) + Number(digit)),
-  );
-}
-
-function isNumericDiceButton(
-  diceValue: DiceButtonValue,
-): diceValue is Exclude<DiceButtonValue, "固定" | "以上"> {
-  return diceValue !== "固定" && diceValue !== "以上";
-}
-
-function isDiceButtonEnabled(
-  diceValue: DiceButtonValue,
-  maxDropDice: number,
-) {
-  if (diceValue === "固定" || diceValue === "以上") {
-    return true;
-  }
-
-  return Number(diceValue) <= maxDropDice;
-}
-
-function clampDropDiceValue(value: number, maxDropDice: number) {
-  return Math.max(1, Math.min(value, maxDropDice));
-}
-
-function getDropDiceAboveStartValue(
-  dice: string,
-  maxDropDice: number,
-): number | null {
-  const normalized = normalizeDropDiceText(dice).trim();
-  const match = normalized.match(/^(10|[1-9])\s*~\s*$/);
-
-  if (!match) {
-    return null;
-  }
-
-  return clampDropDiceValue(Number(match[1]), maxDropDice);
-}
-
-function formatDiceAboveSelection(
-  selected: Set<string>,
-  maxDropDice: number,
-): string {
-  const selectedNumbers = Array.from(selected)
-    .map((value) => Number(value))
-    .filter(
-      (value) =>
-        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
-    )
-    .sort((a, b) => a - b);
-
-  const start = selectedNumbers[0] ?? 1;
-
-  return `${toFullWidthNumber(start)}～`;
-}
-
-function getSelectedDiceValues(
-  dice: string,
-  maxDropDice: number,
-): Set<string> {
-  const selected = new Set<string>();
-  const aboveStart = getDropDiceAboveStartValue(dice, maxDropDice);
-
-  if (aboveStart !== null) {
-    selected.add(String(aboveStart));
-    return selected;
-  }
-
-  const normalized = normalizeDropDiceText(dice);
-
-  for (const match of normalized.matchAll(
-    /(10|[1-9])\s*[~-]\s*(10|[1-9])/g,
-  )) {
-    const start = Number(match[1]);
-    const end = Number(match[2]);
-    const min = Math.max(1, Math.min(start, end));
-    const max = Math.min(Math.max(start, end), maxDropDice);
-
-    for (let value = min; value <= max; value += 1) {
-      selected.add(String(value));
-    }
-  }
-
-  for (const match of normalized.matchAll(/10|[1-9]/g)) {
-    const value = Number(match[0]);
-
-    if (value >= 1 && value <= maxDropDice) {
-      selected.add(String(value));
-    }
-  }
-
-  return selected;
-}
-
-function getDiceRangeBoundaryValues(
-  selected: Set<string>,
-  maxDropDice: number,
-): Set<string> {
-  const sortedValues = Array.from(selected)
-    .map((value) => Number(value))
-    .filter(
-      (value) =>
-        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
-    )
-    .sort((a, b) => a - b);
-
-  const boundaries = new Set<string>();
-
-  if (sortedValues.length === 0) {
-    return boundaries;
-  }
-
-  boundaries.add(String(sortedValues[0]));
-
-  if (sortedValues.length >= 2) {
-    boundaries.add(String(sortedValues[sortedValues.length - 1]));
-  }
-
-  return boundaries;
-}
-
-function normalizeDiceRangeSelection(
-  selected: Set<string>,
-  maxDropDice: number,
-): string {
-  const sortedValues = Array.from(selected)
-    .map((value) => Number(value))
-    .filter(
-      (value) =>
-        Number.isInteger(value) && value >= 1 && value <= maxDropDice,
-    )
-    .sort((a, b) => a - b);
-
-  if (sortedValues.length === 0) {
-    return "";
-  }
-
-  if (sortedValues.length === 1) {
-    return toFullWidthNumber(sortedValues[0]);
-  }
-
-  const min = sortedValues[0];
-  const max = sortedValues[sortedValues.length - 1];
-
-  return `${toFullWidthNumber(min)}～${toFullWidthNumber(max)}`;
-}
-
-function formatDropDiceForOutput(
-  dice: string,
-  maxDropDice: number,
-): string {
-  const trimmedDice = dice.trim();
-
-  if (trimmedDice === "固定") {
-    return "固定";
-  }
-
-  const aboveStart = getDropDiceAboveStartValue(trimmedDice, maxDropDice);
-
-  if (aboveStart !== null) {
-    return `${toFullWidthNumber(aboveStart)}～`;
-  }
-
-  const selected = getSelectedDiceValues(trimmedDice, maxDropDice);
-  const formattedDice = normalizeDiceRangeSelection(selected, maxDropDice);
-
-  return formattedDice || trimmedDice;
-}
-
-function getDropDicePreview(dice: string, maxDropDice: number): string {
-  const preview = formatDropDiceForOutput(dice, maxDropDice).trim();
-
-  return preview || "未選択";
-}
-
-function makeId() {
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function toNonNegativeNumber(value: string) {
-  const numberValue = Number(value);
-  return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
-}
-
-function clampInteger(
-  value: number,
-  min: number,
-  max: number,
-  fallback: number,
-) {
-  if (!Number.isFinite(value)) {
-    return fallback;
-  }
-
-  return Math.max(min, Math.min(max, Math.floor(value)));
-}
-
-function normalizeCr(value: number) {
-  return clampInteger(value, 1, 30, 1);
-}
-
-function normalizeCount(value: number, fallback: number) {
-  return clampInteger(value, 1, 99, fallback);
-}
-
-function withSkillRowId(skill: EnemySkillInput): EnemySkillRow {
-  return { id: makeId(), ...skill };
-}
-
-function withDropRowId(item: EnemyDropItemInput): EnemyDropItemRow {
-  return { id: makeId(), ...item };
-}
-
-function downloadTextFile(filename: string, content: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function downloadBlobFile(filename: string, blob: Blob) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function buildCurrentFormData(
-  form: EnemyFormData,
-  skills: EnemySkillRow[],
-  items: EnemyDropItemRow[],
-): EnemyFormData {
-  const maxDropDice = getMaxDropDice(form.rank);
-
-  return {
-    ...form,
-    skills: skills.map((skill) => ({
-      name: skill.name,
-      tags: skill.tags,
-      timing: skill.timing,
-      roleAttack: skill.roleAttack,
-      roleDefense: skill.roleDefense,
-      target: skill.target,
-      range: skill.range,
-      limit: skill.limit,
-      effect: skill.effect,
-    })),
-    items: items.map((item) => ({
-      dice: formatDropDiceForOutput(item.dice, maxDropDice),
-      name: item.name,
-      description: item.description,
-    })),
-  };
-}
-
-function TabButton(props: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  const { active, onClick, children } = props;
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "border-b-2 px-3 py-2 text-sm transition",
-        active
-          ? "border-red-500 text-red-500"
-          : "border-transparent text-neutral-700 hover:text-neutral-900",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
 
 export default function EnemyPage() {
   const initialForm = useMemo(() => getDefaultEnemyForm(), []);
