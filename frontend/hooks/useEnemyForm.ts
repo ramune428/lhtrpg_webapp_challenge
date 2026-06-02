@@ -306,6 +306,7 @@ export function useEnemyForm() {
     removeSkill,
     result,
     setActiveTab,
+    setForm,
     setStatusMessage,
     skills,
     statusMessage,
