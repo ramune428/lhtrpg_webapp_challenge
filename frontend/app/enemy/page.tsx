@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type ChangeEvent } from "react";
 import AppNav from "@/components/app-nav";
 import PageLinkCard from "@/components/page-link-card";
-import { TabButton } from "@/components/enemy";
+import { EnemyCalculatedValuesPanel, EnemyOutputPanel, TabButton } from "@/components/enemy";
 import {
   CHARACTER_PAGE_LINKS,
   ENEMY_PAGE_LINKS,
@@ -936,18 +936,12 @@ export default function EnemyPage() {
 
             <hr className="my-8 border-neutral-300" />
 
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">能力値</h2>
-              <button
-                type="button"
-                onClick={handleApplyCalculatedValues}
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
-              >
-                推奨能力値を反映
-              </button>
-            </div>
+            <EnemyCalculatedValuesPanel
+              calculated={calculated}
+              onApply={handleApplyCalculatedValues}
+            />
 
-            <div className="space-y-6">
+            <div className="mt-8 space-y-6">
               <div>
                 <h3 className="mb-3 text-sm font-semibold text-neutral-700">
                   基本能力値
@@ -1600,47 +1594,16 @@ export default function EnemyPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={handleGenerate}
-                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-                >
-                  コマンドを生成する
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50"
-                >
-                  コピー
-                </button>
-              </div>
-
-              <textarea
-                value={result}
-                readOnly
-                className="min-h-[180px] w-full resize-y rounded-xl border border-neutral-300 px-4 py-3 text-sm leading-6 outline-none"
+              <EnemyOutputPanel
+                result={result}
+                statusMessage={statusMessage}
+                onGenerate={handleGenerate}
+                onCopy={handleCopy}
+                onClear={handleClear}
+                onDownloadJson={handleDownloadJson}
+                onDownloadXlsx={handleDownloadXlsx}
+                onImportFile={handleImportFile}
               />
-
-              <div className="flex flex-wrap justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={handleDownloadXlsx}
-                  className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
-                >
-                  Download XLSX
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleDownloadJson}
-                  className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium transition hover:bg-neutral-50"
-                >
-                  Download JSON
-                </button>
-              </div>
             </div>
           </section>
         ) : null}
