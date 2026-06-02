@@ -55,6 +55,7 @@ replaceRequired(
   getDefaultEnemyForm,
   getDefaultTags,
   getDiceRangeBoundaryValues,
+  getDropDiceAboveStartValue,
   getDropDicePreview,
   getEnemyTypeExplanation,
   getGimmickSkill,
