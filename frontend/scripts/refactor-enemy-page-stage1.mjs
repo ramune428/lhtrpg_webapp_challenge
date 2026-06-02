@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const pagePath = resolve(process.cwd(), "app/enemy/page.tsx");
-let source = readFileSync(pagePath, "utf8");
+let source = readFileSync(pagePath, "utf8").replace(/\r\n/g, "\n");
 
 function replaceRequired(pattern, replacement, label) {
   const next = source.replace(pattern, replacement);
@@ -13,14 +13,14 @@ function replaceRequired(pattern, replacement, label) {
 }
 
 replaceRequired(
-  'import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";',
+  /import \{ useMemo, useState, type ChangeEvent, type ReactNode \} from "react";/,
   'import { useMemo, useState, type ChangeEvent } from "react";',
   "remove unused ReactNode import",
 );
 
 if (!source.includes('from "@/components/enemy";')) {
   replaceRequired(
-    'import PageLinkCard from "@/components/page-link-card";\n',
+    /import PageLinkCard from "@\/components\/page-link-card";\n/,
     'import PageLinkCard from "@/components/page-link-card";\nimport { TabButton } from "@/components/enemy";\n',
     "add enemy component imports",
   );
@@ -28,7 +28,7 @@ if (!source.includes('from "@/components/enemy";')) {
 
 if (!source.includes('from "@/utils/downloadFile";')) {
   replaceRequired(
-    '} from "@/components/tool-config";\n',
+    /\} from "@\/components\/tool-config";\n/,
     '} from "@/components/tool-config";\nimport { downloadBlobFile, downloadTextFile } from "@/utils/downloadFile";\n',
     "add download helper imports",
   );
