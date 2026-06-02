@@ -1,3 +1,4 @@
+export { default as EnemyCalculatedValuesPanel } from "./EnemyCalculatedValuesPanel";
 export { default as EnemyNumberField } from "./EnemyNumberField";
 export { default as EnemyOutputPanel } from "./EnemyOutputPanel";
 export { default as EnemySection } from "./EnemySection";
