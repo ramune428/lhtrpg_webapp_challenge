@@ -460,7 +460,10 @@ export default function EnemyPage() {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium">STR</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>STR</label>
+                      <span>推奨値 {calculated.strength}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -475,7 +478,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">DEX</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>DEX</label>
+                      <span>推奨値 {calculated.dexterity}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -490,7 +496,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">POW</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>POW</label>
+                      <span>推奨値 {calculated.power}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -502,7 +511,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">INT</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>INT</label>
+                      <span>推奨値 {calculated.intelligence}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -530,9 +542,10 @@ export default function EnemyPage() {
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          回避(固定値)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>回避(固定値)</label>
+                        <span>推奨値 {calculated.avoid}</span>
+                      </div>
                         <input
                           type="number"
                           min={0}
@@ -547,9 +560,10 @@ export default function EnemyPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          回避(ダイス)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>回避(ダイス)</label>
+                        <span>推奨値 {calculated.avoidDice}</span>
+                      </div>
                         <input
                           type="number"
                           min={0}
@@ -564,9 +578,10 @@ export default function EnemyPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          回避(判定)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>回避(判定)</label>
+                        <span>推奨値 -</span>
+                      </div>
                         <input
                           type="text"
                           value={`${form.avoid} + ${form.avoidDice} D`}
@@ -583,9 +598,10 @@ export default function EnemyPage() {
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          抵抗(固定値)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>抵抗(固定値)</label>
+                        <span>推奨値 {calculated.resist}</span>
+                      </div>
                         <input
                           type="number"
                           min={0}
@@ -600,9 +616,10 @@ export default function EnemyPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          抵抗(ダイス)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>抵抗(ダイス)</label>
+                        <span>推奨値 {calculated.resistDice}</span>
+                      </div>
                         <input
                           type="number"
                           min={0}
@@ -617,9 +634,10 @@ export default function EnemyPage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium">
-                          抵抗(判定)
-                        </label>
+                        <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                        <label>抵抗(判定)</label>
+                        <span>推奨値 -</span>
+                      </div>
                         <input
                           type="text"
                           value={`${form.resist} + ${form.resistDice} D`}
@@ -638,9 +656,10 @@ export default function EnemyPage() {
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      物理防御力
-                    </label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>物理防御力</label>
+                      <span>推奨値 {calculated.physicalDefense}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -655,9 +674,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      魔法防御力
-                    </label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>魔法防御力</label>
+                      <span>推奨値 {calculated.magicDefense}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -672,7 +692,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">最大HP</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>最大HP</label>
+                      <span>推奨値 {calculated.hitPoint}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -687,9 +710,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">
-                      ヘイト倍率
-                    </label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>ヘイト倍率</label>
+                      <span>推奨値 {calculated.hate}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -701,7 +725,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">行動力</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>行動力</label>
+                      <span>推奨値 {calculated.action}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -716,7 +743,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">移動力</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>移動力</label>
+                      <span>推奨値 {calculated.move}</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
@@ -728,7 +758,10 @@ export default function EnemyPage() {
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium">因果力</label>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
+                      <label>因果力</label>
+                      <span>推奨値 -</span>
+                    </div>
                     <input
                       type="number"
                       min={0}
