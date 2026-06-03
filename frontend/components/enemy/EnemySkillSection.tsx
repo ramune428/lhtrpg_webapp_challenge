@@ -1,15 +1,15 @@
-import { skillTimings } from "@/utils/enemy";
+import { skillTimings, type EnemySkillInput } from "@/utils/enemy";
 import type { EnemySkillRow } from "@/utils/enemy/form";
 
 type EnemySkillSectionProps = {
   skills: EnemySkillRow[];
-  exampleSkill: EnemySkillRow;
-  gimmickSkill: EnemySkillRow;
+  exampleSkill: EnemySkillInput;
+  gimmickSkill: EnemySkillInput;
   isGimmick: boolean;
   onSkillCountChange: (nextCountRaw: number) => void;
   onUpdateSkill: (
     id: string,
-    key: keyof Omit<EnemySkillRow, "id">,
+    key: keyof EnemySkillInput,
     value: string,
   ) => void;
   onRemoveSkill: (id: string) => void;
