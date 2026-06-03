@@ -61,6 +61,10 @@ export default function EnemyPage() {
     updateSkill,
   } = useEnemyForm();
 
+  const recommendedValue = (value: number) =>
+    form.enemyType === "不明" ? "-" : value;
+
+
   return (
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
@@ -462,7 +466,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>STR</label>
-                      <span>推奨値 {calculated.strength}</span>
+                      <span>推奨値 {recommendedValue(calculated.strength)}</span>
                     </div>
                     <input
                       type="number"
@@ -480,7 +484,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>DEX</label>
-                      <span>推奨値 {calculated.dexterity}</span>
+                      <span>推奨値 {recommendedValue(calculated.dexterity)}</span>
                     </div>
                     <input
                       type="number"
@@ -498,7 +502,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>POW</label>
-                      <span>推奨値 {calculated.power}</span>
+                      <span>推奨値 {recommendedValue(calculated.power)}</span>
                     </div>
                     <input
                       type="number"
@@ -513,7 +517,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>INT</label>
-                      <span>推奨値 {calculated.intelligence}</span>
+                      <span>推奨値 {recommendedValue(calculated.intelligence)}</span>
                     </div>
                     <input
                       type="number"
@@ -544,7 +548,7 @@ export default function EnemyPage() {
                       <div>
                         <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                         <label>回避(固定値)</label>
-                        <span>推奨値 {calculated.avoid}</span>
+                        <span>推奨値 {recommendedValue(calculated.avoid)}</span>
                       </div>
                         <input
                           type="number"
@@ -562,7 +566,7 @@ export default function EnemyPage() {
                       <div>
                         <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                         <label>回避(ダイス)</label>
-                        <span>推奨値 {calculated.avoidDice}</span>
+                        <span>推奨値 {recommendedValue(calculated.avoidDice)}</span>
                       </div>
                         <input
                           type="number"
@@ -600,7 +604,7 @@ export default function EnemyPage() {
                       <div>
                         <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                         <label>抵抗(固定値)</label>
-                        <span>推奨値 {calculated.resist}</span>
+                        <span>推奨値 {recommendedValue(calculated.resist)}</span>
                       </div>
                         <input
                           type="number"
@@ -618,7 +622,7 @@ export default function EnemyPage() {
                       <div>
                         <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                         <label>抵抗(ダイス)</label>
-                        <span>推奨値 {calculated.resistDice}</span>
+                        <span>推奨値 {recommendedValue(calculated.resistDice)}</span>
                       </div>
                         <input
                           type="number"
@@ -658,7 +662,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>物理防御力</label>
-                      <span>推奨値 {calculated.physicalDefense}</span>
+                      <span>推奨値 {recommendedValue(calculated.physicalDefense)}</span>
                     </div>
                     <input
                       type="number"
@@ -676,7 +680,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>魔法防御力</label>
-                      <span>推奨値 {calculated.magicDefense}</span>
+                      <span>推奨値 {recommendedValue(calculated.magicDefense)}</span>
                     </div>
                     <input
                       type="number"
@@ -694,7 +698,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>最大HP</label>
-                      <span>推奨値 {calculated.hitPoint}</span>
+                      <span>推奨値 {recommendedValue(calculated.hitPoint)}</span>
                     </div>
                     <input
                       type="number"
@@ -712,7 +716,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>ヘイト倍率</label>
-                      <span>推奨値 {calculated.hate}</span>
+                      <span>推奨値 {recommendedValue(calculated.hate)}</span>
                     </div>
                     <input
                       type="number"
@@ -727,7 +731,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>行動力</label>
-                      <span>推奨値 {calculated.action}</span>
+                      <span>推奨値 {recommendedValue(calculated.action)}</span>
                     </div>
                     <input
                       type="number"
@@ -745,7 +749,7 @@ export default function EnemyPage() {
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm font-medium">
                       <label>移動力</label>
-                      <span>推奨値 {calculated.move}</span>
+                      <span>推奨値 {recommendedValue(calculated.move)}</span>
                     </div>
                     <input
                       type="number"
