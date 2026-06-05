@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   calculateEnemyValues,
   enemyTypes,
-} from "../../utils/createEnemyPiece.ts";
+} from "../../utils/enemy/index.ts";
 import {
   calculateExpectedExplicitGimmickValues,
   calculateExpectedNonGimmickValues,
