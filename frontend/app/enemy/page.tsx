@@ -3,7 +3,7 @@
 import Link from "next/link";
 import AppNav from "@/components/app-nav";
 import PageLinkCard from "@/components/page-link-card";
-import { EnemyCalculatedValuesPanel, EnemyDropItemSection, EnemyOutputPanel, EnemyPreviewSection, EnemySkillSection, TabButton } from "@/components/enemy";
+import { EnemyCalculatedValuesPanel, EnemyDropItemSection, EnemyHitPointMultiplierPreview, EnemyHitPointRecommendationPreview, EnemyOutputPanel, EnemyPreviewSection, EnemySkillSection, TabButton } from "@/components/enemy";
 import {
   CHARACTER_PAGE_LINKS,
   ENEMY_PAGE_LINKS,
@@ -315,6 +315,8 @@ export default function EnemyPage() {
                 </select>
               </div>
 
+              <EnemyHitPointMultiplierPreview rank={form.rank} />
+
               <div>
                 <label className="mb-2 block text-sm font-medium">CR</label>
                 <input
@@ -474,6 +476,11 @@ export default function EnemyPage() {
             <EnemyCalculatedValuesPanel
               calculated={calculated}
               onApply={handleApplyCalculatedValues}
+            />
+
+            <EnemyHitPointRecommendationPreview
+              rank={form.rank}
+              hitPoint={calculated.hitPoint}
             />
 
             <div className="mt-8 space-y-6">
