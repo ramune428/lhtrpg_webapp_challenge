@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { EnemyFormData } from "@/utils/enemy";
 
@@ -56,9 +56,40 @@ function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings {
 
 export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
   const settings = getPreviewSettings(rank);
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const grid = fieldRef.current?.parentElement;
+    if (!grid) {
+      return;
+    }
+
+    const fields = Array.from(grid.children) as HTMLElement[];
+    const nameField = fields[0];
+    const initialTagsField = fields[8];
+    const tagsField = fields[9];
+
+    nameField?.classList.add("sm:col-span-2");
+
+    initialTagsField?.classList.remove("lg:col-span-2");
+    initialTagsField?.classList.add("lg:col-span-3");
+
+    tagsField?.classList.remove("lg:col-span-2");
+    tagsField?.classList.add("lg:col-span-4");
+
+    return () => {
+      nameField?.classList.remove("sm:col-span-2");
+
+      initialTagsField?.classList.remove("lg:col-span-3");
+      initialTagsField?.classList.add("lg:col-span-2");
+
+      tagsField?.classList.remove("lg:col-span-4");
+      tagsField?.classList.add("lg:col-span-2");
+    };
+  }, []);
 
   return (
-    <div>
+    <div ref={fieldRef}>
       <div className="mb-2 flex min-h-5 items-center justify-between gap-2">
         <label className="block text-sm font-medium">HP倍率</label>
         <span className="whitespace-nowrap text-xs font-medium text-amber-700">
