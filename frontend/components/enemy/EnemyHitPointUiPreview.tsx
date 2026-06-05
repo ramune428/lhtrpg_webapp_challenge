@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { EnemyFormData } from "@/utils/enemy";
 
 type EnemyRank = EnemyFormData["rank"];
@@ -92,6 +96,43 @@ export function EnemyHitPointRecommendationPreview({
   hitPoint: number;
 }) {
   const settings = getPreviewSettings(rank);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const headings = Array.from(document.querySelectorAll("h3"));
+    const judgementHeading = headings.find(
+      (heading) => heading.textContent?.trim() === "判定値",
+    );
+    const judgementSection = judgementHeading?.parentElement;
+
+    if (!judgementSection?.parentElement) {
+      return;
+    }
+
+    const placeholder = document.createElement("div");
+    placeholder.dataset.enemyHitPointPreview = "true";
+    judgementSection.parentElement.insertBefore(placeholder, judgementSection);
+    setPortalTarget(placeholder);
+
+    const labels = Array.from(document.querySelectorAll("label"));
+    const existingHitPointLabel = labels.find(
+      (label) => label.textContent?.trim() === "最大HP",
+    );
+    const existingHitPointField = existingHitPointLabel?.parentElement?.parentElement;
+    const previousDisplay = existingHitPointField?.style.display ?? "";
+
+    if (existingHitPointField) {
+      existingHitPointField.style.display = "none";
+    }
+
+    return () => {
+      placeholder.remove();
+      if (existingHitPointField) {
+        existingHitPointField.style.display = previousDisplay;
+      }
+    };
+  }, []);
+
   const baseHitPoint = Math.floor(hitPoint / settings.multiplier);
   const minHitPoint = Math.floor(baseHitPoint * settings.minMultiplier);
   const maxHitPoint = Math.floor(baseHitPoint * settings.maxMultiplier);
@@ -99,7 +140,7 @@ export function EnemyHitPointRecommendationPreview({
     ? `${minHitPoint}（固定）`
     : `${minHitPoint} ～ ${maxHitPoint}`;
 
-  return (
+  const content = (
     <section className="rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-neutral-700">最大HP</h3>
@@ -158,4 +199,6 @@ export function EnemyHitPointRecommendationPreview({
       </p>
     </section>
   );
+
+  return portalTarget ? createPortal(content, portalTarget) : null;
 }
