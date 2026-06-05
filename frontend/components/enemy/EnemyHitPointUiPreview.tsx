@@ -69,21 +69,21 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
     const initialTagsField = fields[8];
     const tagsField = fields[9];
 
-    nameField?.classList.add("sm:col-span-2");
+    nameField?.classList.remove("sm:col-span-2", "lg:col-span-2");
 
-    initialTagsField?.classList.remove("lg:col-span-2");
-    initialTagsField?.classList.add("lg:col-span-3");
+    initialTagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
+    initialTagsField?.classList.add("lg:col-span-2");
 
-    tagsField?.classList.remove("lg:col-span-2");
-    tagsField?.classList.add("lg:col-span-4");
+    tagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
+    tagsField?.classList.add("lg:col-span-2");
 
     return () => {
-      nameField?.classList.remove("sm:col-span-2");
+      nameField?.classList.add("lg:col-span-2");
 
-      initialTagsField?.classList.remove("lg:col-span-3");
+      initialTagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
       initialTagsField?.classList.add("lg:col-span-2");
 
-      tagsField?.classList.remove("lg:col-span-4");
+      tagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
       tagsField?.classList.add("lg:col-span-2");
     };
   }, []);
