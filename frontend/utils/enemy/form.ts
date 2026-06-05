@@ -1,4 +1,5 @@
 import { formatDropDiceForOutput, getMaxDropDice } from "./dice";
+import { normalizeEnemyRankForRace } from "./rank";
 import type { EnemyDropItemInput, EnemyFormData, EnemySkillInput } from "./types";
 
 export type EnemySkillRow = EnemySkillInput & { id: string };
@@ -47,10 +48,12 @@ export function buildCurrentFormData(
   skills: EnemySkillRow[],
   items: EnemyDropItemRow[],
 ): EnemyFormData {
-  const maxDropDice = getMaxDropDice(form.rank);
+  const rank = normalizeEnemyRankForRace(form.race, form.rank);
+  const maxDropDice = getMaxDropDice(rank);
 
   return {
     ...form,
+    rank,
     skills: skills.map((skill) => ({
       name: skill.name,
       tags: skill.tags,
