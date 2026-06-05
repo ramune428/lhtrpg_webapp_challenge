@@ -256,7 +256,12 @@ export function useEnemyForm() {
       const next = prev.filter((item) => item.id !== id);
       return next.length > 0
         ? next
-        : [withDropRowId(createEmptyDropItemInput())];
+        : [
+            withDropRowId({
+              ...createEmptyDropItemInput(),
+              dice: form.rank === "モブ" ? "固定" : "",
+            }),
+          ];
     });
   };
 
@@ -279,7 +284,10 @@ export function useEnemyForm() {
 
       if (nextCount > prev.length) {
         const additional = Array.from({ length: nextCount - prev.length }, () =>
-          withDropRowId(createEmptyDropItemInput()),
+          withDropRowId({
+            ...createEmptyDropItemInput(),
+            dice: form.rank === "モブ" ? "固定" : "",
+          }),
         );
         return [...prev, ...additional];
       }
