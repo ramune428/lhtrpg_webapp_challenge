@@ -130,7 +130,7 @@ export function EnemyHitPointRecommendationPreview({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">最終推奨HP</label>
+          <label className="mb-2 block text-sm font-medium">最終HP</label>
           <input
             type="text"
             value={hitPoint}
@@ -151,7 +151,7 @@ export function EnemyHitPointRecommendationPreview({
       </div>
 
       <p className="mt-4 text-sm leading-7 text-neutral-600">
-        基準HP {baseHitPoint} × HP倍率 {settings.multiplier} ＝ 最終推奨HP {hitPoint}
+        基準HP {baseHitPoint} × HP倍率 {settings.multiplier} ＝ 最終HP {hitPoint}
       </p>
       <p className="mt-1 text-xs leading-6 text-neutral-500">
         現在はUI確認用です。最大HPの編集方法と計算反映は未実装です。
