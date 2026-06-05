@@ -1,0 +1,384 @@
+name: Apply gimmick normal-rank rule
+
+on:
+  push:
+    branches:
+      - test/enemy-formula
+    paths:
+      - .github/workflows/apply-gimmick-normal-rank-rule.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: test/enemy-formula
+
+      - name: Apply gimmick normal-rank rule
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_required(source: str, before: str, after: str, label: str) -> str:
+              if before not in source:
+                  raise SystemExit(f'Target not found: {label}')
+              return source.replace(before, after, 1)
+
+          # createEnemyPiece.ts
+          path = Path('frontend/utils/createEnemyPiece.ts')
+          source = path.read_text(encoding='utf-8')
+
+          source = replace_required(
+              source,
+              '''export function getDefaultTags(rank: EnemyRank, race: EnemyRace): string {
+  return rank === "ノーマル" ? race : `${rank}、${race}`;
+}''',
+              '''export function normalizeEnemyRank(race: EnemyRace, rank: EnemyRank): EnemyRank {
+  return race === "ギミック" ? "ノーマル" : rank;
+}
+
+export function getDefaultTags(rank: EnemyRank, race: EnemyRace): string {
+  const normalizedRank = normalizeEnemyRank(race, rank);
+  return normalizedRank === "ノーマル" ? race : `${normalizedRank}、${race}`;
+}''',
+              'add normalizeEnemyRank',
+          )
+
+          source = replace_required(
+              source,
+              '''  const { enemyType, race, rank, cr } = args;
+  const data = enemyDataMap[enemyType];''',
+              '''  const { enemyType, race, rank, cr } = args;
+  const effectiveRank = normalizeEnemyRank(race, rank);
+  const data = enemyDataMap[enemyType];''',
+              'add effective rank to calculateEnemyValues',
+          )
+
+          start = source.index('export function calculateEnemyValues')
+          end = source.index('export function getSkillExample', start)
+          calculate_block = source[start:end]
+          calculate_block = calculate_block.replace('rank ===', 'effectiveRank ===')
+          calculate_block = calculate_block.replace(
+              'Math.floor((cr + data.base_hateCr) / 6 + data.base_hate_fix)',
+              'Math.floor((cr * data.base_hateCr) / 6 + data.base_hate_fix)',
+          )
+          source = source[:start] + calculate_block + source[end:]
+
+          # Normalize imported JSON rank.
+          json_start = source.index('export function parseEnemyJson')
+          json_end = source.index('function parseCellText', json_start)
+          json_block = source[json_start:json_end]
+          json_block = replace_required(
+              json_block,
+              '''  const race = (enemyRaces.find((candidate) => rawTags.includes(candidate)) ??
+    "人型") as EnemyRace;
+
+  const popularity''',
+              '''  const race = (enemyRaces.find((candidate) => rawTags.includes(candidate)) ??
+    "人型") as EnemyRace;
+  const normalizedRank = normalizeEnemyRank(race, rank);
+
+  const popularity''',
+              'normalize JSON import rank',
+          )
+          json_block = replace_required(
+              json_block,
+              '''    rank,
+    cr,''',
+              '''    rank: normalizedRank,
+    cr,''',
+              'return normalized JSON rank',
+          )
+          source = source[:json_start] + json_block + source[json_end:]
+
+          # Normalize imported XLSX rank.
+          xlsx_start = source.index('export function parseEnemyXlsx')
+          xlsx_end = source.index('function normalizeDice', xlsx_start)
+          xlsx_block = source[xlsx_start:xlsx_end]
+          xlsx_block = replace_required(
+              xlsx_block,
+              '''  const race = enemyRaces.includes(raceText as EnemyRace)
+    ? (raceText as EnemyRace)
+    : (baseData?.race ?? "人型");
+  const enemyType''',
+              '''  const race = enemyRaces.includes(raceText as EnemyRace)
+    ? (raceText as EnemyRace)
+    : (baseData?.race ?? "人型");
+  const normalizedRank = normalizeEnemyRank(race, rank);
+  const enemyType''',
+              'normalize XLSX import rank',
+          )
+          xlsx_block = xlsx_block.replace(
+              'calculateEnemyValues({ enemyType, race, rank, cr })',
+              'calculateEnemyValues({ enemyType, race, rank: normalizedRank, cr })',
+              1,
+          )
+          xlsx_block = replace_required(
+              xlsx_block,
+              '''    rank,
+    cr,''',
+              '''    rank: normalizedRank,
+    cr,''',
+              'return normalized XLSX rank',
+          )
+          source = source[:xlsx_start] + xlsx_block + source[xlsx_end:]
+
+          source = replace_required(
+              source,
+              '      rank: data.rank,',
+              '      rank: normalizeEnemyRank(data.race, data.rank),',
+              'normalize JSON output rank',
+          )
+          source = replace_required(
+              source,
+              '''      "ランク",
+      data.rank,''',
+              '''      "ランク",
+      normalizeEnemyRank(data.race, data.rank),''',
+              'normalize XLSX output rank',
+          )
+
+          path.write_text(source, encoding='utf-8')
+
+          # Re-export normalizeEnemyRank.
+          path = Path('frontend/utils/enemy/calculate.ts')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''  getEnemyTypeExplanation,
+}''',
+              '''  getEnemyTypeExplanation,
+  normalizeEnemyRank,
+}''',
+              're-export normalizeEnemyRank',
+          )
+          path.write_text(source, encoding='utf-8')
+
+          # Normalize current form data and drop dice range.
+          path = Path('frontend/utils/enemy/form.ts')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''import { formatDropDiceForOutput, getMaxDropDice } from "./dice";
+import type''',
+              '''import { normalizeEnemyRank } from "./calculate";
+import { formatDropDiceForOutput, getMaxDropDice } from "./dice";
+import type''',
+              'import normalizeEnemyRank in form helper',
+          )
+          source = replace_required(
+              source,
+              '''  const maxDropDice = getMaxDropDice(form.rank);
+
+  return {
+    ...form,''',
+              '''  const rank = normalizeEnemyRank(form.race, form.rank);
+  const maxDropDice = getMaxDropDice(rank);
+
+  return {
+    ...form,
+    rank,''',
+              'normalize current form rank',
+          )
+          path.write_text(source, encoding='utf-8')
+
+          # Force UI form state to normal when race is gimmick.
+          path = Path('frontend/hooks/useEnemyForm.ts')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''  const updateForm = <K extends keyof EnemyFormData>(
+    key: K,
+    value: EnemyFormData[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };''',
+              '''  const updateForm = <K extends keyof EnemyFormData>(
+    key: K,
+    value: EnemyFormData[K],
+  ) => {
+    setForm((prev) => {
+      if (key === "race" && value === "ギミック") {
+        return { ...prev, race: "ギミック", rank: "ノーマル" };
+      }
+
+      if (key === "rank" && prev.race === "ギミック") {
+        return { ...prev, rank: "ノーマル" };
+      }
+
+      return { ...prev, [key]: value };
+    });
+  };''',
+              'force gimmick rank in UI state',
+          )
+          path.write_text(source, encoding='utf-8')
+
+          # Disable rank selector for gimmicks and explain the rule.
+          path = Path('frontend/app/enemy/page.tsx')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''                  value={form.rank}
+                  onChange={(e) => {''',
+              '''                  value={form.rank}
+                  disabled={form.race === "ギミック"}
+                  onChange={(e) => {''',
+              'disable gimmick rank selector',
+          )
+          source = replace_required(
+              source,
+              '''                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                >
+                  {enemyRanks.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </div>''',
+              '''                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500"
+                >
+                  {enemyRanks.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+                {form.race === "ギミック" ? (
+                  <p className="mt-1 text-xs text-neutral-500">
+                    大種族がギミックの場合、ランクはノーマルに固定されます。
+                  </p>
+                ) : null}
+              </div>''',
+              'add gimmick rank explanation',
+          )
+          path.write_text(source, encoding='utf-8')
+
+          # Document rule on formula page.
+          path = Path('frontend/app/enemy/formula/page.tsx')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''      <p>算出された数値の小数点以下は切り捨て。</p>
+
+      <DetailsBlock title="各能力値（STR / DEX / POW / INT）">''',
+              '''      <p>算出された数値の小数点以下は切り捨て。</p>
+
+      <DetailsBlock title="大種族「ギミック」のエネミーランク">
+        <p>大種族が「ギミック」の場合、エネミーランクは常に「ノーマル」として扱う。</p>
+        <p>入力データや読込データに別のランクが指定されている場合も、計算および出力時は「ノーマル」に補正する。</p>
+      </DetailsBlock>
+
+      <DetailsBlock title="各能力値（STR / DEX / POW / INT）">''',
+              'document gimmick normal-rank rule',
+          )
+          path.write_text(source, encoding='utf-8')
+
+          # Add tests for normalization rule.
+          path = Path('frontend/tests/enemy/formula.test.mjs')
+          source = path.read_text(encoding='utf-8')
+          source = replace_required(
+              source,
+              '''  calculateEnemyValues,
+  enemyTypes,
+} from "../../utils/createEnemyPiece.ts";''',
+              '''  calculateEnemyValues,
+  createEnemyJson,
+  enemyTypes,
+  getDefaultEnemyForm,
+  getDefaultTags,
+  normalizeEnemyRank,
+} from "../../utils/createEnemyPiece.ts";''',
+              'import gimmick rank test targets',
+          )
+          marker = '''test("計算式ページに記載された9タイプが実装側に存在する", () => {
+  const implementedTypes = enemyTypes.filter((enemyType) => enemyType !== "不明");
+
+  assert.deepEqual(implementedTypes, enemyFormulaTypes);
+});
+'''
+          addition = marker + '''
+test("大種族ギミックのエネミーランクは常にノーマルへ補正される", () => {
+  for (const rank of enemyFormulaRanks) {
+    assert.equal(normalizeEnemyRank("ギミック", rank), "ノーマル");
+  }
+});
+
+test("大種族ギミックでは入力ランクに関係なくノーマル相当の計算結果になる", () => {
+  const normal = calculateEnemyValues({
+    enemyType: "フェンサー",
+    race: "ギミック",
+    rank: "ノーマル",
+    cr: 10,
+  });
+
+  for (const rank of enemyFormulaRanks) {
+    const actual = calculateEnemyValues({
+      enemyType: "フェンサー",
+      race: "ギミック",
+      rank,
+      cr: 10,
+    });
+
+    assert.deepEqual(actual, normal, `ギミック / ${rank}`);
+  }
+});
+
+test("大種族ギミックの初期タグとJSON出力には別ランクを残さない", () => {
+  assert.equal(getDefaultTags("レイド", "ギミック"), "ギミック");
+
+  const form = {
+    ...getDefaultEnemyForm(),
+    name: "テストギミック",
+    race: "ギミック",
+    rank: "レイド",
+  };
+  const json = JSON.parse(createEnemyJson(form));
+
+  assert.equal(json.rank, "ノーマル");
+  assert.deepEqual(json.tags, ["ギミック"]);
+});
+'''
+          source = replace_required(source, marker, addition, 'add gimmick normal-rank tests')
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run enemy formula tests
+        working-directory: frontend
+        run: npm run test:enemy-formula
+
+      - name: Run lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Remove one-time workflow
+        run: rm .github/workflows/apply-gimmick-normal-rank-rule.yml
+
+      - name: Commit successful changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend .github/workflows/apply-gimmick-normal-rank-rule.yml
+          git commit -m "Enforce normal rank for gimmick enemies"
+          git push origin HEAD:test/enemy-formula
