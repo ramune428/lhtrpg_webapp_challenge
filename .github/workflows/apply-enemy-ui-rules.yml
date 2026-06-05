@@ -1,0 +1,114 @@
+name: Apply enemy UI rules
+
+on:
+  push:
+    branches:
+      - fix/enemy-official-formulas
+    paths:
+      - .github/workflows/apply-enemy-ui-rules.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/enemy-official-formulas
+
+      - name: Apply No.4 No.5 No.10
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              if old not in text:
+                  raise RuntimeError(f"pattern not found: {path}\n{old[:120]}")
+              file.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          # No.4: モブは固定ドロップのみ選択可能
+          path = "frontend/components/enemy/EnemyDropItemSection.tsx"
+          replace_once(path,
+              '  const maxDropDice = getMaxDropDice(rank);\n',
+              '  const maxDropDice = getMaxDropDice(rank);\n  const isMob = rank === "モブ";\n')
+          replace_once(path,
+              '                      const isEnabled = isDiceButtonEnabled(\n                        diceValue,\n                        maxDropDice,\n                      );\n',
+              '                      const isEnabled =\n                        (!isMob || diceValue === "固定") &&\n                        isDiceButtonEnabled(diceValue, maxDropDice);\n')
+          replace_once(path,
+              '                            !isEnabled\n                              ? "レイドの場合のみ選択できます"\n',
+              '                            !isEnabled\n                              ? isMob\n                                ? "モブのドロップ品は固定のみ選択できます"\n                                : "レイドの場合のみ選択できます"\n')
+          replace_once(path,
+              '                    ※\n                    1〜6は常に選択できます。7〜10はランクが「レイド」の場合のみ選択できます。\n                    「以上」は、選択中の最小値に「～」を付けた形式で出力します。\n',
+              '                    ※ モブの場合は「固定」のみ選択できます。\n                    モブ以外では1〜6を選択でき、7〜10はランクが「レイド」の場合のみ選択できます。\n                    「以上」は、選択中の最小値に「～」を付けた形式で出力します。\n')
+
+          path = "frontend/utils/enemy/form.ts"
+          replace_once(path,
+              '      dice: formatDropDiceForOutput(item.dice, maxDropDice),\n',
+              '      dice:\n        rank === "モブ"\n          ? "固定"\n          : formatDropDiceForOutput(item.dice, maxDropDice),\n')
+
+          # No.5: 新規作成では「不明」を選択不可、読込後はタイプ編集不可
+          path = "frontend/utils/enemy/constants.ts"
+          replace_once(path,
+              'export {\n  enemyRaces,\n  enemyRanks,\n  enemyTypes,\n  popularityList,\n  skillTimings,\n} from "../createEnemyPiece";\n',
+              'export {\n  enemyRaces,\n  enemyRanks,\n  enemyTypes,\n  popularityList,\n  skillTimings,\n} from "../createEnemyPiece";\n\nimport { enemyTypes } from "../createEnemyPiece";\n\nexport const selectableEnemyTypes = enemyTypes.filter(\n  (enemyType) => enemyType !== "不明",\n);\n')
+
+          path = "frontend/hooks/useEnemyForm.ts"
+          replace_once(path,
+              '  const [statusMessage, setStatusMessage] = useState("");\n',
+              '  const [statusMessage, setStatusMessage] = useState("");\n  const [isEnemyTypeLocked, setIsEnemyTypeLocked] = useState(false);\n')
+          replace_once(path,
+              '  ) => {\n    setForm((prev) => ({ ...prev, [key]: value }));\n  };\n',
+              '  ) => {\n    if (key === "enemyType" && isEnemyTypeLocked) {\n      setStatusMessage("読み込んだエネミーデータのタイプは変更できません。");\n      return;\n    }\n\n    if (key === "rank" && value === "モブ") {\n      setItems((prev) =>\n        prev.map((item) => ({\n          ...item,\n          dice: "固定",\n        })),\n      );\n    }\n\n    setForm((prev) => ({ ...prev, [key]: value }));\n  };\n')
+          replace_once(path,
+              '    setResult("");\n    setStatusMessage("入力内容をクリアしました。");\n',
+              '    setResult("");\n    setIsEnemyTypeLocked(false);\n    setStatusMessage("入力内容をクリアしました。");\n')
+          replace_once(path,
+              '      setItems(imported.items.map(withDropRowId));\n      setResult("");\n',
+              '      setItems(\n        imported.items.map((item) =>\n          withDropRowId({\n            ...item,\n            dice: imported.rank === "モブ" ? "固定" : item.dice,\n          }),\n        ),\n      );\n      setResult("");\n      setIsEnemyTypeLocked(true);\n')
+          replace_once(path,
+              '    initialTags,\n    items,\n',
+              '    initialTags,\n    isEnemyTypeLocked,\n    items,\n')
+
+          path = "frontend/app/enemy/page.tsx"
+          replace_once(path,
+              '  enemyTypes,\n',
+              '  selectableEnemyTypes,\n')
+          replace_once(path,
+              '    initialTags,\n    items,\n',
+              '    initialTags,\n    isEnemyTypeLocked,\n    items,\n')
+          replace_once(path,
+              '  const recommendedValue = (value: number) =>\n    form.enemyType === "不明" ? "-" : value;\n',
+              '  const recommendedValue = (value: number) =>\n    form.enemyType === "不明" ? "-" : value;\n  const enemyTypeOptions = isEnemyTypeLocked\n    ? [form.enemyType]\n    : selectableEnemyTypes;\n')
+          replace_once(path,
+              '                <select\n                  value={form.enemyType}\n',
+              '                <select\n                  value={form.enemyType}\n                  disabled={isEnemyTypeLocked}\n')
+          replace_once(path,
+              '                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"\n                >\n                  {enemyTypes.map((value) => (\n',
+              '                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600"\n                >\n                  {enemyTypeOptions.map((value) => (\n')
+          replace_once(path,
+              '                </select>\n              </div>\n\n              <div>\n                <label className="mb-2 block text-sm font-medium">大種族</label>\n',
+              '                </select>\n                {isEnemyTypeLocked ? (\n                  <p className="mt-2 text-xs leading-6 text-neutral-500">\n                    読み込んだエネミーデータのタイプは変更できません。\n                  </p>\n                ) : null}\n              </div>\n\n              <div>\n                <label className="mb-2 block text-sm font-medium">大種族</label>\n')
+
+          # No.10: モブ判定説明文を明確化
+          path = "frontend/app/enemy/formula/page.tsx"
+          file = Path(path)
+          text = file.read_text(encoding="utf-8")
+          old = '<p>モブの場合、固定値 3 とする</p>'
+          new = '<p>モブの場合、判定に用いるダイス1個につき固定値3として換算する。</p>'
+          if text.count(old) != 2:
+              raise RuntimeError(f"unexpected occurrence count: {text.count(old)}")
+          file.write_text(text.replace(old, new), encoding="utf-8")
+
+          Path(".github/workflows/apply-enemy-ui-rules.yml").unlink()
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Apply enemy input rules and wording fixes"
+          git push origin HEAD:fix/enemy-official-formulas
