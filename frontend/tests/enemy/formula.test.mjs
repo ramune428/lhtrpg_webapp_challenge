@@ -57,6 +57,41 @@ test("計算式ページに記載された9タイプが実装側に存在する"
   assert.deepEqual(implementedTypes, enemyFormulaTypes);
 });
 
+test("ノーマル／モブのヘイト倍率は (CR × CR係数) / 6 + 固定値 の最終結果を切り捨てる", () => {
+  const result = calculateEnemyValues({
+    enemyType: "フェンサー",
+    race: "人型",
+    rank: "ノーマル",
+    cr: 10,
+  });
+
+  assert.equal(result.hate, 4);
+});
+
+test("CR係数が0のタイプはノーマル／モブでもヘイト倍率が固定値のままになる", () => {
+  const result = calculateEnemyValues({
+    enemyType: "アーマラー",
+    race: "人型",
+    rank: "ノーマル",
+    cr: 30,
+  });
+
+  assert.equal(result.hate, 1);
+});
+
+test("ギミックはボス／レイドを含む全ランクでヘイト倍率が0になる", () => {
+  for (const rank of enemyFormulaRanks) {
+    const result = calculateEnemyValues({
+      enemyType: "フェンサー",
+      race: "ギミック",
+      rank,
+      cr: 30,
+    });
+
+    assert.equal(result.hate, 0, `ギミック / ${rank}`);
+  }
+});
+
 for (const enemyType of enemyFormulaTypes) {
   for (const rank of enemyFormulaRanks) {
     test(`${enemyType} / ${rank} / CR1～30 が計算式ページと一致する`, () => {
