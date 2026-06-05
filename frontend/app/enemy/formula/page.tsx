@@ -597,7 +597,7 @@ function CalculationFormulaSection() {
       </DetailsBlock>
 
       <DetailsBlock title="回避値（ダイス）">
-        <p>モブの場合、固定値 3 とする</p>
+        <p>モブの場合、判定に用いるダイス1個につき固定値3として換算する。</p>
         <p>モブ以外でグラップラーの場合、3D とする</p>
         <p>上記以外の場合、2D とする</p>
       </DetailsBlock>
@@ -609,7 +609,7 @@ function CalculationFormulaSection() {
       </DetailsBlock>
 
       <DetailsBlock title="抵抗値（ダイス）">
-        <p>モブの場合、固定値 3 とする</p>
+        <p>モブの場合、判定に用いるダイス1個につき固定値3として換算する。</p>
         <p>モブ以外でグラップラーの場合、3D とする</p>
         <p>上記以外の場合、2D とする</p>
       </DetailsBlock>

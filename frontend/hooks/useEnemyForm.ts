@@ -38,6 +38,7 @@ export function useEnemyForm() {
   );
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isEnemyTypeLocked, setIsEnemyTypeLocked] = useState(false);
 
   const calculated = useMemo(
     () =>
@@ -72,6 +73,20 @@ export function useEnemyForm() {
     key: K,
     value: EnemyFormData[K],
   ) => {
+    if (key === "enemyType" && isEnemyTypeLocked) {
+      setStatusMessage("読み込んだエネミーデータのタイプは変更できません。");
+      return;
+    }
+
+    if (key === "rank" && value === "モブ") {
+      setItems((prev) =>
+        prev.map((item) => ({
+          ...item,
+          dice: "固定",
+        })),
+      );
+    }
+
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -159,6 +174,7 @@ export function useEnemyForm() {
     setSkills(next.skills.map(withSkillRowId));
     setItems(next.items.map(withDropRowId));
     setResult("");
+    setIsEnemyTypeLocked(false);
     setStatusMessage("入力内容をクリアしました。");
     setActiveTab("basic");
   };
@@ -208,8 +224,16 @@ export function useEnemyForm() {
 
       setForm(imported);
       setSkills(imported.skills.map(withSkillRowId));
-      setItems(imported.items.map(withDropRowId));
+      setItems(
+        imported.items.map((item) =>
+          withDropRowId({
+            ...item,
+            dice: imported.rank === "モブ" ? "固定" : item.dice,
+          }),
+        ),
+      );
       setResult("");
+      setIsEnemyTypeLocked(true);
       setStatusMessage(
         lowerName.endsWith(".json")
           ? "JSONを読み込みました。"
@@ -300,6 +324,7 @@ export function useEnemyForm() {
     handleItemCountChange,
     handleSkillCountChange,
     initialTags,
+    isEnemyTypeLocked,
     items,
     outputSkills,
     removeItem,

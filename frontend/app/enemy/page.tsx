@@ -16,7 +16,7 @@ import {
   calculateIdentification,
   enemyRanks,
   enemyRaces,
-  enemyTypes,
+  selectableEnemyTypes,
   getEnemyTypeExplanation,
   normalizeCr,
   popularityList,
@@ -47,6 +47,7 @@ export default function EnemyPage() {
     handleItemCountChange,
     handleSkillCountChange,
     initialTags,
+    isEnemyTypeLocked,
     items,
     outputSkills,
     removeItem,
@@ -63,6 +64,9 @@ export default function EnemyPage() {
 
   const recommendedValue = (value: number) =>
     form.enemyType === "不明" ? "-" : value;
+  const enemyTypeOptions = isEnemyTypeLocked
+    ? [form.enemyType]
+    : selectableEnemyTypes;
 
 
   return (
@@ -337,20 +341,26 @@ export default function EnemyPage() {
                 <label className="mb-2 block text-sm font-medium">タイプ</label>
                 <select
                   value={form.enemyType}
+                  disabled={isEnemyTypeLocked}
                   onChange={(e) =>
                     updateForm(
                       "enemyType",
                       e.target.value as EnemyFormData["enemyType"],
                     )
                   }
-                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500"
+                  className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600"
                 >
-                  {enemyTypes.map((value) => (
+                  {enemyTypeOptions.map((value) => (
                     <option key={value} value={value}>
                       {value}
                     </option>
                   ))}
                 </select>
+                {isEnemyTypeLocked ? (
+                  <p className="mt-2 text-xs leading-6 text-neutral-500">
+                    読み込んだエネミーデータのタイプは変更できません。
+                  </p>
+                ) : null}
               </div>
 
               <div>
