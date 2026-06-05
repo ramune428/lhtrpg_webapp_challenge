@@ -6,97 +6,37 @@ import {
 import { normalizeEnemyRankForRace } from "./rank";
 import type { EnemyRank, EnemyType } from "./types";
 
-type EnemyFormulaBase = {
-  hateCrCoefficient: number;
-  hateFix: number;
-  hitPointCoefficient: number;
-  hitPointFix: number;
-  damageCoefficient: number;
+const hateBaseData: Record<EnemyType, { crCoefficient: number; fix: number }> = {
+  不明: { crCoefficient: 0, fix: 0 },
+  アーマラー: { crCoefficient: 0, fix: 1 },
+  フェンサー: { crCoefficient: 2, fix: 1 },
+  グラップラー: { crCoefficient: 0, fix: 1 },
+  サポーター: { crCoefficient: 0, fix: 1 },
+  ヒーラー: { crCoefficient: 0, fix: 1 },
+  スピア: { crCoefficient: 0, fix: 2 },
+  アーチャー: { crCoefficient: 2, fix: 2 },
+  シューター: { crCoefficient: 2, fix: 2 },
+  ボマー: { crCoefficient: 2, fix: 2 },
 };
 
-const enemyFormulaBaseData: Record<EnemyType, EnemyFormulaBase> = {
-  不明: {
-    hateCrCoefficient: 0,
-    hateFix: 0,
-    hitPointCoefficient: 0,
-    hitPointFix: 0,
-    damageCoefficient: 0,
-  },
-  アーマラー: {
-    hateCrCoefficient: 0,
-    hateFix: 1,
-    hitPointCoefficient: 8.5,
-    hitPointFix: 48,
-    damageCoefficient: 1,
-  },
-  フェンサー: {
-    hateCrCoefficient: 2,
-    hateFix: 1,
-    hitPointCoefficient: 8.4,
-    hitPointFix: 45,
-    damageCoefficient: 1,
-  },
-  グラップラー: {
-    hateCrCoefficient: 0,
-    hateFix: 1,
-    hitPointCoefficient: 7.5,
-    hitPointFix: 45,
-    damageCoefficient: 1,
-  },
-  サポーター: {
-    hateCrCoefficient: 0,
-    hateFix: 1,
-    hitPointCoefficient: 5,
-    hitPointFix: 35,
-    damageCoefficient: 1,
-  },
-  ヒーラー: {
-    hateCrCoefficient: 0,
-    hateFix: 1,
-    hitPointCoefficient: 6,
-    hitPointFix: 30,
-    damageCoefficient: 1,
-  },
-  スピア: {
-    hateCrCoefficient: 0,
-    hateFix: 2,
-    hitPointCoefficient: 6,
-    hitPointFix: 30,
-    damageCoefficient: 1,
-  },
-  アーチャー: {
-    hateCrCoefficient: 2,
-    hateFix: 2,
-    hitPointCoefficient: 5,
-    hitPointFix: 26,
-    damageCoefficient: 0.9,
-  },
-  シューター: {
-    hateCrCoefficient: 2,
-    hateFix: 2,
-    hitPointCoefficient: 4,
-    hitPointFix: 26,
-    damageCoefficient: 1,
-  },
-  ボマー: {
-    hateCrCoefficient: 2,
-    hateFix: 2,
-    hitPointCoefficient: 4,
-    hitPointFix: 26,
-    damageCoefficient: 0.85,
-  },
+const damageCoefficientData: Record<EnemyType, number> = {
+  不明: 1,
+  アーマラー: 1,
+  フェンサー: 1,
+  グラップラー: 1,
+  サポーター: 1,
+  ヒーラー: 1,
+  スピア: 1,
+  アーチャー: 0.9,
+  シューター: 1,
+  ボマー: 0.85,
 };
 
 function calculateHitPoint(
-  base: EnemyFormulaBase,
+  normalHitPoint: number,
   rank: EnemyRank,
-  cr: number,
   isGimmick: boolean,
 ): number {
-  const normalHitPoint = Math.floor(
-    cr * base.hitPointCoefficient + base.hitPointFix,
-  );
-
   if (isGimmick || rank === "モブ") {
     return Math.floor(normalHitPoint / 2);
   }
@@ -130,44 +70,20 @@ function calculateGold(rank: EnemyRank, cr: number, isGimmick: boolean): string 
   return `換金(${normalGold} G)`;
 }
 
-function getDamageBase(enemyType: EnemyType, cr: number): number {
-  if (
-    ["アーマラー", "フェンサー", "グラップラー", "ヒーラー"].includes(
-      enemyType,
-    )
-  ) {
-    return cr * 3.5 + 8 + 8;
+function applyDamageCoefficient(damage: string, coefficient: number): string {
+  const match = damage.match(/^(-?\d+)\s*\+\s*2\s*D$/);
+
+  if (!match || coefficient === 1) {
+    return damage;
   }
 
-  if (enemyType === "サポーター") {
-    return cr * 3.5 + 8;
-  }
+  const fixedValue = Number(match[1]);
+  const expectedDiceValue = 7;
+  const adjustedFixedValue =
+    Math.floor((fixedValue + expectedDiceValue) * coefficient) -
+    expectedDiceValue;
 
-  if (["スピア", "アーチャー"].includes(enemyType)) {
-    return cr * 6 + 18 + 8;
-  }
-
-  if (["シューター", "ボマー"].includes(enemyType)) {
-    return cr * 6 + 18;
-  }
-
-  return 0;
-}
-
-function calculateDamage(
-  enemyType: EnemyType,
-  cr: number,
-  base: EnemyFormulaBase,
-  fallback: string,
-): string {
-  if (enemyType === "不明") {
-    return fallback;
-  }
-
-  const damageTotal = Math.floor(
-    getDamageBase(enemyType, cr) * base.damageCoefficient,
-  );
-  return `${damageTotal - 7} + 2 D`;
+  return `${adjustedFixedValue} + 2 D`;
 }
 
 export function calculateEnemyValues(
@@ -175,22 +91,30 @@ export function calculateEnemyValues(
 ) {
   const rank = normalizeEnemyRankForRace(args.race, args.rank);
   const values = calculateEnemyValuesBase({ ...args, rank });
-  const base = enemyFormulaBaseData[args.enemyType];
-  const isGimmick = args.race === "ギミック";
 
   if (args.enemyType === "不明") {
     return values;
   }
 
+  const normalValues = calculateEnemyValuesBase({
+    ...args,
+    race: "人型",
+    rank: "ノーマル",
+  });
+  const isGimmick = args.race === "ギミック";
+  const hateBase = hateBaseData[args.enemyType];
   const hate = isGimmick
     ? 0
-    : Math.floor((args.cr * base.hateCrCoefficient) / 6 + base.hateFix);
+    : Math.floor((args.cr * hateBase.crCoefficient) / 6 + hateBase.fix);
 
   return {
     ...values,
-    hitPoint: calculateHitPoint(base, rank, args.cr, isGimmick),
+    hitPoint: calculateHitPoint(normalValues.hitPoint, rank, isGimmick),
     hate,
-    damage: calculateDamage(args.enemyType, args.cr, base, values.damage),
+    damage: applyDamageCoefficient(
+      normalValues.damage,
+      damageCoefficientData[args.enemyType],
+    ),
     gold: calculateGold(rank, args.cr, isGimmick),
   };
 }
