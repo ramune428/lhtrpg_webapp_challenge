@@ -7,36 +7,51 @@ type HitPointPreviewSettings = {
   minMultiplier: number;
   maxMultiplier: number;
   options: number[];
+  isFixed: boolean;
 };
 
-function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings | null {
+function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings {
+  if (rank === "モブ") {
+    return {
+      multiplier: 0.5,
+      minMultiplier: 0.5,
+      maxMultiplier: 0.5,
+      options: [0.5],
+      isFixed: true,
+    };
+  }
+
+  if (rank === "ノーマル") {
+    return {
+      multiplier: 1,
+      minMultiplier: 1,
+      maxMultiplier: 1,
+      options: [1],
+      isFixed: true,
+    };
+  }
+
   if (rank === "ボス") {
     return {
       multiplier: 4,
       minMultiplier: 2,
       maxMultiplier: 4,
       options: [2, 3, 4],
+      isFixed: false,
     };
   }
 
-  if (rank === "レイド") {
-    return {
-      multiplier: 10,
-      minMultiplier: 5,
-      maxMultiplier: 10,
-      options: [5, 6, 7, 8, 9, 10],
-    };
-  }
-
-  return null;
+  return {
+    multiplier: 10,
+    minMultiplier: 5,
+    maxMultiplier: 10,
+    options: [5, 6, 7, 8, 9, 10],
+    isFixed: false,
+  };
 }
 
 export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
   const settings = getPreviewSettings(rank);
-
-  if (!settings) {
-    return null;
-  }
 
   return (
     <div>
@@ -60,7 +75,9 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
       </select>
 
       <p className="mt-2 text-xs leading-6 text-neutral-500">
-        {rank}は×{settings.minMultiplier}～×{settings.maxMultiplier}を選択する想定です。
+        {settings.isFixed
+          ? `${rank}は×${settings.multiplier}で固定されます。`
+          : `${rank}は×${settings.minMultiplier}～×${settings.maxMultiplier}を選択する想定です。`}
         現在は計算に反映されません。
       </p>
     </div>
@@ -75,21 +92,17 @@ export function EnemyHitPointRecommendationPreview({
   hitPoint: number;
 }) {
   const settings = getPreviewSettings(rank);
-
-  if (!settings) {
-    return null;
-  }
-
   const baseHitPoint = Math.floor(hitPoint / settings.multiplier);
-  const minHitPoint = baseHitPoint * settings.minMultiplier;
-  const maxHitPoint = baseHitPoint * settings.maxMultiplier;
+  const minHitPoint = Math.floor(baseHitPoint * settings.minMultiplier);
+  const maxHitPoint = Math.floor(baseHitPoint * settings.maxMultiplier);
+  const rangeLabel = settings.isFixed
+    ? `${minHitPoint}（固定）`
+    : `${minHitPoint} ～ ${maxHitPoint}`;
 
   return (
-    <section className="mt-8 rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
+    <section className="rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-neutral-700">
-          最大HP推奨値（UI案）
-        </h3>
+        <h3 className="text-sm font-semibold text-neutral-700">最大HP</h3>
         <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
           表示のみ・未実装
         </span>
@@ -130,7 +143,7 @@ export function EnemyHitPointRecommendationPreview({
           <label className="mb-2 block text-sm font-medium">推奨範囲</label>
           <input
             type="text"
-            value={`${minHitPoint} ～ ${maxHitPoint}`}
+            value={rangeLabel}
             readOnly
             className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
           />
@@ -141,7 +154,7 @@ export function EnemyHitPointRecommendationPreview({
         基準HP {baseHitPoint} × HP倍率 {settings.multiplier} ＝ 最終推奨HP {hitPoint}
       </p>
       <p className="mt-1 text-xs leading-6 text-neutral-500">
-        最終的な最大HPは、既存の最大HP入力欄で自由に調整する想定です。
+        現在はUI確認用です。最大HPの編集方法と計算反映は未実装です。
       </p>
     </section>
   );
