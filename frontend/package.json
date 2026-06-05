@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:enemy-formula": "node --experimental-strip-types --test tests/enemy/formula.test.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
