@@ -4,7 +4,7 @@ import {
   getEnemyTypeExplanation,
 } from "../createEnemyPiece";
 import { normalizeEnemyRankForRace } from "./rank";
-import type { EnemyType } from "./types";
+import type { EnemyRank, EnemyType } from "./types";
 
 type EnemyFormulaBase = {
   hateCrCoefficient: number;
@@ -17,7 +17,7 @@ type EnemyFormulaBase = {
 const enemyFormulaBaseData: Record<EnemyType, EnemyFormulaBase> = {
   不明: {
     hateCrCoefficient: 0,
-    hateFix: 1,
+    hateFix: 0,
     hitPointCoefficient: 0,
     hitPointFix: 0,
     damageCoefficient: 0,
@@ -89,11 +89,13 @@ const enemyFormulaBaseData: Record<EnemyType, EnemyFormulaBase> = {
 
 function calculateHitPoint(
   base: EnemyFormulaBase,
-  rank: Parameters<typeof normalizeEnemyRankForRace>[1],
+  rank: EnemyRank,
   cr: number,
   isGimmick: boolean,
 ): number {
-  const normalHitPoint = Math.floor(cr * base.hitPointCoefficient + base.hitPointFix);
+  const normalHitPoint = Math.floor(
+    cr * base.hitPointCoefficient + base.hitPointFix,
+  );
 
   if (isGimmick || rank === "モブ") {
     return Math.floor(normalHitPoint / 2);
@@ -110,24 +112,30 @@ function calculateHitPoint(
   return normalHitPoint;
 }
 
-function calculateGold(rank: Parameters<typeof normalizeEnemyRankForRace>[1], cr: number, isGimmick: boolean): string {
-  const normalGoldRaw = (cr + 2) * (cr + 2) * 0.72 + 17;
-  const normalGold = Math.floor(normalGoldRaw) - (Math.floor(normalGoldRaw) % 5);
+function roundDownToFive(value: number): number {
+  return Math.floor(value) - (Math.floor(value) % 5);
+}
 
-  let adjustedGold = normalGold;
+function calculateGold(rank: EnemyRank, cr: number, isGimmick: boolean): string {
+  const normalGold = roundDownToFive((cr + 2) * (cr + 2) * 0.72 + 17);
 
   if (isGimmick || rank === "モブ") {
-    adjustedGold /= 2;
-  } else if (rank === "ボス" || rank === "レイド") {
-    adjustedGold *= 4;
+    return `換金(${roundDownToFive(normalGold / 2)} G)`;
   }
 
-  const roundedGold = Math.floor(adjustedGold) - (Math.floor(adjustedGold) % 5);
-  return `換金(${roundedGold} G)`;
+  if (rank === "ボス" || rank === "レイド") {
+    return `換金(${normalGold * 4} G)`;
+  }
+
+  return `換金(${normalGold} G)`;
 }
 
 function getDamageBase(enemyType: EnemyType, cr: number): number {
-  if (["アーマラー", "フェンサー", "グラップラー", "ヒーラー"].includes(enemyType)) {
+  if (
+    ["アーマラー", "フェンサー", "グラップラー", "ヒーラー"].includes(
+      enemyType,
+    )
+  ) {
     return cr * 3.5 + 8 + 8;
   }
 
@@ -146,12 +154,19 @@ function getDamageBase(enemyType: EnemyType, cr: number): number {
   return 0;
 }
 
-function calculateDamage(enemyType: EnemyType, cr: number, base: EnemyFormulaBase): string {
+function calculateDamage(
+  enemyType: EnemyType,
+  cr: number,
+  base: EnemyFormulaBase,
+  fallback: string,
+): string {
   if (enemyType === "不明") {
-    return "0 + 0 D";
+    return fallback;
   }
 
-  const damageTotal = Math.floor(getDamageBase(enemyType, cr) * base.damageCoefficient);
+  const damageTotal = Math.floor(
+    getDamageBase(enemyType, cr) * base.damageCoefficient,
+  );
   return `${damageTotal - 7} + 2 D`;
 }
 
@@ -163,6 +178,10 @@ export function calculateEnemyValues(
   const base = enemyFormulaBaseData[args.enemyType];
   const isGimmick = args.race === "ギミック";
 
+  if (args.enemyType === "不明") {
+    return values;
+  }
+
   const hate = isGimmick
     ? 0
     : Math.floor((args.cr * base.hateCrCoefficient) / 6 + base.hateFix);
@@ -171,7 +190,7 @@ export function calculateEnemyValues(
     ...values,
     hitPoint: calculateHitPoint(base, rank, args.cr, isGimmick),
     hate,
-    damage: calculateDamage(args.enemyType, args.cr, base),
+    damage: calculateDamage(args.enemyType, args.cr, base, values.damage),
     gold: calculateGold(rank, args.cr, isGimmick),
   };
 }
