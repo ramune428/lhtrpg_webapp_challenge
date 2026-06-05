@@ -1,0 +1,72 @@
+name: Apply HP UI preview
+
+on:
+  push:
+    branches:
+      - fix/enemy-official-formulas
+    paths:
+      - .github/workflows/apply-hp-ui-preview.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/enemy-official-formulas
+
+      - name: Apply UI preview
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              file = Path(path)
+              text = file.read_text(encoding="utf-8")
+              if old not in text:
+                  raise RuntimeError(f"pattern not found: {path}\n{old[:180]}")
+              file.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          path = "frontend/components/enemy/index.ts"
+          replace_once(
+              path,
+              'export { default as EnemyDropItemSection } from "./EnemyDropItemSection";\n',
+              'export { default as EnemyDropItemSection } from "./EnemyDropItemSection";\nexport {\n  EnemyHitPointMultiplierPreview,\n  EnemyHitPointRecommendationPreview,\n} from "./EnemyHitPointUiPreview";\n',
+          )
+
+          path = "frontend/app/enemy/page.tsx"
+          replace_once(
+              path,
+              'import { EnemyCalculatedValuesPanel, EnemyDropItemSection, EnemyOutputPanel, EnemyPreviewSection, EnemySkillSection, TabButton } from "@/components/enemy";\n',
+              'import { EnemyCalculatedValuesPanel, EnemyDropItemSection, EnemyHitPointMultiplierPreview, EnemyHitPointRecommendationPreview, EnemyOutputPanel, EnemyPreviewSection, EnemySkillSection, TabButton } from "@/components/enemy";\n',
+          )
+          replace_once(
+              path,
+              '                </select>\n              </div>\n\n              <div>\n                <label className="mb-2 block text-sm font-medium">CR</label>\n',
+              '                </select>\n              </div>\n\n              <EnemyHitPointMultiplierPreview rank={form.rank} />\n\n              <div>\n                <label className="mb-2 block text-sm font-medium">CR</label>\n',
+          )
+          replace_once(
+              path,
+              '            <EnemyCalculatedValuesPanel\n              calculated={calculated}\n              onApply={handleApplyCalculatedValues}\n            />\n\n            <div className="mt-8 space-y-6">\n',
+              '            <EnemyCalculatedValuesPanel\n              calculated={calculated}\n              onApply={handleApplyCalculatedValues}\n            />\n\n            <EnemyHitPointRecommendationPreview\n              rank={form.rank}\n              hitPoint={calculated.hitPoint}\n            />\n\n            <div className="mt-8 space-y-6">\n',
+          )
+
+          Path(".github/workflows/apply-hp-ui-preview.yml").unlink()
+
+      - name: Validate
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Add HP multiplier UI preview"
+          git push origin HEAD:fix/enemy-official-formulas
