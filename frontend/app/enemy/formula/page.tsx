@@ -621,7 +621,7 @@ function CalculationFormulaSection() {
 
         <p>ノーマル または モブの場合、以下の計算式で算出する</p>
         <FormulaText>
-          {"(<CR> * <base_hateCr>) // 6 + <base_hate_fix>"}
+          {"(<CR> * <base_hateCr>) / 6 + <base_hate_fix>"}
         </FormulaText>
       </DetailsBlock>
 
