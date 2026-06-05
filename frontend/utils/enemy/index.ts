@@ -4,4 +4,5 @@ export * from "./dice";
 export * from "./form";
 export * from "./io";
 export * from "./piece";
+export * from "./rank";
 export type * from "./types";
