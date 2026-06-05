@@ -548,6 +548,22 @@ function CoreMaterialTable({ rows }: { rows: CoreMaterialRow[] }) {
   );
 }
 
+function GimmickRankNotice() {
+  return (
+    <aside className="rounded-xl border border-neutral-300 bg-neutral-50 px-5 py-4 text-sm leading-7 text-neutral-800">
+      <h2 className="font-semibold text-neutral-950">
+        大種族「ギミック」のエネミーランク
+      </h2>
+      <p className="mt-2">
+        大種族が「ギミック」の場合、エネミーランクは常に「ノーマル」として扱います。
+      </p>
+      <p>
+        入力データや読込データに別のランクが指定されている場合も、計算および出力時は「ノーマル」に補正します。
+      </p>
+    </aside>
+  );
+}
+
 function BaseDataSection() {
   return (
     <div className="space-y-3">
@@ -710,6 +726,13 @@ export default function EnemyFormulaPage() {
               </Link>
               のJavaScriptから計算式を求めて反映させています。
             </p>,
+          ],
+        },
+        {
+          title: "大種族「ギミック」のエネミーランク",
+          hideTitle: true,
+          paragraphs: [
+            <GimmickRankNotice key="gimmick-rank-notice" />,
           ],
         },
         {

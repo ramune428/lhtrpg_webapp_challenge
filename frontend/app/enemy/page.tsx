@@ -285,7 +285,16 @@ export default function EnemyPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">ランク</label>
+                <div className="mb-2 flex min-h-5 items-center justify-between gap-2">
+                  <label className="block text-sm font-medium">ランク</label>
+
+                  {form.race === "ギミック" ? (
+                    <span className="whitespace-nowrap text-xs font-medium text-amber-700">
+                      ギミックはノーマルとして計算
+                    </span>
+                  ) : null}
+                </div>
+
                 <select
                   value={form.rank}
                   onChange={(e) => {
