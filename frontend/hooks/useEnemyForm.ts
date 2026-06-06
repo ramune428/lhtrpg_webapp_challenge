@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   calculateEnemyValues,
   createEmptyDropItemInput,
@@ -32,6 +32,43 @@ function normalizeGimmickRank(form: EnemyFormData): EnemyFormData {
   return form.race === "ギミック" ? { ...form, rank: GIMMICK_RANK } : form;
 }
 
+function isNumberInput(target: EventTarget | null): target is HTMLInputElement {
+  return target instanceof HTMLInputElement && target.type === "number";
+}
+
+function getNumberInputMinimum(input: HTMLInputElement): number {
+  const min = Number(input.min);
+  return Number.isFinite(min) ? min : 0;
+}
+
+function setNumberInputValue(input: HTMLInputElement, value: number) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  valueSetter?.call(input, String(value));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function stopEmptyNumberInputPropagation(event: Event) {
+  if (!isNumberInput(event.target) || event.target.value !== "") {
+    return;
+  }
+
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+function commitMinimumWhenNumberInputIsBlank(event: FocusEvent) {
+  if (!isNumberInput(event.target) || event.target.value !== "") {
+    return;
+  }
+
+  setNumberInputValue(event.target, getNumberInputMinimum(event.target));
+}
+
 export function useEnemyForm() {
   const initialForm = useMemo(() => getDefaultEnemyForm(), []);
   const [activeTab, setActiveTab] = useState<EnemyTabKey>("basic");
@@ -45,6 +82,16 @@ export function useEnemyForm() {
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isEnemyTypeLocked, setIsEnemyTypeLocked] = useState(false);
+
+  useEffect(() => {
+    document.addEventListener("input", stopEmptyNumberInputPropagation, true);
+    document.addEventListener("blur", commitMinimumWhenNumberInputIsBlank, true);
+
+    return () => {
+      document.removeEventListener("input", stopEmptyNumberInputPropagation, true);
+      document.removeEventListener("blur", commitMinimumWhenNumberInputIsBlank, true);
+    };
+  }, []);
 
   const calculated = useMemo(
     () =>
