@@ -1,0 +1,46 @@
+name: Apply formula page text fix
+
+on:
+  push:
+    branches:
+      - fix/enemy-official-formulas
+    paths:
+      - .github/workflows/apply-formula-page-text-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/enemy-official-formulas
+
+      - name: Patch formula page text
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("frontend/app/enemy/formula/page.tsx")
+          text = path.read_text(encoding="utf-8")
+          replacements = [
+              ('ヘイト倍率（CR係数）', 'ヘイト倍率（CR補正値）'),
+              ('(<CR> * <base_hateCr>) / 6 + <base_hate_fix>', '(<CR> + <base_hateCr>) / 6 + <base_hate_fix>'),
+              ('※ 最終値は 5 の倍数になるように切り捨てる', '※ 公式のドロップ期待値に合わせ、最終値は小数点以下を切り捨てる'),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise RuntimeError(f"target text not found: {old}")
+              text = text.replace(old, new, 1)
+          path.write_text(text, encoding="utf-8")
+          Path(".github/workflows/apply-formula-page-text-fix.yml").unlink()
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Update enemy formula page for official hate and gold"
+          git push origin HEAD:fix/enemy-official-formulas
