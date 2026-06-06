@@ -88,18 +88,17 @@ function setLabelSideText(
   }
 
   label.classList.remove("block");
-  label.classList.add("flex", "items-center", "justify-between", "gap-2");
+  label.classList.add("flex", "items-center", "justify-between", "gap-3", "text-sm", "font-medium");
 
   let badge = label.querySelector<HTMLSpanElement>(`span[data-enemy-ui-badge="${key}"]`);
   if (!badge) {
     badge = document.createElement("span");
     badge.dataset.enemyUiBadge = key;
-    badge.className = "whitespace-nowrap text-xs font-medium text-black";
+    badge.className = "whitespace-nowrap text-black";
     label.appendChild(badge);
   }
 
-  badge.classList.remove("text-neutral-500");
-  badge.classList.add("text-black");
+  badge.className = "whitespace-nowrap text-black";
   badge.textContent = text;
 }
 
