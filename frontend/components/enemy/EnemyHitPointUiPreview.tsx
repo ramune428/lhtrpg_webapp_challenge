@@ -78,6 +78,16 @@ function findFieldByLabel(text: string): HTMLElement | undefined {
   return undefined;
 }
 
+function setRightSideTextSize() {
+  document
+    .querySelectorAll<HTMLSpanElement>(
+      ".mb-2.flex.items-center.justify-between span, .mb-2.flex.min-h-5.items-center.justify-between span",
+    )
+    .forEach((span) => {
+      span.classList.add("text-xs");
+    });
+}
+
 function setLabelSideText(
   label: HTMLLabelElement | undefined,
   key: string,
@@ -94,11 +104,10 @@ function setLabelSideText(
   if (!badge) {
     badge = document.createElement("span");
     badge.dataset.enemyUiBadge = key;
-    badge.className = "whitespace-nowrap text-black";
     label.appendChild(badge);
   }
 
-  badge.className = "whitespace-nowrap text-black";
+  badge.className = "whitespace-nowrap text-xs font-medium text-black";
   badge.textContent = text;
 }
 
@@ -162,7 +171,7 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
     setLabelSideText(
       popularityField?.querySelector("label") as HTMLLabelElement | undefined,
       "identification-top",
-      `識別難易度${recommendedIdentification}`,
+      `識別難易度 ${recommendedIdentification}`,
     );
 
     initialTagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
@@ -180,6 +189,8 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
         `推奨値 ${recommendedIdentification}`,
       );
     }
+
+    setRightSideTextSize();
   });
 
   return (
@@ -245,6 +256,8 @@ export function EnemyHitPointRecommendationPreview({
     if (existingHitPointField) {
       existingHitPointField.style.display = "none";
     }
+
+    setRightSideTextSize();
 
     return () => {
       placeholder.remove();
