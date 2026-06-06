@@ -116,7 +116,7 @@ const baseDataDefinitions: BaseDataDefinition[] = [
     valueLabel: "数値",
   },
   {
-    itemName: "ヘイト倍率（CR係数）",
+    itemName: "ヘイト倍率（CR補正値）",
     keyName: "base_hateCr",
     valueLabel: "数値",
   },
@@ -637,7 +637,7 @@ function CalculationFormulaSection() {
 
         <p>ノーマル または モブの場合、以下の計算式で算出する</p>
         <FormulaText>
-          {"(<CR> * <base_hateCr>) / 6 + <base_hate_fix>"}
+          {"(<CR> + <base_hateCr>) / 6 + <base_hate_fix>"}
         </FormulaText>
       </DetailsBlock>
 
@@ -703,7 +703,7 @@ function CalculationFormulaSection() {
         </FormulaText>
         <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
         <p>ボス または レイドの場合、上記の計算結果を 4 倍する</p>
-        <p>※ 最終値は 5 の倍数になるように切り捨てる</p>
+        <p>※ 公式のドロップ期待値に合わせ、最終値は小数点以下を切り捨てる</p>
       </DetailsBlock>
 
       <DetailsBlock title="ドロップ［コア、魔触媒］">
