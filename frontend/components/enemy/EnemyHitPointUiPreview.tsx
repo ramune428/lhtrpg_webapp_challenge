@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { EnemyFormData } from "@/utils/enemy";
+import { calculateIdentification, type EnemyFormData } from "@/utils/enemy";
 
 type EnemyRank = EnemyFormData["rank"];
 
@@ -54,6 +54,76 @@ function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings {
   };
 }
 
+function getFieldLabelText(label: HTMLLabelElement): string {
+  return label.childNodes[0]?.textContent?.trim() ?? label.textContent?.trim() ?? "";
+}
+
+function findLabel(text: string): HTMLLabelElement | undefined {
+  return Array.from(document.querySelectorAll("label")).find(
+    (label): label is HTMLLabelElement => getFieldLabelText(label as HTMLLabelElement) === text,
+  );
+}
+
+function findFieldByLabel(text: string): HTMLElement | undefined {
+  const label = findLabel(text);
+  let current = label?.parentElement;
+
+  while (current) {
+    if (current.querySelector("input, select, textarea")) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+
+  return undefined;
+}
+
+function setLabelSideText(
+  label: HTMLLabelElement | undefined,
+  key: string,
+  text: string,
+) {
+  if (!label) {
+    return;
+  }
+
+  label.classList.remove("block");
+  label.classList.add("flex", "items-center", "justify-between", "gap-2");
+
+  let badge = label.querySelector<HTMLSpanElement>(`span[data-enemy-ui-badge="${key}"]`);
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.dataset.enemyUiBadge = key;
+    badge.className = "whitespace-nowrap text-xs font-medium text-neutral-500";
+    label.appendChild(badge);
+  }
+
+  badge.textContent = text;
+}
+
+function getRecommendedIdentification(grid: HTMLElement | null): string {
+  const crField = Array.from(grid?.children ?? []).find((field) => {
+    const label = field.querySelector("label");
+    return label && getFieldLabelText(label as HTMLLabelElement) === "CR";
+  }) as HTMLElement | undefined;
+  const popularityField = Array.from(grid?.children ?? []).find((field) => {
+    const label = field.querySelector("label");
+    return label && getFieldLabelText(label as HTMLLabelElement) === "知名度";
+  }) as HTMLElement | undefined;
+
+  const crInput = crField?.querySelector<HTMLInputElement>("input");
+  const popularitySelect = popularityField?.querySelector<HTMLSelectElement>("select");
+
+  if (!crInput || !popularitySelect) {
+    return "";
+  }
+
+  return calculateIdentification(
+    popularitySelect.value as EnemyFormData["popularity"],
+    Number(crInput.value),
+  );
+}
+
 export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
   const settings = getPreviewSettings(rank);
   const fieldRef = useRef<HTMLDivElement | null>(null);
@@ -65,11 +135,34 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
     }
 
     const fields = Array.from(grid.children) as HTMLElement[];
-    const nameField = fields[0];
-    const initialTagsField = fields[8];
-    const tagsField = fields[9];
+    const nameField = fields.find((field) => {
+      const label = field.querySelector("label");
+      return label && getFieldLabelText(label as HTMLLabelElement) === "名称";
+    });
+    const popularityField = fields.find((field) => {
+      const label = field.querySelector("label");
+      return label && getFieldLabelText(label as HTMLLabelElement) === "知名度";
+    });
+    const initialTagsField = fields.find((field) => {
+      const label = field.querySelector("label");
+      return label && getFieldLabelText(label as HTMLLabelElement) === "初期タグ";
+    });
+    const tagsField = fields.find((field) => {
+      const label = field.querySelector("label");
+      return label && getFieldLabelText(label as HTMLLabelElement) === "タグ";
+    });
+    const identificationField = findFieldByLabel("識別難易度");
+    const hateField = findFieldByLabel("ヘイト倍率");
+    const recommendedIdentification = getRecommendedIdentification(grid);
 
     nameField?.classList.remove("sm:col-span-2", "lg:col-span-2");
+
+    popularityField?.classList.add("lg:col-span-2");
+    setLabelSideText(
+      popularityField?.querySelector("label") as HTMLLabelElement | undefined,
+      "identification-top",
+      `識別難易度${recommendedIdentification}`,
+    );
 
     initialTagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
     initialTagsField?.classList.add("lg:col-span-2");
@@ -77,16 +170,16 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
     tagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
     tagsField?.classList.add("lg:col-span-2");
 
-    return () => {
-      nameField?.classList.add("lg:col-span-2");
-
-      initialTagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
-      initialTagsField?.classList.add("lg:col-span-2");
-
-      tagsField?.classList.remove("lg:col-span-3", "lg:col-span-4");
-      tagsField?.classList.add("lg:col-span-2");
-    };
-  }, []);
+    if (identificationField && hateField?.parentElement) {
+      identificationField.classList.remove("sm:col-span-2", "lg:col-span-2", "lg:col-span-3", "lg:col-span-4");
+      hateField.parentElement.insertBefore(identificationField, hateField.nextSibling);
+      setLabelSideText(
+        identificationField.querySelector("label") as HTMLLabelElement | undefined,
+        "identification-recommended",
+        `推奨値 ${recommendedIdentification}`,
+      );
+    }
+  });
 
   return (
     <div ref={fieldRef}>
@@ -145,11 +238,7 @@ export function EnemyHitPointRecommendationPreview({
     judgementSection.parentElement.insertBefore(placeholder, judgementSection);
     setPortalTarget(placeholder);
 
-    const labels = Array.from(document.querySelectorAll("label"));
-    const existingHitPointLabel = labels.find(
-      (label) => label.textContent?.trim() === "最大HP",
-    );
-    const existingHitPointField = existingHitPointLabel?.parentElement?.parentElement;
+    const existingHitPointField = findFieldByLabel("最大HP");
     const previousDisplay = existingHitPointField?.style.display ?? "";
 
     if (existingHitPointField) {
