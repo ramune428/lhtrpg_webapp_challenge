@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { calculateIdentification, type EnemyFormData } from "@/utils/enemy";
 
@@ -15,6 +15,7 @@ type HitPointPreviewSettings = {
 };
 
 const SIDE_TEXT_CLASS = "whitespace-nowrap text-xs font-medium text-black";
+const HP_MULTIPLIER_CHANGE_EVENT = "enemy-hp-multiplier-change";
 
 function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings {
   switch (rank) {
@@ -189,9 +190,42 @@ function moveIdentificationField(formGrid: HTMLElement) {
   );
 }
 
+function dispatchHitPointMultiplierChange(multiplier: number) {
+  window.dispatchEvent(
+    new CustomEvent(HP_MULTIPLIER_CHANGE_EVENT, {
+      detail: { multiplier },
+    }),
+  );
+}
+
+function setReactInputValue(input: HTMLInputElement, value: number) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  valueSetter?.call(input, String(value));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function toNonNegativeInteger(value: string): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+}
+
 export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
   const settings = getPreviewSettings(rank);
   const fieldRef = useRef<HTMLDivElement | null>(null);
+  const [multiplier, setMultiplier] = useState(settings.multiplier);
+
+  useEffect(() => {
+    setMultiplier(settings.multiplier);
+  }, [settings.multiplier]);
+
+  useEffect(() => {
+    dispatchHitPointMultiplierChange(multiplier);
+  }, [multiplier]);
 
   useEffect(() => {
     const formGrid = fieldRef.current?.parentElement;
@@ -206,17 +240,13 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
 
   return (
     <div ref={fieldRef}>
-      <div className="mb-2 flex min-h-5 items-center justify-between gap-2">
-        <label className="block text-sm font-medium">HP倍率</label>
-        <span className="whitespace-nowrap text-xs font-medium text-amber-700">
-          UI確認用
-        </span>
-      </div>
+      <label className="mb-2 block min-h-5 text-sm font-medium">HP倍率</label>
 
       <select
-        defaultValue={String(settings.multiplier)}
-        disabled
-        className="w-full cursor-not-allowed rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 text-neutral-600 outline-none"
+        value={String(multiplier)}
+        disabled={settings.isFixed}
+        onChange={(e) => setMultiplier(Number(e.target.value))}
+        className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600"
       >
         {settings.options.map((value) => (
           <option key={value} value={value}>
@@ -228,8 +258,7 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
       <p className="mt-2 text-xs leading-6 text-neutral-500">
         {settings.isFixed
           ? `${rank}は×${settings.multiplier}で固定されます。`
-          : `${rank}は×${settings.minMultiplier}～×${settings.maxMultiplier}を選択する想定です。`}
-        現在は計算に反映されません。
+          : `${rank}は×${settings.minMultiplier}～×${settings.maxMultiplier}から選択できます。`}
       </p>
     </div>
   );
@@ -243,7 +272,37 @@ export function EnemyHitPointRecommendationPreview({
   hitPoint: number;
 }) {
   const settings = getPreviewSettings(rank);
+  const defaultMultiplier = settings.multiplier;
+  const baseHitPoint = useMemo(
+    () => Math.floor(hitPoint / defaultMultiplier),
+    [defaultMultiplier, hitPoint],
+  );
+  const [multiplier, setMultiplier] = useState(defaultMultiplier);
+  const [finalHitPoint, setFinalHitPoint] = useState(hitPoint);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const hitPointInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setMultiplier(defaultMultiplier);
+    setFinalHitPoint(Math.floor(baseHitPoint * defaultMultiplier));
+  }, [baseHitPoint, defaultMultiplier]);
+
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const customEvent = event as CustomEvent<{ multiplier: number }>;
+      const nextMultiplier = customEvent.detail?.multiplier;
+
+      if (typeof nextMultiplier !== "number") {
+        return;
+      }
+
+      setMultiplier(nextMultiplier);
+      setFinalHitPoint(Math.floor(baseHitPoint * nextMultiplier));
+    };
+
+    window.addEventListener(HP_MULTIPLIER_CHANGE_EVENT, listener);
+    return () => window.removeEventListener(HP_MULTIPLIER_CHANGE_EVENT, listener);
+  }, [baseHitPoint]);
 
   useEffect(() => {
     const judgementHeading = Array.from(document.querySelectorAll("h3")).find(
@@ -262,6 +321,9 @@ export function EnemyHitPointRecommendationPreview({
 
     const existingHitPointField = findFieldByLabel(document, "最大HP");
     const previousDisplay = existingHitPointField?.style.display ?? "";
+    hitPointInputRef.current = existingHitPointField?.querySelector<HTMLInputElement>(
+      "input",
+    ) ?? null;
 
     if (existingHitPointField) {
       existingHitPointField.style.display = "none";
@@ -277,7 +339,14 @@ export function EnemyHitPointRecommendationPreview({
     };
   }, []);
 
-  const baseHitPoint = Math.floor(hitPoint / settings.multiplier);
+  useEffect(() => {
+    if (!hitPointInputRef.current) {
+      return;
+    }
+
+    setReactInputValue(hitPointInputRef.current, finalHitPoint);
+  }, [finalHitPoint]);
+
   const minHitPoint = Math.floor(baseHitPoint * settings.minMultiplier);
   const maxHitPoint = Math.floor(baseHitPoint * settings.maxMultiplier);
   const rangeLabel = settings.isFixed
@@ -289,9 +358,6 @@ export function EnemyHitPointRecommendationPreview({
         <section className="rounded-2xl border border-neutral-200 bg-neutral-50/60 p-4">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-neutral-700">最大HP</h3>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              表示のみ・未実装
-            </span>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -309,7 +375,7 @@ export function EnemyHitPointRecommendationPreview({
               <label className="mb-2 block text-sm font-medium">HP倍率</label>
               <input
                 type="text"
-                value={`×${settings.multiplier}`}
+                value={`×${multiplier}`}
                 readOnly
                 className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
               />
@@ -318,10 +384,11 @@ export function EnemyHitPointRecommendationPreview({
             <div>
               <label className="mb-2 block text-sm font-medium">最終HP</label>
               <input
-                type="text"
-                value={hitPoint}
-                readOnly
-                className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
+                type="number"
+                min={0}
+                value={finalHitPoint}
+                onChange={(e) => setFinalHitPoint(toNonNegativeInteger(e.target.value))}
+                className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
               />
             </div>
 
@@ -337,10 +404,7 @@ export function EnemyHitPointRecommendationPreview({
           </div>
 
           <p className="mt-4 text-sm leading-7 text-neutral-600">
-            基準HP {baseHitPoint} × HP倍率 {settings.multiplier} ＝ 最終HP {hitPoint}
-          </p>
-          <p className="mt-1 text-xs leading-6 text-neutral-500">
-            現在はUI確認用です。最大HPの編集方法と計算反映は未実装です。
+            基準HP {baseHitPoint} × HP倍率 {multiplier} ＝ 最終HP {Math.floor(baseHitPoint * multiplier)}
           </p>
         </section>,
         portalTarget,
