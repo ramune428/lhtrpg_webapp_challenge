@@ -65,3 +65,5 @@ jobs:
           git add -A
           git commit -m "Align formula docs with official hate and gold values"
           git push origin HEAD:fix/enemy-official-formulas
+
+# trigger: 1
