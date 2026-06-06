@@ -251,10 +251,6 @@ function getListValue(list, index) {
   return list[index] ?? list[list.length - 1];
 }
 
-function roundDownToFive(value) {
-  return Math.floor(value) - (Math.floor(value) % 5);
-}
-
 function calculateNormalHitPoint(baseData, cr) {
   return Math.floor(cr * baseData.hitPointCoefficient + baseData.hitPointFix);
 }
@@ -286,7 +282,7 @@ function calculateHate(baseData, rank, cr, isGimmick) {
     return Math.floor(cr / 2.4 + 4);
   }
 
-  return Math.floor((cr * baseData.hateCr) / 6 + baseData.hateFix);
+  return Math.floor((cr + baseData.hateCr) / 6 + baseData.hateFix);
 }
 
 function calculateDefenseDice(enemyType, rank) {
@@ -324,10 +320,10 @@ function calculateDamage(enemyType, cr) {
 }
 
 function calculateGold(rank, cr, isGimmick) {
-  const normalGold = roundDownToFive((cr + 2) * (cr + 2) * 0.72 + 17);
+  const normalGold = Math.floor((cr + 2) * (cr + 2) * 0.72 + 17);
 
   if (isGimmick || rank === "モブ") {
-    return `換金(${roundDownToFive(normalGold / 2)} G)`;
+    return `換金(${Math.floor(normalGold / 2)} G)`;
   }
 
   if (rank === "ボス" || rank === "レイド") {
