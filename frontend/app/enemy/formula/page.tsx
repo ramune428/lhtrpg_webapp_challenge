@@ -666,21 +666,34 @@ function CalculationFormulaSection() {
         <p>例： 2D → 6、3D → 9</p>
       </DetailsBlock>
 
-      <DetailsBlock title="ダメージ固定値">
+      <DetailsBlock title="基本攻撃ダメージ">
+        <p>
+          以下の式は、基本攻撃の推奨ダメージ合計です。
+          実際の出力では、推奨ダメージ合計から2Dの期待値7を差し引いた値を固定値とし、「固定値 + 2D」の形式で出力します。
+        </p>
+
         <DetailsBlock title="アーマラー、フェンサー、グラップラー、ヒーラー">
-          <FormulaText>{"<CR> * 3.5 + 8 + 8"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 3.5 + 8 + 8"}</FormulaText>
         </DetailsBlock>
 
         <DetailsBlock title="サポーター">
-          <FormulaText>{"<CR> * 3.5 + 8"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 3.5 + 8"}</FormulaText>
         </DetailsBlock>
 
-        <DetailsBlock title="スピア、アーチャー">
-          <FormulaText>{"<CR> * 6 + 18 + 8"}</FormulaText>
+        <DetailsBlock title="スピア">
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18 + 8"}</FormulaText>
         </DetailsBlock>
 
-        <DetailsBlock title="シューター、ボマー">
-          <FormulaText>{"<CR> * 6 + 18"}</FormulaText>
+        <DetailsBlock title="アーチャー">
+          <FormulaText>{"推奨ダメージ合計 = (<CR> * 6 + 18 + 8) * 0.9"}</FormulaText>
+        </DetailsBlock>
+
+        <DetailsBlock title="シューター">
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18"}</FormulaText>
+        </DetailsBlock>
+
+        <DetailsBlock title="ボマー">
+          <FormulaText>{"推奨ダメージ合計 = (<CR> * 6 + 18) * 0.85"}</FormulaText>
         </DetailsBlock>
       </DetailsBlock>
 
