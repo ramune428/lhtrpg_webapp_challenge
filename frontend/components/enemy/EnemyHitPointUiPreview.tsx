@@ -94,10 +94,12 @@ function setLabelSideText(
   if (!badge) {
     badge = document.createElement("span");
     badge.dataset.enemyUiBadge = key;
-    badge.className = "whitespace-nowrap text-xs font-medium text-neutral-500";
+    badge.className = "whitespace-nowrap text-xs font-medium text-black";
     label.appendChild(badge);
   }
 
+  badge.classList.remove("text-neutral-500");
+  badge.classList.add("text-black");
   badge.textContent = text;
 }
 
@@ -155,9 +157,9 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
     const hateField = findFieldByLabel("ヘイト倍率");
     const recommendedIdentification = getRecommendedIdentification(grid);
 
-    nameField?.classList.remove("sm:col-span-2", "lg:col-span-2");
+    nameField?.classList.add("sm:col-span-2", "lg:col-span-2");
 
-    popularityField?.classList.add("lg:col-span-2");
+    popularityField?.classList.remove("sm:col-span-2", "lg:col-span-2", "lg:col-span-3", "lg:col-span-4");
     setLabelSideText(
       popularityField?.querySelector("label") as HTMLLabelElement | undefined,
       "identification-top",
