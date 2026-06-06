@@ -26,6 +26,12 @@ import { downloadBlobFile, downloadTextFile } from "@/utils/downloadFile";
 
 export type EnemyTabKey = "basic" | "skills" | "output";
 
+const GIMMICK_RANK: EnemyFormData["rank"] = "ノーマル";
+
+function normalizeGimmickRank(form: EnemyFormData): EnemyFormData {
+  return form.race === "ギミック" ? { ...form, rank: GIMMICK_RANK } : form;
+}
+
 export function useEnemyForm() {
   const initialForm = useMemo(() => getDefaultEnemyForm(), []);
   const [activeTab, setActiveTab] = useState<EnemyTabKey>("basic");
@@ -75,6 +81,27 @@ export function useEnemyForm() {
   ) => {
     if (key === "enemyType" && isEnemyTypeLocked) {
       setStatusMessage("読み込んだエネミーデータのタイプは変更できません。");
+      return;
+    }
+
+    if (key === "rank" && form.race === "ギミック" && value !== GIMMICK_RANK) {
+      setStatusMessage("ギミックはランクをノーマル固定で扱います。");
+      return;
+    }
+
+    if (key === "race") {
+      const nextRace = value as EnemyFormData["race"];
+
+      setForm((prev) => ({
+        ...prev,
+        race: nextRace,
+        rank: nextRace === "ギミック" ? GIMMICK_RANK : prev.rank,
+      }));
+
+      if (nextRace === "ギミック") {
+        setStatusMessage("ギミックはランクをノーマル固定で扱います。");
+      }
+
       return;
     }
 
@@ -221,23 +248,26 @@ export function useEnemyForm() {
           : (() => {
               throw new Error("対応している入力ファイルは JSON / XLSX です。");
             })();
+      const normalizedImported = normalizeGimmickRank(imported);
 
-      setForm(imported);
-      setSkills(imported.skills.map(withSkillRowId));
+      setForm(normalizedImported);
+      setSkills(normalizedImported.skills.map(withSkillRowId));
       setItems(
-        imported.items.map((item) =>
+        normalizedImported.items.map((item) =>
           withDropRowId({
             ...item,
-            dice: imported.rank === "モブ" ? "固定" : item.dice,
+            dice: normalizedImported.rank === "モブ" ? "固定" : item.dice,
           }),
         ),
       );
       setResult("");
       setIsEnemyTypeLocked(true);
       setStatusMessage(
-        lowerName.endsWith(".json")
-          ? "JSONを読み込みました。"
-          : "XLSXを読み込みました。",
+        normalizedImported.race === "ギミック"
+          ? "JSON/XLSXを読み込みました。ギミックはランクをノーマル固定で扱います。"
+          : lowerName.endsWith(".json")
+            ? "JSONを読み込みました。"
+            : "XLSXを読み込みました。",
       );
     } catch (error) {
       console.error(error);
