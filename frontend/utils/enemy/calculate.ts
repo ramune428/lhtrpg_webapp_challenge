@@ -70,6 +70,24 @@ function calculateGold(rank: EnemyRank, cr: number, isGimmick: boolean): string 
   return `換金(${normalGold} G)`;
 }
 
+function calculateHate(
+  rank: EnemyRank,
+  cr: number,
+  enemyType: EnemyType,
+  isGimmick: boolean,
+): number {
+  if (rank === "ボス" || rank === "レイド") {
+    return Math.floor(cr / 2.4 + 4);
+  }
+
+  if (isGimmick) {
+    return 0;
+  }
+
+  const hateBase = hateBaseData[enemyType];
+  return Math.floor((cr * hateBase.crCoefficient) / 6 + hateBase.fix);
+}
+
 function applyDamageCoefficient(damage: string, coefficient: number): string {
   const match = damage.match(/^(-?\d+)\s*\+\s*2\s*D$/);
 
@@ -102,15 +120,11 @@ export function calculateEnemyValues(
     rank: "ノーマル",
   });
   const isGimmick = args.race === "ギミック";
-  const hateBase = hateBaseData[args.enemyType];
-  const hate = isGimmick
-    ? 0
-    : Math.floor((args.cr * hateBase.crCoefficient) / 6 + hateBase.fix);
 
   return {
     ...values,
     hitPoint: calculateHitPoint(normalValues.hitPoint, rank, isGimmick),
-    hate,
+    hate: calculateHate(rank, args.cr, args.enemyType, isGimmick),
     damage: applyDamageCoefficient(
       normalValues.damage,
       damageCoefficientData[args.enemyType],
