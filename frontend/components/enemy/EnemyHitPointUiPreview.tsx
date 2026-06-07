@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { calculateIdentification, type EnemyFormData } from "@/utils/enemy";
 
@@ -14,8 +14,37 @@ type HitPointPreviewSettings = {
   isFixed: boolean;
 };
 
+type MultiplierState = {
+  rank: EnemyRank;
+  value: number;
+};
+
+type HitPointPreviewState = {
+  key: string;
+  multiplier: number;
+  finalHitPoint: number;
+};
+
 const SIDE_TEXT_CLASS = "whitespace-nowrap text-xs font-medium text-black";
 const HP_MULTIPLIER_CHANGE_EVENT = "enemy-hp-multiplier-change";
+
+function createExternalValueStore<T>() {
+  let value: T | null = null;
+  const listeners = new Set<() => void>();
+
+  return {
+    getSnapshot: () => value,
+    getServerSnapshot: () => null,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    setValue: (nextValue: T | null) => {
+      value = nextValue;
+      listeners.forEach((listener) => listener());
+    },
+  };
+}
 
 function getPreviewSettings(rank: EnemyRank): HitPointPreviewSettings {
   switch (rank) {
@@ -217,11 +246,11 @@ function toNonNegativeInteger(value: string): number {
 export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
   const settings = getPreviewSettings(rank);
   const fieldRef = useRef<HTMLDivElement | null>(null);
-  const [multiplier, setMultiplier] = useState(settings.multiplier);
-
-  useEffect(() => {
-    setMultiplier(settings.multiplier);
-  }, [settings.multiplier]);
+  const [multiplierState, setMultiplierState] = useState<MultiplierState>(() => ({
+    rank,
+    value: settings.multiplier,
+  }));
+  const multiplier = multiplierState.rank === rank ? multiplierState.value : settings.multiplier;
 
   useEffect(() => {
     dispatchHitPointMultiplierChange(multiplier);
@@ -245,7 +274,7 @@ export function EnemyHitPointMultiplierPreview({ rank }: { rank: EnemyRank }) {
       <select
         value={String(multiplier)}
         disabled={settings.isFixed}
-        onChange={(e) => setMultiplier(Number(e.target.value))}
+        onChange={(e) => setMultiplierState({ rank, value: Number(e.target.value) })}
         className="w-full rounded-xl border border-neutral-300 px-4 py-3 outline-none focus:border-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-600"
       >
         {settings.options.map((value) => (
@@ -277,15 +306,30 @@ export function EnemyHitPointRecommendationPreview({
     () => Math.floor(hitPoint / defaultMultiplier),
     [defaultMultiplier, hitPoint],
   );
-  const [multiplier, setMultiplier] = useState(defaultMultiplier);
-  const [finalHitPoint, setFinalHitPoint] = useState(hitPoint);
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const defaultFinalHitPoint = Math.floor(baseHitPoint * defaultMultiplier);
+  const previewStateKey = `${rank}:${baseHitPoint}:${defaultMultiplier}`;
+  const [previewState, setPreviewState] = useState<HitPointPreviewState>(() => ({
+    key: previewStateKey,
+    multiplier: defaultMultiplier,
+    finalHitPoint: defaultFinalHitPoint,
+  }));
+  const activePreviewState =
+    previewState.key === previewStateKey
+      ? previewState
+      : {
+          key: previewStateKey,
+          multiplier: defaultMultiplier,
+          finalHitPoint: defaultFinalHitPoint,
+        };
+  const multiplier = activePreviewState.multiplier;
+  const finalHitPoint = activePreviewState.finalHitPoint;
+  const portalTargetStore = useMemo(() => createExternalValueStore<HTMLElement>(), []);
+  const portalTarget = useSyncExternalStore(
+    portalTargetStore.subscribe,
+    portalTargetStore.getSnapshot,
+    portalTargetStore.getServerSnapshot,
+  );
   const hitPointInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    setMultiplier(defaultMultiplier);
-    setFinalHitPoint(Math.floor(baseHitPoint * defaultMultiplier));
-  }, [baseHitPoint, defaultMultiplier]);
 
   useEffect(() => {
     const listener = (event: Event) => {
@@ -296,13 +340,16 @@ export function EnemyHitPointRecommendationPreview({
         return;
       }
 
-      setMultiplier(nextMultiplier);
-      setFinalHitPoint(Math.floor(baseHitPoint * nextMultiplier));
+      setPreviewState({
+        key: previewStateKey,
+        multiplier: nextMultiplier,
+        finalHitPoint: Math.floor(baseHitPoint * nextMultiplier),
+      });
     };
 
     window.addEventListener(HP_MULTIPLIER_CHANGE_EVENT, listener);
     return () => window.removeEventListener(HP_MULTIPLIER_CHANGE_EVENT, listener);
-  }, [baseHitPoint]);
+  }, [baseHitPoint, previewStateKey]);
 
   useEffect(() => {
     const judgementHeading = Array.from(document.querySelectorAll("h3")).find(
@@ -317,7 +364,7 @@ export function EnemyHitPointRecommendationPreview({
     const placeholder = document.createElement("div");
     placeholder.dataset.enemyHitPointPreview = "true";
     judgementSection.parentElement.insertBefore(placeholder, judgementSection);
-    setPortalTarget(placeholder);
+    portalTargetStore.setValue(placeholder);
 
     const existingHitPointField = findFieldByLabel(document, "最大HP");
     const previousDisplay = existingHitPointField?.style.display ?? "";
@@ -332,12 +379,13 @@ export function EnemyHitPointRecommendationPreview({
     applyRightSideTextSize();
 
     return () => {
+      portalTargetStore.setValue(null);
       placeholder.remove();
       if (existingHitPointField) {
         existingHitPointField.style.display = previousDisplay;
       }
     };
-  }, []);
+  }, [portalTargetStore]);
 
   useEffect(() => {
     if (!hitPointInputRef.current) {
@@ -387,7 +435,12 @@ export function EnemyHitPointRecommendationPreview({
                 type="number"
                 min={0}
                 value={finalHitPoint}
-                onChange={(e) => setFinalHitPoint(toNonNegativeInteger(e.target.value))}
+                onChange={(e) =>
+                  setPreviewState({
+                    ...activePreviewState,
+                    finalHitPoint: toNonNegativeInteger(e.target.value),
+                  })
+                }
                 className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 outline-none focus:border-neutral-500"
               />
             </div>
