@@ -144,7 +144,7 @@ test("gimmick hate is always 0", () => {
   }
 });
 
-test("only bomber applies a basic damage coefficient", () => {
+test("official high damage types use their unmodified basic damage", () => {
   const cr = 10;
 
   assert.equal(
@@ -181,7 +181,7 @@ test("only bomber applies a basic damage coefficient", () => {
       rank: "ノーマル",
       cr,
     }).damage,
-    "59 + 2 D",
+    "71 + 2 D",
   );
 });
 
