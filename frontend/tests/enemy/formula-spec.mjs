@@ -305,9 +305,8 @@ function calculateDamageTotal(enemyType, cr) {
     case "サポーター":
       return cr * 3.5 + 8;
     case "スピア":
-      return cr * 6 + 18 + 8;
     case "アーチャー":
-      return (cr * 6 + 18 + 8) * 0.9;
+      return cr * 6 + 18 + 8;
     case "シューター":
       return cr * 6 + 18;
     case "ボマー":
