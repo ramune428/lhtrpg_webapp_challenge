@@ -27,7 +27,7 @@ const damageCoefficientData: Record<EnemyType, number> = {
   サポーター: 1,
   ヒーラー: 1,
   スピア: 1,
-  アーチャー: 0.9,
+  アーチャー: 1,
   シューター: 1,
   ボマー: 0.85,
 };
