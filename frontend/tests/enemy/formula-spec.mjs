@@ -308,9 +308,8 @@ function calculateDamageTotal(enemyType, cr) {
     case "アーチャー":
       return cr * 6 + 18 + 8;
     case "シューター":
-      return cr * 6 + 18;
     case "ボマー":
-      return (cr * 6 + 18) * 0.85;
+      return cr * 6 + 18;
   }
 }
 
