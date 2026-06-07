@@ -27,6 +27,8 @@ type HitPointPreviewState = {
 
 const SIDE_TEXT_CLASS = "whitespace-nowrap text-xs font-medium text-black";
 const HP_MULTIPLIER_CHANGE_EVENT = "enemy-hp-multiplier-change";
+const READ_ONLY_PREVIEW_INPUT_CLASS =
+  "w-full cursor-not-allowed rounded-xl border border-neutral-300 bg-neutral-100 px-4 py-3 font-medium text-neutral-600 outline-none";
 
 function createExternalValueStore<T>() {
   let value: T | null = null;
@@ -415,7 +417,7 @@ export function EnemyHitPointRecommendationPreview({
                 type="text"
                 value={baseHitPoint}
                 readOnly
-                className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
+                className={READ_ONLY_PREVIEW_INPUT_CLASS}
               />
             </div>
 
@@ -425,7 +427,7 @@ export function EnemyHitPointRecommendationPreview({
                 type="text"
                 value={`×${multiplier}`}
                 readOnly
-                className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
+                className={READ_ONLY_PREVIEW_INPUT_CLASS}
               />
             </div>
 
@@ -451,7 +453,7 @@ export function EnemyHitPointRecommendationPreview({
                 type="text"
                 value={rangeLabel}
                 readOnly
-                className="w-full cursor-default rounded-xl border border-neutral-300 bg-white px-4 py-3 font-medium text-neutral-700 outline-none"
+                className={READ_ONLY_PREVIEW_INPUT_CLASS}
               />
             </div>
           </div>
