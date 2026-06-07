@@ -144,7 +144,7 @@ test("gimmick hate is always 0", () => {
   }
 });
 
-test("only archer and bomber apply basic damage coefficients", () => {
+test("only bomber applies a basic damage coefficient", () => {
   const cr = 10;
 
   assert.equal(
@@ -163,7 +163,7 @@ test("only archer and bomber apply basic damage coefficients", () => {
       rank: "ノーマル",
       cr,
     }).damage,
-    "70 + 2 D",
+    "79 + 2 D",
   );
   assert.equal(
     calculateEnemyValues({
