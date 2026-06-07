@@ -29,7 +29,7 @@ const damageCoefficientData: Record<EnemyType, number> = {
   スピア: 1,
   アーチャー: 1,
   シューター: 1,
-  ボマー: 0.85,
+  ボマー: 1,
 };
 
 function calculateHitPoint(
