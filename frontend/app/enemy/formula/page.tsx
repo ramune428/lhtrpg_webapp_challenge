@@ -389,7 +389,7 @@ const enemyBaseDataMap: Record<string, EnemyBaseData> = {
     base_action_fix: -2,
     base_hateCr: 2,
     base_hate_fix: 2,
-    base_damageAll_coefficient: 0.85,
+    base_damageAll_coefficient: 1,
     base_aggression_coefficient: 0.85,
     base_basicAttackType: "magical",
     base_basicAttackRole_fix: 0,
@@ -684,12 +684,8 @@ function CalculationFormulaSection() {
           <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18 + 8"}</FormulaText>
         </DetailsBlock>
 
-        <DetailsBlock title="シューター">
+        <DetailsBlock title="シューター、ボマー">
           <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18"}</FormulaText>
-        </DetailsBlock>
-
-        <DetailsBlock title="ボマー">
-          <FormulaText>{"推奨ダメージ合計 = (<CR> * 6 + 18) * 0.85"}</FormulaText>
         </DetailsBlock>
       </DetailsBlock>
 
