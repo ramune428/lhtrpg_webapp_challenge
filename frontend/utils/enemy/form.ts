@@ -66,7 +66,10 @@ export function buildCurrentFormData(
       effect: skill.effect,
     })),
     items: items.map((item) => ({
-      dice: formatDropDiceForOutput(item.dice, maxDropDice),
+      dice:
+        rank === "モブ"
+          ? "固定"
+          : formatDropDiceForOutput(item.dice, maxDropDice),
       name: item.name,
       description: item.description,
     })),

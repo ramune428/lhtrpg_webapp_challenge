@@ -40,6 +40,7 @@ export default function EnemyDropItemSection({
   onRemoveItem,
 }: EnemyDropItemSectionProps) {
   const maxDropDice = getMaxDropDice(rank);
+  const isMob = rank === "モブ";
 
   return (
     <div className="mb-6">
@@ -94,10 +95,9 @@ export default function EnemyDropItemSection({
                         selected,
                         maxDropDice,
                       );
-                      const isEnabled = isDiceButtonEnabled(
-                        diceValue,
-                        maxDropDice,
-                      );
+                      const isEnabled =
+                        (!isMob || diceValue === "固定") &&
+                        isDiceButtonEnabled(diceValue, maxDropDice);
                       const isFixedActive = item.dice.trim() === "固定";
                       const isAboveButton = diceValue === "以上";
                       const isAboveActive =
@@ -125,7 +125,9 @@ export default function EnemyDropItemSection({
                           disabled={!isEnabled || isAutoFilled || isAboveDisabled}
                           title={
                             !isEnabled
-                              ? "レイドの場合のみ選択できます"
+                              ? isMob
+                                ? "モブのドロップ品は固定のみ選択できます"
+                                : "レイドの場合のみ選択できます"
                               : isAboveDisabled
                                 ? "固定選択中は使用できません"
                                 : isAutoFilled
@@ -209,8 +211,8 @@ export default function EnemyDropItemSection({
                     })}
                   </div>
                   <p className="mt-2 text-xs leading-6 text-neutral-500">
-                    ※
-                    1〜6は常に選択できます。7〜10はランクが「レイド」の場合のみ選択できます。
+                    ※ モブの場合は「固定」のみ選択できます。
+                    モブ以外では1〜6を選択でき、7〜10はランクが「レイド」の場合のみ選択できます。
                     「以上」は、選択中の最小値に「～」を付けた形式で出力します。
                   </p>
                 </div>

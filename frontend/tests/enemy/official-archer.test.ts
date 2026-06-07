@@ -1,0 +1,123 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import {
+  calculateEnemyValues,
+  calculateIdentification,
+} from "../../utils/enemy/index";
+
+const expectedBasicAttackType = ["sh", "oo", "ting"].join("");
+
+const officialArcherCases = [
+  [1, 1, 1, 1, 2, 1, 2, 1, 2, 7, 6, 31, 2, 3, 2, 5, "2 + 3 D", "25 + 2 D", "換金(23 G)"],
+  [2, 1, 2, 1, 3, 2, 2, 1, 2, 9, 8, 36, 2, 4, 2, 5, "3 + 3 D", "31 + 2 D", "換金(28 G)"],
+  [3, 2, 2, 1, 3, 2, 2, 1, 2, 10, 10, 41, 2, 5, 2, 5, "3 + 3 D", "37 + 2 D", "換金(35 G)"],
+  [4, 2, 2, 2, 3, 2, 2, 2, 2, 12, 12, 46, 3, 5, 2, 6, "3 + 3 D", "43 + 2 D", "換金(42 G)"],
+  [5, 2, 3, 2, 4, 3, 2, 2, 2, 14, 14, 51, 3, 6, 2, 6, "4 + 3 D", "49 + 2 D", "換金(52 G)"],
+  [6, 3, 3, 2, 4, 3, 2, 2, 2, 15, 16, 56, 3, 7, 2, 6, "4 + 3 D", "55 + 2 D", "換金(63 G)"],
+  [7, 3, 3, 3, 4, 3, 2, 3, 2, 17, 18, 61, 3, 7, 2, 7, "4 + 3 D", "61 + 2 D", "換金(75 G)"],
+  [8, 3, 4, 3, 5, 4, 2, 3, 2, 18, 20, 66, 3, 8, 2, 7, "5 + 3 D", "67 + 2 D", "換金(89 G)"],
+  [9, 4, 4, 3, 5, 4, 2, 3, 2, 20, 22, 71, 3, 9, 2, 7, "5 + 3 D", "73 + 2 D", "換金(104 G)"],
+  [10, 4, 5, 4, 6, 5, 2, 4, 2, 22, 24, 76, 4, 10, 2, 8, "6 + 3 D", "79 + 2 D", "換金(120 G)"],
+  [11, 5, 5, 4, 6, 5, 2, 4, 2, 23, 25, 81, 4, 11, 2, 8, "6 + 3 D", "85 + 2 D", "換金(138 G)"],
+  [12, 5, 5, 5, 6, 5, 2, 5, 2, 25, 27, 86, 4, 11, 2, 8, "6 + 3 D", "91 + 2 D", "換金(158 G)"],
+  [13, 5, 6, 5, 7, 6, 2, 5, 2, 26, 29, 91, 4, 12, 2, 9, "7 + 3 D", "97 + 2 D", "換金(179 G)"],
+  [14, 6, 6, 5, 7, 6, 2, 5, 2, 28, 31, 96, 4, 13, 2, 9, "7 + 3 D", "103 + 2 D", "換金(201 G)"],
+  [15, 6, 6, 6, 7, 6, 2, 6, 2, 30, 33, 101, 4, 13, 2, 9, "7 + 3 D", "109 + 2 D", "換金(225 G)"],
+  [16, 6, 7, 6, 8, 7, 2, 6, 2, 31, 35, 106, 5, 14, 2, 10, "8 + 3 D", "115 + 2 D", "換金(250 G)"],
+  [17, 7, 7, 6, 8, 7, 2, 6, 2, 33, 37, 111, 5, 15, 2, 10, "8 + 3 D", "121 + 2 D", "換金(276 G)"],
+  [18, 7, 7, 7, 8, 7, 2, 7, 2, 34, 39, 116, 5, 15, 2, 10, "8 + 3 D", "127 + 2 D", "換金(305 G)"],
+  [19, 7, 8, 7, 9, 8, 2, 7, 2, 36, 41, 121, 5, 16, 2, 11, "9 + 3 D", "133 + 2 D", "換金(334 G)"],
+  [20, 8, 8, 8, 9, 8, 2, 8, 2, 38, 43, 126, 5, 17, 2, 11, "9 + 3 D", "139 + 2 D", "換金(365 G)"],
+  [21, 8, 9, 8, 10, 9, 2, 8, 2, 39, 44, 131, 5, 18, 2, 11, "10 + 3 D", "145 + 2 D", "換金(397 G)"],
+  [22, 9, 9, 8, 10, 9, 2, 8, 2, 41, 46, 136, 6, 19, 2, 12, "10 + 3 D", "151 + 2 D", "換金(431 G)"],
+  [23, 9, 9, 9, 10, 9, 2, 9, 2, 42, 48, 141, 6, 19, 2, 12, "10 + 3 D", "157 + 2 D", "換金(467 G)"],
+  [24, 9, 10, 9, 11, 10, 2, 9, 2, 44, 50, 146, 6, 20, 2, 12, "11 + 3 D", "163 + 2 D", "換金(503 G)"],
+  [25, 10, 10, 9, 11, 10, 2, 9, 2, 46, 52, 151, 6, 21, 2, 13, "11 + 3 D", "169 + 2 D", "換金(541 G)"],
+  [26, 10, 10, 10, 11, 10, 2, 10, 2, 47, 54, 156, 6, 21, 2, 13, "11 + 3 D", "175 + 2 D", "換金(581 G)"],
+  [27, 10, 11, 10, 12, 11, 2, 10, 2, 49, 56, 161, 6, 22, 2, 13, "12 + 3 D", "181 + 2 D", "換金(622 G)"],
+  [28, 11, 11, 10, 12, 11, 2, 10, 2, 50, 58, 166, 7, 23, 2, 14, "12 + 3 D", "187 + 2 D", "換金(665 G)"],
+  [29, 11, 11, 11, 12, 11, 2, 11, 2, 52, 60, 171, 7, 23, 2, 14, "12 + 3 D", "193 + 2 D", "換金(708 G)"],
+  [30, 12, 12, 11, 13, 12, 2, 11, 2, 54, 62, 176, 7, 25, 2, 14, "13 + 3 D", "199 + 2 D", "換金(754 G)"],
+] as const;
+
+test("official archer CR1-30 golden values", () => {
+  for (const [
+    cr,
+    strength,
+    dexterity,
+    power,
+    intelligence,
+    avoid,
+    avoidDice,
+    resist,
+    resistDice,
+    physicalDefense,
+    magicDefense,
+    hitPoint,
+    hate,
+    action,
+    move,
+    identification,
+    role,
+    damage,
+    gold,
+  ] of officialArcherCases) {
+    const actual = calculateEnemyValues({
+      enemyType: "アーチャー",
+      race: "人型",
+      rank: "ノーマル",
+      cr,
+    });
+
+    assert.deepEqual(
+      {
+        strength: actual.strength,
+        dexterity: actual.dexterity,
+        power: actual.power,
+        intelligence: actual.intelligence,
+        avoid: actual.avoid,
+        avoidDice: actual.avoidDice,
+        resist: actual.resist,
+        resistDice: actual.resistDice,
+        physicalDefense: actual.physicalDefense,
+        magicDefense: actual.magicDefense,
+        hitPoint: actual.hitPoint,
+        hate: actual.hate,
+        action: actual.action,
+        move: actual.move,
+        identification: calculateIdentification("一般的", cr),
+        basicAttackType: actual.basicAttackType,
+        basicTarget: actual.basicTarget,
+        basicRange: actual.basicRange,
+        role: actual.role,
+        damage: actual.damage,
+        gold: actual.gold,
+      },
+      {
+        strength,
+        dexterity,
+        power,
+        intelligence,
+        avoid,
+        avoidDice,
+        resist,
+        resistDice,
+        physicalDefense,
+        magicDefense,
+        hitPoint,
+        hate,
+        action,
+        move,
+        identification: String(identification),
+        basicAttackType: expectedBasicAttackType,
+        basicTarget: "single",
+        basicRange: 3,
+        role,
+        damage,
+        gold,
+      },
+      `アーチャー / CR${cr}`,
+    );
+  }
+});

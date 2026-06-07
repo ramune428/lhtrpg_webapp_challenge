@@ -116,7 +116,7 @@ const baseDataDefinitions: BaseDataDefinition[] = [
     valueLabel: "数値",
   },
   {
-    itemName: "ヘイト倍率（CR係数）",
+    itemName: "ヘイト倍率（CR補正値）",
     keyName: "base_hateCr",
     valueLabel: "数値",
   },
@@ -337,7 +337,7 @@ const enemyBaseDataMap: Record<string, EnemyBaseData> = {
     base_action_fix: 0,
     base_hateCr: 2,
     base_hate_fix: 2,
-    base_damageAll_coefficient: 0.9,
+    base_damageAll_coefficient: 1,
     base_aggression_coefficient: 0.85,
     base_basicAttackType: "shooting",
     base_basicAttackRole_fix: 0,
@@ -389,7 +389,7 @@ const enemyBaseDataMap: Record<string, EnemyBaseData> = {
     base_action_fix: -2,
     base_hateCr: 2,
     base_hate_fix: 2,
-    base_damageAll_coefficient: 0.85,
+    base_damageAll_coefficient: 1,
     base_aggression_coefficient: 0.85,
     base_basicAttackType: "magical",
     base_basicAttackRole_fix: 0,
@@ -597,7 +597,7 @@ function CalculationFormulaSection() {
       </DetailsBlock>
 
       <DetailsBlock title="回避値（ダイス）">
-        <p>モブの場合、固定値 3 とする</p>
+        <p>モブの場合、判定に用いるダイス1個につき固定値3として換算する。</p>
         <p>モブ以外でグラップラーの場合、3D とする</p>
         <p>上記以外の場合、2D とする</p>
       </DetailsBlock>
@@ -609,7 +609,7 @@ function CalculationFormulaSection() {
       </DetailsBlock>
 
       <DetailsBlock title="抵抗値（ダイス）">
-        <p>モブの場合、固定値 3 とする</p>
+        <p>モブの場合、判定に用いるダイス1個につき固定値3として換算する。</p>
         <p>モブ以外でグラップラーの場合、3D とする</p>
         <p>上記以外の場合、2D とする</p>
       </DetailsBlock>
@@ -637,7 +637,7 @@ function CalculationFormulaSection() {
 
         <p>ノーマル または モブの場合、以下の計算式で算出する</p>
         <FormulaText>
-          {"(<CR> * <base_hateCr>) / 6 + <base_hate_fix>"}
+          {"(<CR> + <base_hateCr>) / 6 + <base_hate_fix>"}
         </FormulaText>
       </DetailsBlock>
 
@@ -666,21 +666,26 @@ function CalculationFormulaSection() {
         <p>例： 2D → 6、3D → 9</p>
       </DetailsBlock>
 
-      <DetailsBlock title="ダメージ固定値">
+      <DetailsBlock title="基本攻撃ダメージ">
+        <p>
+          以下の式は、基本攻撃の推奨ダメージ合計です。
+          実際の出力では、推奨ダメージ合計から2Dの期待値7を差し引いた値を固定値とし、「固定値 + 2D」の形式で出力します。
+        </p>
+
         <DetailsBlock title="アーマラー、フェンサー、グラップラー、ヒーラー">
-          <FormulaText>{"<CR> * 3.5 + 8 + 8"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 3.5 + 8 + 8"}</FormulaText>
         </DetailsBlock>
 
         <DetailsBlock title="サポーター">
-          <FormulaText>{"<CR> * 3.5 + 8"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 3.5 + 8"}</FormulaText>
         </DetailsBlock>
 
         <DetailsBlock title="スピア、アーチャー">
-          <FormulaText>{"<CR> * 6 + 18 + 8"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18 + 8"}</FormulaText>
         </DetailsBlock>
 
         <DetailsBlock title="シューター、ボマー">
-          <FormulaText>{"<CR> * 6 + 18"}</FormulaText>
+          <FormulaText>{"推奨ダメージ合計 = <CR> * 6 + 18"}</FormulaText>
         </DetailsBlock>
       </DetailsBlock>
 
@@ -690,7 +695,7 @@ function CalculationFormulaSection() {
         </FormulaText>
         <p>ギミック または モブの場合、上記の計算結果を 1/2 倍する</p>
         <p>ボス または レイドの場合、上記の計算結果を 4 倍する</p>
-        <p>※ 最終値は 5 の倍数になるように切り捨てる</p>
+        <p>※ 公式のドロップ期待値に合わせ、最終値は小数点以下を切り捨てる</p>
       </DetailsBlock>
 
       <DetailsBlock title="ドロップ［コア、魔触媒］">

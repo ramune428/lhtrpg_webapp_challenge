@@ -236,18 +236,41 @@ export const enemyFormulaBaseData = {
   },
 };
 
+const corePriceList = [
+  30, 40, 50, 60, 80, 100, 120, 140, 180, 220, 240, 300, 340, 380, 440, 500,
+  560, 620, 680, 740, 820, 900, 980, 1060, 1160, 1240, 1340, 1440, 1540, 1640,
+  1760,
+];
+
+const catalystPriceList = [
+  15, 20, 25, 30, 40, 50, 60, 70, 90, 110, 120, 150, 170, 190, 220, 250, 280,
+  310, 340, 370, 410, 450, 490, 530, 580, 620, 670, 720, 770, 820, 880,
+];
+
+function getListValue(list, index) {
+  return list[index] ?? list[list.length - 1];
+}
+
+function calculateNormalHitPoint(baseData, cr) {
+  return Math.floor(cr * baseData.hitPointCoefficient + baseData.hitPointFix);
+}
+
 function calculateHitPoint(baseData, rank, cr, isGimmick) {
-  let value = cr * baseData.hitPointCoefficient + baseData.hitPointFix;
+  const normalHitPoint = calculateNormalHitPoint(baseData, cr);
 
   if (isGimmick || rank === "モブ") {
-    value /= 2;
-  } else if (rank === "ボス") {
-    value *= 4;
-  } else if (rank === "レイド") {
-    value *= 10;
+    return Math.floor(normalHitPoint / 2);
   }
 
-  return Math.floor(value);
+  if (rank === "ボス") {
+    return normalHitPoint * 4;
+  }
+
+  if (rank === "レイド") {
+    return normalHitPoint * 10;
+  }
+
+  return normalHitPoint;
 }
 
 function calculateHate(baseData, rank, cr, isGimmick) {
@@ -259,7 +282,7 @@ function calculateHate(baseData, rank, cr, isGimmick) {
     return Math.floor(cr / 2.4 + 4);
   }
 
-  return Math.floor((cr * baseData.hateCr) / 6) + baseData.hateFix;
+  return Math.floor((cr + baseData.hateCr) / 6 + baseData.hateFix);
 }
 
 function calculateDefenseDice(enemyType, rank) {
@@ -270,6 +293,57 @@ function calculateDefenseDice(enemyType, rank) {
   }
 
   return { fixedBonus: 0, dice };
+}
+
+function calculateDamageTotal(enemyType, cr) {
+  switch (enemyType) {
+    case "アーマラー":
+    case "フェンサー":
+    case "グラップラー":
+    case "ヒーラー":
+      return cr * 3.5 + 8 + 8;
+    case "サポーター":
+      return cr * 3.5 + 8;
+    case "スピア":
+    case "アーチャー":
+      return cr * 6 + 18 + 8;
+    case "シューター":
+    case "ボマー":
+      return cr * 6 + 18;
+  }
+}
+
+function calculateDamage(enemyType, cr) {
+  return `${Math.floor(calculateDamageTotal(enemyType, cr)) - 7} + 2 D`;
+}
+
+function calculateGold(rank, cr, isGimmick) {
+  const normalGold = Math.floor((cr + 2) * (cr + 2) * 0.72 + 17);
+
+  if (isGimmick || rank === "モブ") {
+    return `換金(${Math.floor(normalGold / 2)} G)`;
+  }
+
+  if (rank === "ボス" || rank === "レイド") {
+    return `換金(${normalGold * 4} G)`;
+  }
+
+  return `換金(${normalGold} G)`;
+}
+
+function calculateDropCore(rank, cr) {
+  if (rank === "ボス" || rank === "レイド") {
+    return `コア素材[CR${cr}] (${getListValue(corePriceList, cr - 1)} G)`;
+  }
+
+  return "コア素材 なし";
+}
+
+function calculateDropCatalyst(rank, cr) {
+  const catalystIndex = rank === "ボス" || rank === "レイド" ? cr : cr - 1;
+  const catalystStrength = rank === "ボス" || rank === "レイド" ? cr + 1 : cr;
+
+  return `魔触媒${catalystStrength} (${getListValue(catalystPriceList, catalystIndex)} G)`;
 }
 
 export function calculateExpectedNonGimmickValues(enemyType, rank, cr) {
@@ -313,6 +387,10 @@ export function calculateExpectedNonGimmickValues(enemyType, rank, cr) {
     basicTarget: baseData.basicTarget,
     basicRange: baseData.basicRange,
     role,
+    damage: calculateDamage(enemyType, cr),
+    gold: calculateGold(rank, cr, false),
+    dropCore: calculateDropCore(rank, cr),
+    dropCatalyst: calculateDropCatalyst(rank, cr),
   };
 }
 
@@ -334,5 +412,9 @@ export function calculateExpectedExplicitGimmickValues(enemyType, rank, cr) {
     hate: calculateHate(baseData, rank, cr, true),
     action: 0,
     move: 0,
+    damage: calculateDamage(enemyType, cr),
+    gold: calculateGold(rank, cr, true),
+    dropCore: calculateDropCore(rank, cr),
+    dropCatalyst: calculateDropCatalyst(rank, cr),
   };
 }

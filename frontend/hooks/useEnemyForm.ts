@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   calculateEnemyValues,
   createEmptyDropItemInput,
@@ -26,6 +26,49 @@ import { downloadBlobFile, downloadTextFile } from "@/utils/downloadFile";
 
 export type EnemyTabKey = "basic" | "skills" | "output";
 
+const GIMMICK_RANK: EnemyFormData["rank"] = "ノーマル";
+
+function normalizeGimmickRank(form: EnemyFormData): EnemyFormData {
+  return form.race === "ギミック" ? { ...form, rank: GIMMICK_RANK } : form;
+}
+
+function isNumberInput(target: EventTarget | null): target is HTMLInputElement {
+  return target instanceof HTMLInputElement && target.type === "number";
+}
+
+function getNumberInputMinimum(input: HTMLInputElement): number {
+  const min = Number(input.min);
+  return Number.isFinite(min) ? min : 0;
+}
+
+function setNumberInputValue(input: HTMLInputElement, value: number) {
+  const valueSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    "value",
+  )?.set;
+
+  valueSetter?.call(input, String(value));
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function stopEmptyNumberInputPropagation(event: Event) {
+  if (!isNumberInput(event.target) || event.target.value !== "") {
+    return;
+  }
+
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+function commitMinimumWhenNumberInputIsBlank(event: FocusEvent) {
+  if (!isNumberInput(event.target) || event.target.value !== "") {
+    return;
+  }
+
+  setNumberInputValue(event.target, getNumberInputMinimum(event.target));
+}
+
 export function useEnemyForm() {
   const initialForm = useMemo(() => getDefaultEnemyForm(), []);
   const [activeTab, setActiveTab] = useState<EnemyTabKey>("basic");
@@ -38,6 +81,17 @@ export function useEnemyForm() {
   );
   const [result, setResult] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isEnemyTypeLocked, setIsEnemyTypeLocked] = useState(false);
+
+  useEffect(() => {
+    document.addEventListener("input", stopEmptyNumberInputPropagation, true);
+    document.addEventListener("blur", commitMinimumWhenNumberInputIsBlank, true);
+
+    return () => {
+      document.removeEventListener("input", stopEmptyNumberInputPropagation, true);
+      document.removeEventListener("blur", commitMinimumWhenNumberInputIsBlank, true);
+    };
+  }, []);
 
   const calculated = useMemo(
     () =>
@@ -72,6 +126,41 @@ export function useEnemyForm() {
     key: K,
     value: EnemyFormData[K],
   ) => {
+    if (key === "enemyType" && isEnemyTypeLocked) {
+      setStatusMessage("読み込んだエネミーデータのタイプは変更できません。");
+      return;
+    }
+
+    if (key === "rank" && form.race === "ギミック" && value !== GIMMICK_RANK) {
+      setStatusMessage("ギミックはランクをノーマル固定で扱います。");
+      return;
+    }
+
+    if (key === "race") {
+      const nextRace = value as EnemyFormData["race"];
+
+      setForm((prev) => ({
+        ...prev,
+        race: nextRace,
+        rank: nextRace === "ギミック" ? GIMMICK_RANK : prev.rank,
+      }));
+
+      if (nextRace === "ギミック") {
+        setStatusMessage("ギミックはランクをノーマル固定で扱います。");
+      }
+
+      return;
+    }
+
+    if (key === "rank" && value === "モブ") {
+      setItems((prev) =>
+        prev.map((item) => ({
+          ...item,
+          dice: "固定",
+        })),
+      );
+    }
+
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -159,6 +248,7 @@ export function useEnemyForm() {
     setSkills(next.skills.map(withSkillRowId));
     setItems(next.items.map(withDropRowId));
     setResult("");
+    setIsEnemyTypeLocked(false);
     setStatusMessage("入力内容をクリアしました。");
     setActiveTab("basic");
   };
@@ -205,15 +295,26 @@ export function useEnemyForm() {
           : (() => {
               throw new Error("対応している入力ファイルは JSON / XLSX です。");
             })();
+      const normalizedImported = normalizeGimmickRank(imported);
 
-      setForm(imported);
-      setSkills(imported.skills.map(withSkillRowId));
-      setItems(imported.items.map(withDropRowId));
+      setForm(normalizedImported);
+      setSkills(normalizedImported.skills.map(withSkillRowId));
+      setItems(
+        normalizedImported.items.map((item) =>
+          withDropRowId({
+            ...item,
+            dice: normalizedImported.rank === "モブ" ? "固定" : item.dice,
+          }),
+        ),
+      );
       setResult("");
+      setIsEnemyTypeLocked(true);
       setStatusMessage(
-        lowerName.endsWith(".json")
-          ? "JSONを読み込みました。"
-          : "XLSXを読み込みました。",
+        normalizedImported.race === "ギミック"
+          ? "JSON/XLSXを読み込みました。ギミックはランクをノーマル固定で扱います。"
+          : lowerName.endsWith(".json")
+            ? "JSONを読み込みました。"
+            : "XLSXを読み込みました。",
       );
     } catch (error) {
       console.error(error);
@@ -232,7 +333,12 @@ export function useEnemyForm() {
       const next = prev.filter((item) => item.id !== id);
       return next.length > 0
         ? next
-        : [withDropRowId(createEmptyDropItemInput())];
+        : [
+            withDropRowId({
+              ...createEmptyDropItemInput(),
+              dice: form.rank === "モブ" ? "固定" : "",
+            }),
+          ];
     });
   };
 
@@ -255,7 +361,10 @@ export function useEnemyForm() {
 
       if (nextCount > prev.length) {
         const additional = Array.from({ length: nextCount - prev.length }, () =>
-          withDropRowId(createEmptyDropItemInput()),
+          withDropRowId({
+            ...createEmptyDropItemInput(),
+            dice: form.rank === "モブ" ? "固定" : "",
+          }),
         );
         return [...prev, ...additional];
       }
@@ -300,6 +409,7 @@ export function useEnemyForm() {
     handleItemCountChange,
     handleSkillCountChange,
     initialTags,
+    isEnemyTypeLocked,
     items,
     outputSkills,
     removeItem,

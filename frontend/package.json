@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:enemy-formula": "tsx --test tests/enemy/formula.test.ts"
+    "test:enemy-formula": "tsx --test tests/enemy/*.test.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
