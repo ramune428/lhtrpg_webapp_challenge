@@ -449,104 +449,103 @@ export default function HomePage() {
           </div>
 
           <section className="mb-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold">チャットパレット出力オプション</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsOutputOptionsOpen((current) => !current)}
-                  aria-expanded={isOutputOptionsOpen}
-                  className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
-                >
-                  {isOutputOptionsOpen ? "出力オプションを閉じる" : "出力オプションを開く"}
-                </button>
-                {isOutputOptionsOpen && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleSetAllOptionalOptions(true)}
-                      className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
-                    >
-                      任意項目をすべてON
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetAllOptionalOptions(false)}
-                      className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
-                    >
-                      任意項目をすべてOFF
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsOutputOptionsOpen((current) => !current)}
+              aria-expanded={isOutputOptionsOpen}
+              className="mb-3 flex w-full items-center justify-between rounded-xl border border-neutral-300 bg-white px-4 py-3 text-left transition hover:bg-neutral-50"
+            >
+              <span className="text-lg font-semibold">チャットパレット出力オプション</span>
+              <span className="text-sm font-medium text-neutral-500">
+                {isOutputOptionsOpen ? "閉じる ▲" : "開く ▼"}
+              </span>
+            </button>
 
             {isOutputOptionsOpen ? (
-              <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
-                <div className="grid content-start gap-2">
-                  {outputOptionItemsBeforeSkills.map(renderOutputOptionItem)}
-
-                  <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
-                    {renderOutputOptionGroupTitle("特技")}
-                    <div className="grid gap-2 pl-3">
-                      {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
-                      {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
-                      {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
-                      {renderOutputOptionItem({ key: "skillCommands", label: "特技コマンド", alwaysOn: true })}
-                    </div>
-                  </section>
-
-                  <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
-                    {renderOutputOptionGroupTitle("基本動作", {
-                      checked: options.includeBasicActionNames,
-                      disabled: false,
-                      onChange: updateBasicActionGroup,
-                    })}
-                    <div className="grid gap-2 pl-3">
-                      {renderOutputOptionItem({
-                        key: "includeBasicActionNames",
-                        label: "特技名",
-                        onChange: (checked) => updateBasicActionOption("includeBasicActionNames", checked),
-                      })}
-                      {renderOutputOptionItem({
-                        key: "includeBasicActionInfo",
-                        label: "特技情報",
-                        onChange: (checked) => updateBasicActionOption("includeBasicActionInfo", checked),
-                      })}
-                      {renderOutputOptionItem({
-                        key: "includeBasicActionEffects",
-                        label: "特技効果",
-                        onChange: (checked) => updateBasicActionOption("includeBasicActionEffects", checked),
-                      })}
-                      {renderOutputOptionItem({
-                        key: "includeBasicActionCommands",
-                        label: "特技コマンド",
-                        onChange: (checked) => updateBasicActionOption("includeBasicActionCommands", checked),
-                      })}
-                    </div>
-                  </section>
-
-                  {outputOptionItemsAfterBasicActions.map(renderOutputOptionItem)}
+              <>
+                <div className="mb-3 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSetAllOptionalOptions(true)}
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
+                  >
+                    任意項目をすべてON
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetAllOptionalOptions(false)}
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
+                  >
+                    任意項目をすべてOFF
+                  </button>
                 </div>
 
-                <div className="flex h-full min-h-[640px] flex-col rounded-2xl border border-neutral-300 bg-white p-4">
-                  <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
-                    <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
-                    <button
-                      type="button"
-                      onClick={handleUpdateChatPaletteReview}
-                      disabled={isReviewLoading || isLoading}
-                      className="rounded-xl border border-neutral-300 px-3 py-2 text-xs font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isReviewLoading ? "更新中..." : "レビューを更新"}
-                    </button>
+                <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
+                  <div className="grid content-start gap-2">
+                    {outputOptionItemsBeforeSkills.map(renderOutputOptionItem)}
+
+                    <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
+                      {renderOutputOptionGroupTitle("特技")}
+                      <div className="grid gap-2 pl-3">
+                        {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
+                        {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
+                        {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
+                        {renderOutputOptionItem({ key: "skillCommands", label: "特技コマンド", alwaysOn: true })}
+                      </div>
+                    </section>
+
+                    <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
+                      {renderOutputOptionGroupTitle("基本動作", {
+                        checked: options.includeBasicActionNames,
+                        disabled: false,
+                        onChange: updateBasicActionGroup,
+                      })}
+                      <div className="grid gap-2 pl-3">
+                        {renderOutputOptionItem({
+                          key: "includeBasicActionNames",
+                          label: "特技名",
+                          onChange: (checked) => updateBasicActionOption("includeBasicActionNames", checked),
+                        })}
+                        {renderOutputOptionItem({
+                          key: "includeBasicActionInfo",
+                          label: "特技情報",
+                          onChange: (checked) => updateBasicActionOption("includeBasicActionInfo", checked),
+                        })}
+                        {renderOutputOptionItem({
+                          key: "includeBasicActionEffects",
+                          label: "特技効果",
+                          onChange: (checked) => updateBasicActionOption("includeBasicActionEffects", checked),
+                        })}
+                        {renderOutputOptionItem({
+                          key: "includeBasicActionCommands",
+                          label: "特技コマンド",
+                          onChange: (checked) => updateBasicActionOption("includeBasicActionCommands", checked),
+                        })}
+                      </div>
+                    </section>
+
+                    {outputOptionItemsAfterBasicActions.map(renderOutputOptionItem)}
                   </div>
-                  <p className="mb-2 min-h-[1rem] shrink-0 text-xs text-neutral-500">{reviewStatusMessage}</p>
-                  <pre className="min-h-[520px] flex-1 overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
-                    {chatPaletteReview || "まだレビューは作成されていません。"}
-                  </pre>
+
+                  <div className="flex h-full min-h-[640px] flex-col rounded-2xl border border-neutral-300 bg-white p-4">
+                    <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
+                      <h4 className="text-sm font-semibold text-neutral-800">チャットパレットのレビュー</h4>
+                      <button
+                        type="button"
+                        onClick={handleUpdateChatPaletteReview}
+                        disabled={isReviewLoading || isLoading}
+                        className="rounded-xl border border-neutral-300 px-3 py-2 text-xs font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isReviewLoading ? "更新中..." : "レビューを更新"}
+                      </button>
+                    </div>
+                    <p className="mb-2 min-h-[1rem] shrink-0 text-xs text-neutral-500">{reviewStatusMessage}</p>
+                    <pre className="min-h-[520px] flex-1 overflow-auto whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs leading-5 text-neutral-800">
+                      {chatPaletteReview || "まだレビューは作成されていません。"}
+                    </pre>
+                  </div>
                 </div>
-              </div>
+              </>
             ) : (
               <p className="text-sm text-neutral-500">出力オプションは折りたたまれています。</p>
             )}
