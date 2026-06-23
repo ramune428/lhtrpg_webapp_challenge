@@ -24,7 +24,7 @@ const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
 type OutputOptionItem = {
-  key: keyof ChatPaletteOptions | "combatBasics" | "skillCommands";
+  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands" | "basicActionNames";
   label: string;
   alwaysOn?: boolean;
 };
@@ -38,7 +38,9 @@ const outputOptionItemsBeforeSkills: OutputOptionItem[] = [
 
 const outputOptionItemsAfterSkills: OutputOptionItem[] = [
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
-  { key: "includeBasicActions", label: "基本動作" },
+];
+
+const outputOptionItemsAfterBasicActions: OutputOptionItem[] = [
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
   { key: "includeItemList", label: "所持アイテム一覧" },
   { key: "includeAbilityChecks", label: "各種判定" },
@@ -53,7 +55,8 @@ function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
     includeSkillSupportCalculations: checked,
     includeSkillInfo: checked,
     includeSkillEffects: checked,
-    includeBasicActions: checked,
+    includeBasicActionInfo: checked,
+    includeBasicActionEffects: checked,
     includeEquipmentEffects: checked,
     includeItemList: checked,
     includeAbilityChecks: checked,
@@ -390,13 +393,24 @@ export default function HomePage() {
                 <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
                   <h4 className="mb-2 font-semibold">特技</h4>
                   <div className="grid gap-2 pl-3">
-                    {renderOutputOptionItem({ key: "combatBasics", label: "特技名", alwaysOn: true })}
+                    {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
                     {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
                     {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
                   </div>
                 </section>
 
                 {outputOptionItemsAfterSkills.map(renderOutputOptionItem)}
+
+                <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
+                  <h4 className="mb-2 font-semibold">基本動作</h4>
+                  <div className="grid gap-2 pl-3">
+                    {renderOutputOptionItem({ key: "basicActionNames", label: "特技名", alwaysOn: true })}
+                    {renderOutputOptionItem({ key: "includeBasicActionInfo", label: "特技情報" })}
+                    {renderOutputOptionItem({ key: "includeBasicActionEffects", label: "特技効果" })}
+                  </div>
+                </section>
+
+                {outputOptionItemsAfterBasicActions.map(renderOutputOptionItem)}
               </div>
 
               <div className="flex h-full min-h-[640px] flex-col rounded-2xl border border-neutral-300 bg-white p-4">
