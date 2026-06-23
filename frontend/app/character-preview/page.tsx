@@ -454,20 +454,21 @@ export default function HomePage() {
             </summary>
 
             <div className="mt-4">
-              <div className="mb-3 flex flex-wrap justify-end gap-2">
+              <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                <span className="text-sm font-medium text-neutral-600">一括操作：</span>
                 <button
                   type="button"
                   onClick={() => handleSetAllOptionalOptions(true)}
                   className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
                 >
-                  任意項目をすべてON
+                  すべてON
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSetAllOptionalOptions(false)}
                   className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium transition hover:bg-white"
                 >
-                  任意項目をすべてOFF
+                  すべてOFF
                 </button>
               </div>
 
