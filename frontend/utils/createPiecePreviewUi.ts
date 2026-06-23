@@ -53,12 +53,32 @@ const BASIC_ACTION_COMMANDS: Record<string, string> = {
   プロップ解除: "{解除値} 解除値",
 };
 
+const ABILITY_FIELDS: Array<[label: string, fieldName: string]> = [
+  ["運動値", "abl_motion"],
+  ["耐久値", "abl_durability"],
+  ["解除値", "abl_dismantle"],
+  ["操作値", "abl_operate"],
+  ["知覚値", "abl_sense"],
+  ["交渉値", "abl_negotiate"],
+  ["知識値", "abl_knowledge"],
+  ["解析値", "abl_analyze"],
+  ["回避値", "abl_avoid"],
+  ["抵抗値", "abl_resist"],
+  ["命中値", "abl_hit"],
+];
+
 function asString(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
   }
 
   return String(value);
+}
+
+function asNumber(value: unknown): number {
+  const num = Number(value);
+
+  return Number.isFinite(num) ? num : 0;
 }
 
 function asArray<T = unknown>(value: unknown): T[] {
@@ -75,6 +95,10 @@ function asRecord(value: unknown): AnyRecord | null {
   }
 
   return value as AnyRecord;
+}
+
+function toHalfWidthDigits(value: string): string {
+  return value.replace(/[０-９]/g, (char) => String(char.charCodeAt(0) - 0xff10));
 }
 
 function createSkillList(jsonDataValue: unknown): AnyRecord[] {
@@ -152,6 +176,151 @@ function formatSkillDetails(skill: AnyRecord, options: SkillDisplayOptions): str
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function normalizeAbilityCheckValue(value: string): string {
+  return toHalfWidthDigits(value)
+    .replace(/\s*>=0\s*$/, "")
+    .replace(/Ｄ/g, "D")
+    .replace(/^([0-9]+)\+([0-9]+D.*)$/, "$2+$1");
+}
+
+function createAbilityValueMap(jsonDataValue: unknown): Map<string, string> {
+  const jsonData = asRecord(jsonDataValue);
+  const result = new Map<string, string>();
+
+  if (!jsonData) {
+    return result;
+  }
+
+  for (const [label, fieldName] of ABILITY_FIELDS) {
+    const value = normalizeAbilityCheckValue(asString(jsonData[fieldName]));
+    result.set(label, value || `{${label}}`);
+  }
+
+  return result;
+}
+
+function normalizeRollText(roll: string): string {
+  return roll
+    .replace(/^判定[:：]/, "")
+    .replace(/（/g, "(")
+    .replace(/）/g, ")")
+    .replace(/／/g, "/")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function rollLabel(roll: string): string | null {
+  return normalizeRollText(roll).match(/^(?:対決|基本)\(([^)]+)\)$/)?.[1] ?? null;
+}
+
+function abilityLabelByCheckName(name: string): string | null {
+  const map: Record<string, string> = {
+    命中: "命中値",
+    回避: "回避値",
+    抵抗: "抵抗値",
+    運動: "運動値",
+    耐久: "耐久値",
+    解除: "解除値",
+    操作: "操作値",
+    知覚: "知覚値",
+    交渉: "交渉値",
+    知識: "知識値",
+    解析: "解析値",
+  };
+
+  return map[name] ?? null;
+}
+
+function buildSkillCheckCommand(skill: AnyRecord, abilityValues: Map<string, string>): string | null {
+  const label = rollLabel(asString(skill.roll));
+
+  if (!label) {
+    return null;
+  }
+
+  const match = (label.split("/")[0] ?? "").match(/^(命中|回避|抵抗|運動|耐久|解除|操作|知覚|交渉|知識|解析)(.*)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const abilityLabel = abilityLabelByCheckName(match[1]);
+
+  if (!abilityLabel) {
+    return null;
+  }
+
+  const bonus = toHalfWidthDigits(match[2] ?? "")
+    .replace(/ＳＲ|SR/g, String(asNumber(skill.skill_rank)))
+    .replace(/Ｄ/g, "D");
+  const base = abilityValues.get(abilityLabel) ?? `{${abilityLabel}}`;
+  const command = bonus.includes("D") ? `${base}${bonus}` : `{${abilityLabel}}${bonus}`;
+
+  return `${command} ${asString(skill.name)}(${label})`;
+}
+
+function createSkillCheckCommandMap(jsonDataValue: unknown): Map<string, string> {
+  const abilityValues = createAbilityValueMap(jsonDataValue);
+  const result = new Map<string, string>();
+
+  for (const skill of createSkillList(jsonDataValue)) {
+    const command = buildSkillCheckCommand(skill, abilityValues);
+
+    if (command) {
+      result.set(formatSkillName(skill), command);
+    }
+  }
+
+  return result;
+}
+
+function replaceChatPaletteSection(
+  commands: string,
+  sectionTitle: string,
+  replacer: (sectionBody: string) => string
+): string {
+  const sectionHeader = `${sectionTitle}\n`;
+  const sectionStart = commands.indexOf(sectionHeader);
+
+  if (sectionStart < 0) {
+    return commands;
+  }
+
+  const bodyStart = sectionStart + sectionHeader.length;
+  const nextSectionMatch = commands.slice(bodyStart).match(/\n\n○/);
+  const bodyEnd = nextSectionMatch?.index === undefined ? commands.length : bodyStart + nextSectionMatch.index;
+
+  return `${commands.slice(0, bodyStart)}${replacer(commands.slice(bodyStart, bodyEnd))}${commands.slice(bodyEnd)}`;
+}
+
+function addSkillCheckCommandsToSkillSection(commands: string, jsonDataValue: unknown): string {
+  const skillCheckCommands = createSkillCheckCommandMap(jsonDataValue);
+
+  if (skillCheckCommands.size === 0) {
+    return commands;
+  }
+
+  return replaceChatPaletteSection(commands, "○特技", (sectionBody) => {
+    const existingLines = sectionBody.split("\n");
+    const existingLineSet = new Set(existingLines.map((line) => line.trim()).filter(Boolean));
+    const insertedCommands = new Set<string>();
+
+    return existingLines
+      .reduce<string[]>((result, line) => {
+        result.push(line);
+
+        const checkCommand = skillCheckCommands.get(line.trim());
+        if (checkCommand && !existingLineSet.has(checkCommand) && !insertedCommands.has(checkCommand)) {
+          result.push(checkCommand);
+          insertedCommands.add(checkCommand);
+        }
+
+        return result;
+      }, [])
+      .join("\n");
+  });
 }
 
 function replaceAllText(text: string, searchValue: string, replaceValue: string): string {
@@ -294,7 +463,8 @@ export function createPieceFromJson(
     includeSkillInfo,
     includeSkillEffects,
   });
-  const commands = rewriteBasicActionDisplayText(skillRewrittenCommands, {
+  const skillCommandsWithChecks = addSkillCheckCommandsToSkillSection(skillRewrittenCommands, jsonDataValue);
+  const commands = rewriteBasicActionDisplayText(skillCommandsWithChecks, {
     includeBasicActionNames,
     includeBasicActionInfo,
     includeBasicActionEffects,
