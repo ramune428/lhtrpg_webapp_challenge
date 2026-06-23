@@ -1,1 +1,5 @@
-export { default } from "./character-preview/page";
+import { redirect } from "next/navigation";
+
+export default function HomePage() {
+  redirect("/character");
+}
