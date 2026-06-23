@@ -295,6 +295,12 @@ function replaceChatPaletteSection(
   return `${commands.slice(0, bodyStart)}${replacer(commands.slice(bodyStart, bodyEnd))}${commands.slice(bodyEnd)}`;
 }
 
+function isSkillDetailLine(line: string): boolean {
+  const trimmed = line.trim();
+
+  return trimmed.startsWith("SR:") || trimmed.startsWith("効果:");
+}
+
 function addSkillCheckCommandsToSkillSection(commands: string, jsonDataValue: unknown): string {
   const skillCheckCommands = createSkillCheckCommandMap(jsonDataValue);
 
@@ -306,20 +312,27 @@ function addSkillCheckCommandsToSkillSection(commands: string, jsonDataValue: un
     const existingLines = sectionBody.split("\n");
     const existingLineSet = new Set(existingLines.map((line) => line.trim()).filter(Boolean));
     const insertedCommands = new Set<string>();
+    const result: string[] = [];
 
-    return existingLines
-      .reduce<string[]>((result, line) => {
-        result.push(line);
+    for (let index = 0; index < existingLines.length; index += 1) {
+      const line = existingLines[index];
+      result.push(line);
 
-        const checkCommand = skillCheckCommands.get(line.trim());
-        if (checkCommand && !existingLineSet.has(checkCommand) && !insertedCommands.has(checkCommand)) {
-          result.push(checkCommand);
-          insertedCommands.add(checkCommand);
-        }
+      const checkCommand = skillCheckCommands.get(line.trim());
+      if (!checkCommand || existingLineSet.has(checkCommand) || insertedCommands.has(checkCommand)) {
+        continue;
+      }
 
-        return result;
-      }, [])
-      .join("\n");
+      while (index + 1 < existingLines.length && isSkillDetailLine(existingLines[index + 1])) {
+        index += 1;
+        result.push(existingLines[index]);
+      }
+
+      result.push(checkCommand);
+      insertedCommands.add(checkCommand);
+    }
+
+    return result.join("\n");
   });
 }
 
