@@ -11,8 +11,11 @@ export { fetchCharacterJson, normalizeCharacterId };
 export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescriptions" | "includeBasicActions"> & {
   includeSkillInfo: boolean;
   includeSkillEffects: boolean;
+  includeBasicActions: boolean;
+  includeBasicActionNames: boolean;
   includeBasicActionInfo: boolean;
   includeBasicActionEffects: boolean;
+  includeBasicActionCommands: boolean;
 };
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
@@ -21,8 +24,11 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeSkillSupportCalculations: baseDefaultChatPaletteOptions.includeSkillSupportCalculations,
   includeSkillInfo: true,
   includeSkillEffects: true,
+  includeBasicActions: true,
+  includeBasicActionNames: true,
   includeBasicActionInfo: true,
   includeBasicActionEffects: true,
+  includeBasicActionCommands: true,
   includeEquipmentEffects: baseDefaultChatPaletteOptions.includeEquipmentEffects,
   includeItemList: baseDefaultChatPaletteOptions.includeItemList,
   includeAbilityChecks: baseDefaultChatPaletteOptions.includeAbilityChecks,
@@ -32,7 +38,10 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
 
 type AnyRecord = Record<string, unknown>;
 type SkillDisplayOptions = Pick<ChatPaletteOptions, "includeSkillInfo" | "includeSkillEffects">;
-type BasicActionDisplayOptions = Pick<ChatPaletteOptions, "includeBasicActionInfo" | "includeBasicActionEffects">;
+type BasicActionDisplayOptions = Pick<
+  ChatPaletteOptions,
+  "includeBasicActionNames" | "includeBasicActionInfo" | "includeBasicActionEffects" | "includeBasicActionCommands"
+>;
 
 const BASIC_ACTION_COMMANDS: Record<string, string> = {
   敵情を探る: "{運動値} 運動値",
@@ -205,11 +214,11 @@ function formatBasicActionLine(line: string, options: BasicActionDisplayOptions)
 
   const name = line.slice(0, infoStartIndex).trim();
   const actionName = extractBasicActionName(line);
-  const command = BASIC_ACTION_COMMANDS[actionName] ?? "";
+  const command = options.includeBasicActionCommands ? BASIC_ACTION_COMMANDS[actionName] ?? "" : "";
   const { info, effect } = splitBasicActionInfoAndEffect(line.slice(infoStartIndex + 1));
 
   return [
-    name,
+    options.includeBasicActionNames ? name : "",
     options.includeBasicActionInfo ? info : "",
     options.includeBasicActionEffects ? effect : "",
     command,
@@ -228,10 +237,20 @@ function rewriteBasicActionDisplayText(commands: string, options: BasicActionDis
 
       const [sectionTitle = "○基本動作", ...lines] = paletteSection.split("\n");
       const actionLines = lines.filter((line) => line.startsWith("《"));
-      const formattedActionLines = actionLines.flatMap((line, index) => [
-        ...(index > 0 ? [""] : []),
-        ...formatBasicActionLine(line, options).split("\n"),
-      ]);
+      const formattedActionLines = actionLines.reduce<string[]>((result, line) => {
+        const formattedLine = formatBasicActionLine(line, options);
+
+        if (!formattedLine) {
+          return result;
+        }
+
+        if (result.length > 0) {
+          result.push("");
+        }
+
+        result.push(...formattedLine.split("\n"));
+        return result;
+      }, []);
 
       return [sectionTitle, ...formattedActionLines].join("\n");
     })
@@ -250,14 +269,20 @@ export function createPieceFromJson(
   const {
     includeSkillInfo,
     includeSkillEffects,
+    includeBasicActions,
+    includeBasicActionNames,
     includeBasicActionInfo,
     includeBasicActionEffects,
+    includeBasicActionCommands,
     ...baseOptionsWithoutSkillDetails
   } = mergedOptions;
+  const hasBasicActionOutput =
+    includeBasicActions &&
+    (includeBasicActionNames || includeBasicActionInfo || includeBasicActionEffects || includeBasicActionCommands);
   const baseOptions: Partial<BaseChatPaletteOptions> = {
     ...baseOptionsWithoutSkillDetails,
     includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
-    includeBasicActions: true,
+    includeBasicActions: hasBasicActionOutput,
   };
   const pieceText = createBasePieceFromJson(jsonDataValue, characterId, baseOptions);
   const piece = JSON.parse(pieceText) as AnyRecord;
@@ -272,8 +297,10 @@ export function createPieceFromJson(
     includeSkillEffects,
   });
   const commands = rewriteBasicActionDisplayText(skillRewrittenCommands, {
+    includeBasicActionNames,
     includeBasicActionInfo,
     includeBasicActionEffects,
+    includeBasicActionCommands,
   });
 
   return JSON.stringify({
