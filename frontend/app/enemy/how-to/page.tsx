@@ -109,7 +109,6 @@ const steps: Step[] = [
       },
     ],
   },
-
   {
     number: "4",
     title: "エネミー情報の入力",
