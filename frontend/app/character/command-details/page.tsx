@@ -62,6 +62,7 @@ const commandSummaries: CommandSummary[] = [
       "魔防",
       "各能力基本値",
       "各能力値",
+      "各技能値",
     ],
     image: {
       src: commandDetailsImages.parameters,
@@ -375,7 +376,7 @@ function ChatPaletteDetails() {
         </DetailCard>
 
         <DetailCard title="各種判定">
-          <p>運動値、耐久値など能力値に関係する判定が出力されます。</p>
+          <p>運動値、耐久値など技能値に関係する判定が出力されます。</p>
         </DetailCard>
 
         <DetailCard title="消耗品">
