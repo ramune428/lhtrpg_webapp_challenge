@@ -51,13 +51,6 @@ const outputOptionItemsAfterBasicActions: OutputOptionItem[] = [
   { key: "includeTreasureTables", label: "財宝表" },
 ];
 
-const basicActionOptionKeys: BasicActionOptionKey[] = [
-  "includeBasicActionNames",
-  "includeBasicActionInfo",
-  "includeBasicActionEffects",
-  "includeBasicActionCommands",
-];
-
 function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
   return {
     includeDamageCalculator: checked,
@@ -143,8 +136,32 @@ export default function HomePage() {
   };
 
   const updateBasicActionOption = (key: BasicActionOptionKey, checked: boolean) => {
-    const nextOptions: ChatPaletteOptions = { ...options, [key]: checked };
-    nextOptions.includeBasicActions = basicActionOptionKeys.some((optionKey) => nextOptions[optionKey]);
+    let nextOptions: ChatPaletteOptions;
+
+    if (key === "includeBasicActionNames") {
+      nextOptions = checked
+        ? {
+            ...options,
+            includeBasicActions: true,
+            includeBasicActionNames: true,
+          }
+        : {
+            ...options,
+            includeBasicActions: false,
+            includeBasicActionNames: false,
+            includeBasicActionInfo: false,
+            includeBasicActionEffects: false,
+            includeBasicActionCommands: false,
+          };
+    } else {
+      nextOptions = { ...options, [key]: checked };
+      if (checked) {
+        nextOptions.includeBasicActions = true;
+        nextOptions.includeBasicActionNames = true;
+      } else {
+        nextOptions.includeBasicActions = nextOptions.includeBasicActionNames;
+      }
+    }
 
     setOptions(nextOptions);
     refreshPreview(nextOptions);
@@ -158,7 +175,7 @@ export default function HomePage() {
     setOptions(nextOptions);
     refreshPreview(nextOptions);
     if (chatPaletteReview) {
-      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。 ");
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
     }
   };
 
@@ -467,7 +484,7 @@ export default function HomePage() {
 
                 <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
                   {renderOutputOptionGroupTitle("基本動作", {
-                    checked: options.includeBasicActions,
+                    checked: options.includeBasicActionNames,
                     disabled: false,
                     onChange: updateBasicActionGroup,
                   })}
