@@ -11,6 +11,15 @@ type CommandSummary = {
   };
 };
 
+const IMAGE_BASE_PATH = "/character/command-details";
+
+const commandDetailsImages = {
+  basicInfo: `${IMAGE_BASE_PATH}/basic-info.png`,
+  status: `${IMAGE_BASE_PATH}/status.png`,
+  parameters: `${IMAGE_BASE_PATH}/parameters.png`,
+  chatPalette: `${IMAGE_BASE_PATH}/chat-palette.png`,
+} as const;
+
 const IMAGE_CLASS =
   "h-auto w-full rounded-xl border border-neutral-200 shadow-sm";
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
@@ -30,7 +39,7 @@ const commandSummaries: CommandSummary[] = [
       "参考URL（キャラクター情報）",
     ],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-01-CharacterData.png",
+      src: commandDetailsImages.basicInfo,
       alt: "CCFOLIAのキャラクター編集画面の基本情報",
     },
   },
@@ -38,7 +47,7 @@ const commandSummaries: CommandSummary[] = [
     title: "ステータス",
     items: ["HP", "再生", "障壁", "疲労", "ヘイト", "因果力"],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-02-Status.png",
+      src: commandDetailsImages.status,
       alt: "CCFOLIAのキャラクター編集画面のステータス",
     },
   },
@@ -53,9 +62,10 @@ const commandSummaries: CommandSummary[] = [
       "魔防",
       "各能力基本値",
       "各能力値",
+      "各技能値",
     ],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-03-Parameters.png",
+      src: commandDetailsImages.parameters,
       alt: "CCFOLIAのキャラクター編集画面のパラメータ",
     },
   },
@@ -246,9 +256,20 @@ function DamageFormulaDetails() {
 function SkillDetails() {
   return (
     <div className="space-y-4">
+      <p className="mb-3 text-neutral-800">
+        特技のチャットパレットは「特技名」、「特技情報」、「特技効果」、「特技コマンド」の４つから構成されています。
+        <br/>
+        特技名：習得している特技名と特技タグを出力します。
+        <br/>
+        特技情報：SRやタイミング、射程など特技毎の情報を出力します。
+        <br/>
+        特技効果：特技の効果を出力します。
+        <br/>
+        特技コマンド：判定とダイスロールをCCFOLIA用のコマンドとして出力します。
+      </p>
       <NestedDetail title="記述順">
         <p className="mb-3 text-neutral-800">
-          特技は、以下の順番でチャットパレットに記載されます。
+          特技は、以下の順番でチャットパレットに出力されます。
         </p>
 
         <ol className="list-decimal columns-1 gap-x-12 space-y-2 pl-6 sm:columns-2">
@@ -277,7 +298,7 @@ function SkillDetails() {
           </div>
 
           <p>
-            ただし、追加効果（〔因果力〕、〔CR11〕、〔マイナー〕など）は反映されません。
+            追加効果（〔因果力〕、〔CR11〕、〔マイナー〕など）は条件毎に出力します。
           </p>
         </div>
       </NestedDetail>
@@ -293,7 +314,7 @@ function ChatPaletteDetails() {
       <div className="mb-8 flex justify-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/character/command-details/CharacterCommandDetails-04-ChatPalette.png"
+          src={commandDetailsImages.chatPalette}
           alt="CCFOLIAのキャラクター編集画面のチャットパレット"
           className={`${IMAGE_CLASS} max-w-[720px]`}
         />
@@ -305,8 +326,6 @@ function ChatPaletteDetails() {
             <li>命中値</li>
             <li>回避（ヘイトトップ / ヘイトアンダー）</li>
             <li>抵抗（ヘイトトップ / ヘイトアンダー）</li>
-            <li>基本武器攻撃</li>
-            <li>基本魔法攻撃</li>
           </ol>
         </DetailCard>
 
@@ -314,18 +333,58 @@ function ChatPaletteDetails() {
           <DamageFormulaDetails />
         </DetailCard>
 
+        <DetailCard title="判定がある特技">
+          <p>
+            命中判定や、特技ごとに指定された判定値を使うコマンドを出力します。
+            判定が[本文]、[判定なし]、[自動成功]、[-]は、この項目には出力されません。
+            [特技名]と[特技コマンド（判定、ダイスロール）]
+            特技の効果や状況によって修正が入る場合は、必要に応じて出力されたコマンドを調整してください。
+            
+          </p>
+        </DetailCard>
+
+        <DetailCard title="補助計算の特技">
+          <p>
+            ダメージ、HP回復、BS・CSの強度など、数値計算が必要な特技は補助計算用のコマンドとして出力されます。
+            特技単体で確認できるダイスや計算式をもとに、チャットパレットへ計算用コマンドを出力します。
+            実際に使用する前に、必要に応じて数値や式を修正してください。
+          </p>
+        </DetailCard>
+
         <DetailCard title="特技">
           <SkillDetails />
         </DetailCard>
 
-        <DetailCard title="装備中のプレフィックスド / ネームドアイテム">
-          <p>アイテム名、タグ、効果が記載されます。</p>
+        <DetailCard title="基本動作">
+          <p>
+            特技のチャットパレットと同様に「特技名」、「特技情報」、「特技効果」、「特技コマンド」の４つから構成されています。
+            <br/>
+            出力される内容は[基本動作]タグを持つ16の特技が出力されます。
+          </p>
         </DetailCard>
 
-        <DetailCard title="所持品内アイテム">
+        <DetailCard title="装備アイテム効果">
+          <p>装備中のアイテム名、タグ、効果が出力されます。</p>
+        </DetailCard>
+
+        <DetailCard title="所持アイテム一覧">
           <p>
-            アイテム名、タグが記載されます。食料や水薬などの「タイミング」、「効果」がある場合には一緒に記載されます。
+            所持品スロットに登録されているアイテム名、タグが出力されます。
+            <br/>
+            食料や水薬などの「タイミング」、「効果」がある場合には一緒に出力されます。
           </p>
+        </DetailCard>
+
+        <DetailCard title="各種判定">
+          <p>運動値、耐久値など技能値に関係する判定が出力されます。</p>
+        </DetailCard>
+
+        <DetailCard title="消耗品">
+          <p>消耗品ロールのコマンドが出力されます。</p>
+        </DetailCard>
+
+        <DetailCard title="財宝表">
+          <p>財宝表ロールのコマンドが出力されます。</p>
         </DetailCard>
       </div>
     </section>

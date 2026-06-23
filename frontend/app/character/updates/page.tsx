@@ -8,6 +8,22 @@ type VersionItem = {
 };
 
 const currentVersion: VersionItem = {
+  version: "ver 3.1",
+  date: "2026/06",
+  notes: [
+    "チャットパレット出力オプションを追加",
+    "チャットパレットのレビュー表示を追加",
+    "特技の出力内容を整理",
+    "使い方（詳細）とコマンド内訳の説明を更新",
+  ],
+};
+
+// ver3.1 リリース時の移動用メモ
+// currentVersion を ver3.1 に更新したあと、
+// 下の「現行Webアプリ版」セクションをコメントアウト解除し、
+// item={currentVersionForHistory} を使う。
+
+const currentVersionForHistory: VersionItem = {
   version: "ver 3.0",
   date: "2026/05",
   notes: [
@@ -18,25 +34,6 @@ const currentVersion: VersionItem = {
     "UIを調整",
   ],
 };
-
-// ver3.1 リリース時の移動用メモ
-// currentVersion を ver3.1 に更新したあと、
-// 下の「現行Webアプリ版」セクションをコメントアウト解除し、
-// item={currentVersionForHistory} を使う。
-
-/*
-const currentVersionForHistory: VersionItem = {
-  version: "ver 3.0",
-  date: "2026/06",
-  notes: [
-    "Webアプリ版として再構成",
-    `${TOOL_CONFIG.character.toolLabel}をメインページとして公開`,
-    "「使い方（詳細）」「コマンド内訳」「アップデート情報」ページを追加",
-    "ページ構成と導線を整理",
-    "UIを調整",
-  ],
-};
-*/
 
 const notionVersionsForHistory: VersionItem[] = [
   {
@@ -147,7 +144,7 @@ export default function CharacterUpdatesPage() {
           </p>
         </div>
 
-        {/* <section className="space-y-6">
+        <section className="space-y-6">
           <div>
             <h3 className="mb-2 text-xl font-semibold">現行Webアプリ版</h3>
             <p className="text-sm leading-8 text-neutral-700">
@@ -158,7 +155,7 @@ export default function CharacterUpdatesPage() {
           <div className="space-y-6">
             <VersionCard item={currentVersionForHistory} />
           </div>
-        </section> */}
+        </section>
 
         <section className="space-y-6">
           <div>

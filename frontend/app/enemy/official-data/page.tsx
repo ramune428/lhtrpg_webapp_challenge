@@ -5,13 +5,13 @@ import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
 const IMAGE_BASE_PATH = "/enemy/official-data";
 
 const officialDataImages = {
-  officialJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-01-OfficialJsonFile.png`,
-  jsonpText: `${IMAGE_BASE_PATH}/EnemyOfficialData-02-JsonpText.png`,
-  saveAsJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-03-SaveAsJsonFile.png`,
-  removeJsonpWrapper: `${IMAGE_BASE_PATH}/EnemyOfficialData-04-RemoveJsonpWrapper.png`,
-  cleanJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-05-CleanJsonFile.png`,
-  importButton: `${IMAGE_BASE_PATH}/EnemyOfficialData-06-ImportButton.png`,
-  jsonImportResult: `${IMAGE_BASE_PATH}/EnemyOfficialData-07-JsonImportResult.png`,
+  officialJsonFile: `${IMAGE_BASE_PATH}/official-json-file.png`,
+  jsonpText: `${IMAGE_BASE_PATH}/jsonp-text.png`,
+  saveAsJsonFile: `${IMAGE_BASE_PATH}/save-as-json-file.png`,
+  removeJsonpWrapper: `${IMAGE_BASE_PATH}/remove-jsonp-wrapper.png`,
+  cleanJsonFile: `${IMAGE_BASE_PATH}/clean-json-file.png`,
+  importButton: `${IMAGE_BASE_PATH}/import-button.png`,
+  jsonImportResult: `${IMAGE_BASE_PATH}/json-import-result.png`,
 } as const;
 
 type StepImage = {
