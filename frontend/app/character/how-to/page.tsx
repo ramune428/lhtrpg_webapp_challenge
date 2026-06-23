@@ -21,6 +21,60 @@ const STEP_IMAGE_CLASS =
 const NARROW_STEP_IMAGE_CLASS =
   "h-auto w-full max-w-[320px] rounded-xl border border-neutral-200";
 
+const HOW_TO_IMAGES = {
+  characterPage: {
+    src: "/character/how-to/character-page.png",
+    alt: "ログ・ホライズンTRPG冒険者窓口のキャラクターページ",
+  },
+  externalToolAllowed: {
+    src: "/character/how-to/external-tool-allowed.png",
+    alt: "外部ツールからの冒険者データ参照が許可されている状態",
+  },
+  externalToolNotAllowed: {
+    src: "/character/how-to/external-tool-not-allowed.png",
+    alt: "外部ツールからの冒険者データ参照が許可されていない状態",
+  },
+  basicInfoButton: {
+    src: "/character/how-to/basic-info-button.png",
+    alt: "基本情報を変更するボタン",
+  },
+  enableExternalTool: {
+    src: "/character/how-to/enable-external-tool.png",
+    alt: "外部ツールからの冒険者データ参照を許可する設定",
+  },
+  copyCharacterUrl: {
+    src: "/character/how-to/copy-character-url.png",
+    alt: "キャラクターページのURLまたはキャラクターIDをコピーする画面",
+  },
+  inputCharacterId: {
+    src: "/character/how-to/input-character-id.png",
+    alt: `${TOOL_CONFIG.character.toolLabel}にキャラクターURLまたはキャラクターIDを入力する画面`,
+  },
+  chatPaletteOptions: {
+    src: "/character/how-to/copy-command.png",
+    alt: "チャットパレット出力オプションの画面",
+  },
+  copyCommand: {
+    src: "/character/how-to/copy-command.png",
+    alt: "出力されたCCFOLIA用キャラクター駒作成コマンドをコピーする画面",
+  },
+  pasteToCcfolia: {
+    src: "/character/how-to/paste-to-ccfolia.png",
+    alt: "CCFOLIAにコピーしたコマンドを貼り付ける画面",
+    narrow: true,
+  },
+  createdPiece: {
+    src: "/character/how-to/created-piece.png",
+    alt: "CCFOLIAに作成されたキャラクター駒",
+    narrow: true,
+  },
+  changeStandee: {
+    src: "/character/how-to/change-standee.png",
+    alt: "立ち絵を変更したキャラクター駒",
+    narrow: true,
+  },
+} satisfies Record<string, StepImage>;
+
 const steps: Step[] = [
   {
     number: "1",
@@ -38,12 +92,7 @@ const steps: Step[] = [
         を開き、作成したいキャラクターのキャラクターページを開く。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-01-CharacterPage.png",
-        alt: "ログ・ホライズンTRPG冒険者窓口のキャラクターページ",
-      },
-    ],
+    images: [HOW_TO_IMAGES.characterPage],
   },
   {
     number: "2",
@@ -54,16 +103,7 @@ const steps: Step[] = [
         許可されている場合は、キャラクター情報の下部にその旨が表示される。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-02-ExternalToolAllowed.png",
-        alt: "外部ツールからの冒険者データ参照が許可されている状態",
-      },
-      {
-        src: "/character/how-to/CharacterHowTo-03-ExternalToolNotAllowed.png",
-        alt: "外部ツールからの冒険者データ参照が許可されていない状態",
-      },
-    ],
+    images: [HOW_TO_IMAGES.externalToolAllowed, HOW_TO_IMAGES.externalToolNotAllowed],
   },
   {
     number: "3",
@@ -74,12 +114,7 @@ const steps: Step[] = [
         [基本情報を変更する] をクリックする。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-04-BasicInfoButton.png",
-        alt: "基本情報を変更するボタン",
-      },
-    ],
+    images: [HOW_TO_IMAGES.basicInfoButton],
   },
   {
     number: "4",
@@ -90,23 +125,13 @@ const steps: Step[] = [
         にチェックを付けて、変更内容を確定する。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-05-EnableExternalTool.png",
-        alt: "外部ツールからの冒険者データ参照を許可する設定",
-      },
-    ],
+    images: [HOW_TO_IMAGES.enableExternalTool],
   },
   {
     number: "5",
     title: "キャラクターURLまたはIDをコピーする",
     text: <>キャラクターページのURL、またはURL末尾のIDをコピーする。</>,
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-06-CopyCharacterUrl.png",
-        alt: "キャラクターページのURLまたはキャラクターIDをコピーする画面",
-      },
-    ],
+    images: [HOW_TO_IMAGES.copyCharacterUrl],
   },
   {
     number: "6",
@@ -117,35 +142,30 @@ const steps: Step[] = [
         にキャラクターURLまたはキャラクターIDを入力する。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-07-InputCharacterId.png",
-        alt: `${TOOL_CONFIG.character.toolLabel}にキャラクターURLまたはキャラクターIDを入力する画面`,
-      },
-    ],
+    images: [HOW_TO_IMAGES.inputCharacterId],
   },
   {
     number: "6.5",
     title: "チャットパレット出力オプションを設定する（任意）",
-    text: ( 
-      <> 
+    text: (
+      <>
         この操作は任意です。設定が不要な場合は、「7. コマンドを生成してコピーする」へ進んでください。
-        <br /> ※ デフォルトでは、すべての内容が出力されます。
         <br />
-        <br /> [チャットパレット出力オプション] をクリックすると、メニューが展開されます。
-        <br /> 一部の項目を除き、各項目のチェックをON/OFFすることで、出力する内容を設定できます。
-              一括操作：[すべてON] [すべてOFF]をクリックで、チェックの一括操作をすることも可能です。
-        <br /> 例：消耗表をOFFにすると、消耗表に関連する内容は出力されません。
+        ※ デフォルトでは、すべての内容が出力されます。
         <br />
-        <br /> [レビューを更新] をクリックすると、チャットパレットに表示される内容を確認できます。
+        <br />
+        [チャットパレット出力オプション] をクリックすると、メニューが展開されます。
+        <br />
+        一部の項目を除き、各項目のチェックをON/OFFすることで、出力する内容を設定できます。
+        一括操作：[すべてON] [すべてOFF]をクリックで、チェックの一括操作をすることも可能です。
+        <br />
+        例：消耗表をOFFにすると、消耗表に関連する内容は出力されません。
+        <br />
+        <br />
+        [レビューを更新] をクリックすると、チャットパレットに表示される内容を確認できます。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-08-CopyCommand.png",
-        alt: "チャットパレット出力オプションの画面",
-      },
-    ],
+    images: [HOW_TO_IMAGES.chatPaletteOptions],
   },
   {
     number: "7",
@@ -156,48 +176,25 @@ const steps: Step[] = [
         コマンドの生成が完了したら、[コピー] をクリックして出力されたコマンドをコピーする。
       </>
     ),
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-08-CopyCommand.png",
-        alt: "出力されたCCFOLIA用キャラクター駒作成コマンドをコピーする画面",
-      },
-    ],
+    images: [HOW_TO_IMAGES.copyCommand],
   },
   {
     number: "8",
     title: "CCFOLIAにコマンドを貼り付ける",
     text: <>CCFOLIAの盤面に、コピーしたコマンドを貼り付ける。</>,
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-09-PasteToCcfolia.png",
-        alt: "CCFOLIAにコピーしたコマンドを貼り付ける画面",
-        narrow: true,
-      },
-    ],
+    images: [HOW_TO_IMAGES.pasteToCcfolia],
   },
   {
     number: "9",
     title: "キャラクター駒の作成を確認する",
     text: <>キャラクター駒が作成されたことを確認する。</>,
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-10-CreatedPiece.png",
-        alt: "CCFOLIAに作成されたキャラクター駒",
-        narrow: true,
-      },
-    ],
+    images: [HOW_TO_IMAGES.createdPiece],
   },
   {
     number: "10",
     title: "必要に応じて立ち絵を変更する",
     text: <>必要に応じて、作成された駒の立ち絵を変更する。</>,
-    images: [
-      {
-        src: "/character/how-to/CharacterHowTo-11-ChangeStandee.png",
-        alt: "立ち絵を変更したキャラクター駒",
-        narrow: true,
-      },
-    ],
+    images: [HOW_TO_IMAGES.changeStandee],
   },
 ];
 
