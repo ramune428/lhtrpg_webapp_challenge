@@ -228,11 +228,12 @@ function rewriteBasicActionDisplayText(commands: string, options: BasicActionDis
 
       const [sectionTitle = "○基本動作", ...lines] = paletteSection.split("\n");
       const actionLines = lines.filter((line) => line.startsWith("《"));
+      const formattedActionLines = actionLines.flatMap((line, index) => [
+        ...(index > 0 ? [""] : []),
+        ...formatBasicActionLine(line, options).split("\n"),
+      ]);
 
-      return [
-        sectionTitle,
-        ...actionLines.flatMap((line) => formatBasicActionLine(line, options).split("\n")),
-      ].join("\n");
+      return [sectionTitle, ...formattedActionLines].join("\n");
     })
     .join("\n\n");
 }
