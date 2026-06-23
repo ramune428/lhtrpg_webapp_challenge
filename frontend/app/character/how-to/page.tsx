@@ -51,7 +51,7 @@ const HOW_TO_IMAGES = {
     alt: `${TOOL_CONFIG.character.toolLabel}にキャラクターURLまたはキャラクターIDを入力する画面`,
   },
   chatPaletteOptions: {
-    src: "/character/how-to/copy-command.png",
+    src: "/character/how-to/chat-palette-options.png",
     alt: "チャットパレット出力オプションの画面",
   },
   copyCommand: {
