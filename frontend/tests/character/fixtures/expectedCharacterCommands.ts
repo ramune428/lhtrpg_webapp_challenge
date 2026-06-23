@@ -1,0 +1,36 @@
+export const DUMMY_COMMANDS = `<<<ここに期待するコマンドを貼り付け>>>`;
+
+/**
+ * キャラクターIDごとの期待チャットパレットです。
+ *
+ * 使い方:
+ * - 各IDの DUMMY_COMMANDS を、事前に準備したココフォリア用コマンドに置き換えてください。
+ * - 複数行のコマンドは `...` の中にそのまま貼り付けられます。
+ * - DUMMY_COMMANDS のままのIDは、テスト実行時にスキップされます。
+ */
+export const expectedCharacterCommands = {
+  "228050": DUMMY_COMMANDS,
+  "228051": DUMMY_COMMANDS,
+  "228052": DUMMY_COMMANDS,
+  "228053": DUMMY_COMMANDS,
+  "228054": DUMMY_COMMANDS,
+  "228055": DUMMY_COMMANDS,
+  "228056": DUMMY_COMMANDS,
+  "228057": DUMMY_COMMANDS,
+  "228058": DUMMY_COMMANDS,
+  "228059": DUMMY_COMMANDS,
+  "228060": DUMMY_COMMANDS,
+  "228061": DUMMY_COMMANDS,
+  "228062": DUMMY_COMMANDS,
+  "228063": DUMMY_COMMANDS,
+  "228064": DUMMY_COMMANDS,
+  "228065": DUMMY_COMMANDS,
+  "228066": DUMMY_COMMANDS,
+  "228067": DUMMY_COMMANDS,
+  "228068": DUMMY_COMMANDS,
+  "228069": DUMMY_COMMANDS,
+  "228070": DUMMY_COMMANDS,
+  "228071": DUMMY_COMMANDS,
+  "228072": DUMMY_COMMANDS,
+  "228073": DUMMY_COMMANDS,
+} satisfies Record<string, string>;
