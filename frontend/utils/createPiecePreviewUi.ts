@@ -20,8 +20,8 @@ export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescr
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: baseDefaultChatPaletteOptions.includeDamageCalculator,
-  includeSkillChecks: false,
-  includeSkillSupportCalculations: false,
+  includeSkillChecks: baseDefaultChatPaletteOptions.includeSkillChecks,
+  includeSkillSupportCalculations: baseDefaultChatPaletteOptions.includeSkillSupportCalculations,
   includeSkillInfo: true,
   includeSkillEffects: true,
   includeBasicActions: true,
@@ -443,15 +443,11 @@ export function createPieceFromJson(
     includeBasicActionInfo,
     includeBasicActionEffects,
     includeBasicActionCommands,
-    includeSkillChecks,
-    includeSkillSupportCalculations,
     ...baseOptionsWithoutSkillDetails
   } = mergedOptions;
   const hasBasicActionOutput = includeBasicActions && includeBasicActionNames;
   const baseOptions: Partial<BaseChatPaletteOptions> = {
     ...baseOptionsWithoutSkillDetails,
-    includeSkillChecks: false,
-    includeSkillSupportCalculations: false,
     includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
     includeBasicActions: hasBasicActionOutput,
   };
