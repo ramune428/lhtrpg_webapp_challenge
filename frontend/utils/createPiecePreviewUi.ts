@@ -79,7 +79,9 @@ function formatCurrentSkillName(skill: AnyRecord): string {
 }
 
 function formatSkillName(skill: AnyRecord): string {
-  return `《${asString(skill.name)}》`;
+  return [`《${asString(skill.name)}》`, formatTags(skill)]
+    .filter(Boolean)
+    .join(" ");
 }
 
 function formatSkillInfo(skill: AnyRecord): string {
@@ -91,7 +93,6 @@ function formatSkillInfo(skill: AnyRecord): string {
     `射程:${asString(skill.range)}`,
     `コスト:${asString(skill.cost)}`,
     `制限:${asString(skill.limit)}`,
-    formatTags(skill),
   ]
     .filter(Boolean)
     .join(" ");
