@@ -208,8 +208,8 @@ function extractBasicActionName(line: string): string {
 function formatBasicActionLine(line: string, options: BasicActionDisplayOptions): string {
   const infoStartIndex = line.indexOf(" SR:");
 
-  if (!line.startsWith("《") || infoStartIndex < 0) {
-    return line;
+  if (!options.includeBasicActionNames || !line.startsWith("《") || infoStartIndex < 0) {
+    return "";
   }
 
   const name = line.slice(0, infoStartIndex).trim();
@@ -218,7 +218,7 @@ function formatBasicActionLine(line: string, options: BasicActionDisplayOptions)
   const { info, effect } = splitBasicActionInfoAndEffect(line.slice(infoStartIndex + 1));
 
   return [
-    options.includeBasicActionNames ? name : "",
+    name,
     options.includeBasicActionInfo ? info : "",
     options.includeBasicActionEffects ? effect : "",
     command,
@@ -276,9 +276,7 @@ export function createPieceFromJson(
     includeBasicActionCommands,
     ...baseOptionsWithoutSkillDetails
   } = mergedOptions;
-  const hasBasicActionOutput =
-    includeBasicActions &&
-    (includeBasicActionNames || includeBasicActionInfo || includeBasicActionEffects || includeBasicActionCommands);
+  const hasBasicActionOutput = includeBasicActions && includeBasicActionNames;
   const baseOptions: Partial<BaseChatPaletteOptions> = {
     ...baseOptionsWithoutSkillDetails,
     includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
