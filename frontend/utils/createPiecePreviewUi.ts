@@ -295,6 +295,34 @@ function replaceChatPaletteSection(
   return `${commands.slice(0, bodyStart)}${replacer(commands.slice(bodyStart, bodyEnd))}${commands.slice(bodyEnd)}`;
 }
 
+function addSkillNamesToSkillCheckSection(commands: string, jsonDataValue: unknown): string {
+  const skillCheckCommands = createSkillCheckCommandMap(jsonDataValue);
+
+  if (skillCheckCommands.size === 0) {
+    return commands;
+  }
+
+  const commandToSkillName = new Map(
+    Array.from(skillCheckCommands.entries()).map(([skillName, command]) => [command, skillName])
+  );
+
+  return replaceChatPaletteSection(commands, "○判定がある特技", (sectionBody) => {
+    return sectionBody
+      .split("\n")
+      .reduce<string[]>((result, line) => {
+        const skillName = commandToSkillName.get(line.trim());
+
+        if (skillName && result[result.length - 1]?.trim() !== skillName) {
+          result.push(skillName);
+        }
+
+        result.push(line);
+        return result;
+      }, [])
+      .join("\n");
+  });
+}
+
 function addSkillCheckCommandsToSkillSection(commands: string, jsonDataValue: unknown): string {
   const skillCheckCommands = createSkillCheckCommandMap(jsonDataValue);
 
@@ -463,7 +491,8 @@ export function createPieceFromJson(
     includeSkillInfo,
     includeSkillEffects,
   });
-  const skillCommandsWithChecks = addSkillCheckCommandsToSkillSection(skillRewrittenCommands, jsonDataValue);
+  const skillCheckSectionWithNames = addSkillNamesToSkillCheckSection(skillRewrittenCommands, jsonDataValue);
+  const skillCommandsWithChecks = addSkillCheckCommandsToSkillSection(skillCheckSectionWithNames, jsonDataValue);
   const commands = rewriteBasicActionDisplayText(skillCommandsWithChecks, {
     includeBasicActionNames,
     includeBasicActionInfo,
