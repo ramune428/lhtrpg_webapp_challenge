@@ -20,21 +20,21 @@ type Step = {
 const HOW_TO_IMAGE_DIR = "/enemy/how-to";
 
 const HOW_TO_IMAGES = {
-  enemyOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-01-Overview.png`,
-  basicOperations: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-02-BasicOperations.png`,
-  enemyInfoTabOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-03-EnemyInfoTabOverview.png`,
-  enemyInfoForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-04-EnemyInfoForm.png`,
-  dropItemsForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-05-DropItemsForm.png`,
-  abilityValuesForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-06-AbilityValuesForm.png`,
-  skillOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-07-SkillTabOverview.png`,
-  skillExample: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-08-SkillExample.png`,
-  skillInput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-09-SkillInputForm.png`,
-  outputOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-10-DataOutputTabOverview.png`,
-  enemyDataCheck: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-11-EnemyDataCheck.png`,
-  ccfoliaOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-12-CcfoliaOutput.png`,
-  xlsxJsonOutputButtons: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-13-XlsxJsonOutputButtons.png`,
-  xlsxOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-14-XlsxOutput.png`,
-  jsonOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-15-JsonOutput.png`,
+  enemyOverview: `${HOW_TO_IMAGE_DIR}/enemy-overview.png`,
+  basicOperations: `${HOW_TO_IMAGE_DIR}/basic-operations.png`,
+  enemyInfoTabOverview: `${HOW_TO_IMAGE_DIR}/enemy-info-tab-overview.png`,
+  enemyInfoForm: `${HOW_TO_IMAGE_DIR}/enemy-info-form.png`,
+  dropItemsForm: `${HOW_TO_IMAGE_DIR}/drop-items-form.png`,
+  abilityValuesForm: `${HOW_TO_IMAGE_DIR}/ability-values-form.png`,
+  skillOverview: `${HOW_TO_IMAGE_DIR}/skill-tab-overview.png`,
+  skillExample: `${HOW_TO_IMAGE_DIR}/skill-example.png`,
+  skillInput: `${HOW_TO_IMAGE_DIR}/skill-input-form.png`,
+  outputOverview: `${HOW_TO_IMAGE_DIR}/data-output-tab-overview.png`,
+  enemyDataCheck: `${HOW_TO_IMAGE_DIR}/enemy-data-check.png`,
+  ccfoliaOutput: `${HOW_TO_IMAGE_DIR}/ccfolia-output.png`,
+  xlsxJsonOutputButtons: `${HOW_TO_IMAGE_DIR}/xlsx-json-output-buttons.png`,
+  xlsxOutput: `${HOW_TO_IMAGE_DIR}/xlsx-output.png`,
+  jsonOutput: `${HOW_TO_IMAGE_DIR}/json-output.png`,
 } as const;
 
 const STEP_IMAGE_CLASS =
