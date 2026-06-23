@@ -24,7 +24,7 @@ const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
 type OutputOptionItem = {
-  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands" | "basicActionNames";
+  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands" | "basicActionNames" | "basicActionCommands";
   label: string;
   alwaysOn?: boolean;
 };
@@ -34,10 +34,6 @@ const outputOptionItemsBeforeSkills: OutputOptionItem[] = [
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
   { key: "includeSkillChecks", label: "判定がある特技" },
   { key: "includeSkillSupportCalculations", label: "補助計算の特技" },
-];
-
-const outputOptionItemsAfterSkills: OutputOptionItem[] = [
-  { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
 ];
 
 const outputOptionItemsAfterBasicActions: OutputOptionItem[] = [
@@ -396,10 +392,9 @@ export default function HomePage() {
                     {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
                     {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
                     {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
+                    {renderOutputOptionItem({ key: "skillCommands", label: "特技コマンド", alwaysOn: true })}
                   </div>
                 </section>
-
-                {outputOptionItemsAfterSkills.map(renderOutputOptionItem)}
 
                 <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
                   <h4 className="mb-2 font-semibold">基本動作</h4>
@@ -407,6 +402,7 @@ export default function HomePage() {
                     {renderOutputOptionItem({ key: "basicActionNames", label: "特技名", alwaysOn: true })}
                     {renderOutputOptionItem({ key: "includeBasicActionInfo", label: "特技情報" })}
                     {renderOutputOptionItem({ key: "includeBasicActionEffects", label: "特技効果" })}
+                    {renderOutputOptionItem({ key: "basicActionCommands", label: "特技コマンド", alwaysOn: true })}
                   </div>
                 </section>
 
