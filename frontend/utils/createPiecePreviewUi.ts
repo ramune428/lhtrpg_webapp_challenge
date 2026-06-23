@@ -13,15 +13,18 @@ export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescr
   includeSkillEffects: boolean;
 };
 
-const {
-  includeSkillDescriptions: _includeSkillDescriptions,
-  ...baseDefaultOptionsWithoutSkillDescriptions
-} = baseDefaultChatPaletteOptions;
-
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
-  ...baseDefaultOptionsWithoutSkillDescriptions,
+  includeDamageCalculator: baseDefaultChatPaletteOptions.includeDamageCalculator,
+  includeSkillChecks: baseDefaultChatPaletteOptions.includeSkillChecks,
+  includeSkillSupportCalculations: baseDefaultChatPaletteOptions.includeSkillSupportCalculations,
   includeSkillInfo: true,
   includeSkillEffects: true,
+  includeBasicActions: baseDefaultChatPaletteOptions.includeBasicActions,
+  includeEquipmentEffects: baseDefaultChatPaletteOptions.includeEquipmentEffects,
+  includeItemList: baseDefaultChatPaletteOptions.includeItemList,
+  includeAbilityChecks: baseDefaultChatPaletteOptions.includeAbilityChecks,
+  includeConsumeTables: baseDefaultChatPaletteOptions.includeConsumeTables,
+  includeTreasureTables: baseDefaultChatPaletteOptions.includeTreasureTables,
 };
 
 type AnyRecord = Record<string, unknown>;
