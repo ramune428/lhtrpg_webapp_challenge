@@ -1,15 +1,31 @@
 import {
   createPieceFromJson as createBasePieceFromJson,
-  defaultChatPaletteOptions,
+  defaultChatPaletteOptions as baseDefaultChatPaletteOptions,
   fetchCharacterJson,
   normalizeCharacterId,
-  type ChatPaletteOptions,
+  type ChatPaletteOptions as BaseChatPaletteOptions,
 } from "./createPiecePreview";
 
-export { defaultChatPaletteOptions, fetchCharacterJson, normalizeCharacterId };
-export type { ChatPaletteOptions };
+export { fetchCharacterJson, normalizeCharacterId };
+
+export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescriptions"> & {
+  includeSkillInfo: boolean;
+  includeSkillEffects: boolean;
+};
+
+const {
+  includeSkillDescriptions: _includeSkillDescriptions,
+  ...baseDefaultOptionsWithoutSkillDescriptions
+} = baseDefaultChatPaletteOptions;
+
+export const defaultChatPaletteOptions: ChatPaletteOptions = {
+  ...baseDefaultOptionsWithoutSkillDescriptions,
+  includeSkillInfo: true,
+  includeSkillEffects: true,
+};
 
 type AnyRecord = Record<string, unknown>;
+type SkillDisplayOptions = Pick<ChatPaletteOptions, "includeSkillInfo" | "includeSkillEffects">;
 
 function asString(value: unknown): string {
   if (value === null || value === undefined) {
@@ -59,10 +75,12 @@ function formatCurrentSkillName(skill: AnyRecord): string {
     .join(" ");
 }
 
-function formatSkillDeclaration(skill: AnyRecord): string {
+function formatSkillName(skill: AnyRecord): string {
+  return `《${asString(skill.name)}》`;
+}
+
+function formatSkillInfo(skill: AnyRecord): string {
   return [
-    `《${asString(skill.name)}》`,
-    formatTags(skill),
     `SR:${asString(skill.skill_rank)}/${asString(skill.skill_max_rank)}`,
     `タイミング:${asString(skill.timing)}`,
     `判定:${asString(skill.roll)}`,
@@ -70,6 +88,7 @@ function formatSkillDeclaration(skill: AnyRecord): string {
     `射程:${asString(skill.range)}`,
     `コスト:${asString(skill.cost)}`,
     `制限:${asString(skill.limit)}`,
+    formatTags(skill),
   ]
     .filter(Boolean)
     .join(" ");
@@ -99,6 +118,15 @@ function formatSkillEffect(skill: AnyRecord): string {
   return effectText ? `効果:${effectText}` : "";
 }
 
+function formatSkillDetails(skill: AnyRecord, options: SkillDisplayOptions): string {
+  return [
+    options.includeSkillInfo ? formatSkillInfo(skill) : "",
+    options.includeSkillEffects ? formatSkillEffect(skill) : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function replaceAllText(text: string, searchValue: string, replaceValue: string): string {
   if (!searchValue || searchValue === replaceValue) {
     return text;
@@ -107,7 +135,11 @@ function replaceAllText(text: string, searchValue: string, replaceValue: string)
   return text.split(searchValue).join(replaceValue);
 }
 
-function rewriteSkillDisplayText(commands: string, jsonDataValue: unknown): string {
+function rewriteSkillDisplayText(
+  commands: string,
+  jsonDataValue: unknown,
+  options: SkillDisplayOptions
+): string {
   const skills = createSkillList(jsonDataValue);
   let rewrittenCommands = commands;
 
@@ -115,12 +147,12 @@ function rewriteSkillDisplayText(commands: string, jsonDataValue: unknown): stri
     rewrittenCommands = replaceAllText(
       rewrittenCommands,
       formatCurrentSkillDescription(skill),
-      formatSkillEffect(skill)
+      formatSkillDetails(skill, options)
     );
   }
 
   const skillNameMap = new Map(
-    skills.map((skill) => [formatCurrentSkillName(skill), formatSkillDeclaration(skill)])
+    skills.map((skill) => [formatCurrentSkillName(skill), formatSkillName(skill)])
   );
 
   return rewrittenCommands
@@ -134,7 +166,16 @@ export function createPieceFromJson(
   characterId: string,
   options: Partial<ChatPaletteOptions> = {}
 ): string {
-  const pieceText = createBasePieceFromJson(jsonDataValue, characterId, options);
+  const mergedOptions: ChatPaletteOptions = {
+    ...defaultChatPaletteOptions,
+    ...options,
+  };
+  const { includeSkillInfo, includeSkillEffects, ...baseOptionsWithoutSkillDetails } = mergedOptions;
+  const baseOptions: Partial<BaseChatPaletteOptions> = {
+    ...baseOptionsWithoutSkillDetails,
+    includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
+  };
+  const pieceText = createBasePieceFromJson(jsonDataValue, characterId, baseOptions);
   const piece = JSON.parse(pieceText) as AnyRecord;
   const data = asRecord(piece.data);
 
@@ -146,7 +187,10 @@ export function createPieceFromJson(
     ...piece,
     data: {
       ...data,
-      commands: rewriteSkillDisplayText(asString(data.commands), jsonDataValue),
+      commands: rewriteSkillDisplayText(asString(data.commands), jsonDataValue, {
+        includeSkillInfo,
+        includeSkillEffects,
+      }),
     },
   });
 }
