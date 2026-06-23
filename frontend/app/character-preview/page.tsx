@@ -85,8 +85,6 @@ export default function HomePage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
-  const [isSkillOptionsOpen, setIsSkillOptionsOpen] = useState(true);
-  const [isBasicActionOptionsOpen, setIsBasicActionOptionsOpen] = useState(true);
   const [options, setOptions] = useState<ChatPaletteOptions>(initialChatPaletteOptions);
   const [lastJsonData, setLastJsonData] = useState<unknown | null>(null);
   const [lastCharacterId, setLastCharacterId] = useState("");
@@ -329,39 +327,21 @@ export default function HomePage() {
 
   const renderOutputOptionGroupTitle = (
     label: string,
-    groupOptions: {
-      checked?: boolean;
-      disabled?: boolean;
-      onChange?: (checked: boolean) => void;
-      isOpen?: boolean;
-      onToggle?: () => void;
-    } = {}
+    groupOptions: { checked?: boolean; disabled?: boolean; onChange?: (checked: boolean) => void } = {}
   ) => {
     const checked = groupOptions.checked ?? true;
     const disabled = groupOptions.disabled ?? true;
-    const isOpen = groupOptions.isOpen ?? true;
 
     return (
-      <div className="mb-2 flex items-center justify-between gap-3 font-semibold text-neutral-800">
-        <label className="flex min-w-0 items-center gap-3">
-          <input
-            type="checkbox"
-            checked={checked}
-            disabled={disabled}
-            onChange={(event) => groupOptions.onChange?.(event.target.checked)}
-          />
-          <span className="truncate">{label}</span>
-        </label>
-        {groupOptions.onToggle && (
-          <button
-            type="button"
-            onClick={groupOptions.onToggle}
-            className="shrink-0 rounded-lg border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50"
-          >
-            {isOpen ? "閉じる ▲" : "開く ▼"}
-          </button>
-        )}
-      </div>
+      <label className="mb-2 flex items-center gap-3 font-semibold text-neutral-800">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => groupOptions.onChange?.(event.target.checked)}
+        />
+        <span>{label}</span>
+      </label>
     );
   };
 
@@ -497,20 +477,13 @@ export default function HomePage() {
                   {outputOptionItemsBeforeSkills.map(renderOutputOptionItem)}
 
                   <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
-                    {renderOutputOptionGroupTitle("特技", {
-                      checked: true,
-                      disabled: true,
-                      isOpen: isSkillOptionsOpen,
-                      onToggle: () => setIsSkillOptionsOpen((current) => !current),
-                    })}
-                    {isSkillOptionsOpen && (
-                      <div className="grid gap-2 pl-3">
-                        {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
-                        {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
-                        {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
-                        {renderOutputOptionItem({ key: "skillCommands", label: "特技コマンド", alwaysOn: true })}
-                      </div>
-                    )}
+                    {renderOutputOptionGroupTitle("特技")}
+                    <div className="grid gap-2 pl-3">
+                      {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
+                      {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
+                      {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
+                      {renderOutputOptionItem({ key: "skillCommands", label: "特技コマンド", alwaysOn: true })}
+                    </div>
                   </section>
 
                   <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
@@ -518,33 +491,29 @@ export default function HomePage() {
                       checked: options.includeBasicActionNames,
                       disabled: false,
                       onChange: updateBasicActionGroup,
-                      isOpen: isBasicActionOptionsOpen,
-                      onToggle: () => setIsBasicActionOptionsOpen((current) => !current),
                     })}
-                    {isBasicActionOptionsOpen && (
-                      <div className="grid gap-2 pl-3">
-                        {renderOutputOptionItem({
-                          key: "includeBasicActionNames",
-                          label: "特技名",
-                          onChange: (checked) => updateBasicActionOption("includeBasicActionNames", checked),
-                        })}
-                        {renderOutputOptionItem({
-                          key: "includeBasicActionInfo",
-                          label: "特技情報",
-                          onChange: (checked) => updateBasicActionOption("includeBasicActionInfo", checked),
-                        })}
-                        {renderOutputOptionItem({
-                          key: "includeBasicActionEffects",
-                          label: "特技効果",
-                          onChange: (checked) => updateBasicActionOption("includeBasicActionEffects", checked),
-                        })}
-                        {renderOutputOptionItem({
-                          key: "includeBasicActionCommands",
-                          label: "特技コマンド",
-                          onChange: (checked) => updateBasicActionOption("includeBasicActionCommands", checked),
-                        })}
-                      </div>
-                    )}
+                    <div className="grid gap-2 pl-3">
+                      {renderOutputOptionItem({
+                        key: "includeBasicActionNames",
+                        label: "特技名",
+                        onChange: (checked) => updateBasicActionOption("includeBasicActionNames", checked),
+                      })}
+                      {renderOutputOptionItem({
+                        key: "includeBasicActionInfo",
+                        label: "特技情報",
+                        onChange: (checked) => updateBasicActionOption("includeBasicActionInfo", checked),
+                      })}
+                      {renderOutputOptionItem({
+                        key: "includeBasicActionEffects",
+                        label: "特技効果",
+                        onChange: (checked) => updateBasicActionOption("includeBasicActionEffects", checked),
+                      })}
+                      {renderOutputOptionItem({
+                        key: "includeBasicActionCommands",
+                        label: "特技コマンド",
+                        onChange: (checked) => updateBasicActionOption("includeBasicActionCommands", checked),
+                      })}
+                    </div>
                   </section>
 
                   {outputOptionItemsAfterBasicActions.map(renderOutputOptionItem)}
