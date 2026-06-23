@@ -259,6 +259,13 @@ export default function HomePage() {
     );
   };
 
+  const renderOutputOptionGroupTitle = (label: string) => (
+    <label className="mb-2 flex items-center gap-3 font-semibold text-neutral-800">
+      <input type="checkbox" checked disabled />
+      <span>{label}</span>
+    </label>
+  );
+
   return (
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
@@ -387,7 +394,7 @@ export default function HomePage() {
                 {outputOptionItemsBeforeSkills.map(renderOutputOptionItem)}
 
                 <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
-                  <h4 className="mb-2 font-semibold">特技</h4>
+                  {renderOutputOptionGroupTitle("特技")}
                   <div className="grid gap-2 pl-3">
                     {renderOutputOptionItem({ key: "skillNames", label: "特技名", alwaysOn: true })}
                     {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
