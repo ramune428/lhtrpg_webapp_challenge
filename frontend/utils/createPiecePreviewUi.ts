@@ -34,6 +34,25 @@ type AnyRecord = Record<string, unknown>;
 type SkillDisplayOptions = Pick<ChatPaletteOptions, "includeSkillInfo" | "includeSkillEffects">;
 type BasicActionDisplayOptions = Pick<ChatPaletteOptions, "includeBasicActionInfo" | "includeBasicActionEffects">;
 
+const BASIC_ACTION_COMMANDS: Record<string, string> = {
+  ラン: "なし",
+  ダッシュ: "なし",
+  シフト: "なし",
+  敵情を探る: "{運動値} 運動値",
+  基本武器攻撃: "{攻撃力}+1D 基本武器攻撃",
+  基本魔法攻撃: "{魔力}+1D 基本魔法攻撃",
+  異常探知: "{知覚値} 知覚値",
+  エネミー識別: "{知識値} 知識値",
+  プロップ解析: "{解析値} 解析値",
+  プロップ解除: "{解除値} 解除値",
+  とどめの一撃: "なし",
+  かばう: "なし",
+  装備の変更: "なし",
+  受け渡し: "なし",
+  隠れる: "なし",
+  アイテム鑑定: "なし",
+};
+
 function asString(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
@@ -182,6 +201,10 @@ function splitBasicActionInfoAndEffect(text: string): { info: string; effect: st
   };
 }
 
+function extractBasicActionName(line: string): string {
+  return line.match(/^《([^》]+)》/)?.[1] ?? "";
+}
+
 function formatBasicActionLine(line: string, options: BasicActionDisplayOptions): string {
   const infoStartIndex = line.indexOf(" SR:");
 
@@ -190,12 +213,15 @@ function formatBasicActionLine(line: string, options: BasicActionDisplayOptions)
   }
 
   const name = line.slice(0, infoStartIndex).trim();
+  const actionName = extractBasicActionName(line);
+  const command = BASIC_ACTION_COMMANDS[actionName] ?? "なし";
   const { info, effect } = splitBasicActionInfoAndEffect(line.slice(infoStartIndex + 1));
 
   return [
     name,
     options.includeBasicActionInfo ? info : "",
     options.includeBasicActionEffects ? effect : "",
+    command,
   ]
     .filter(Boolean)
     .join("\n");
@@ -210,10 +236,11 @@ function rewriteBasicActionDisplayText(commands: string, options: BasicActionDis
       }
 
       const [sectionTitle = "○基本動作", ...lines] = paletteSection.split("\n");
+      const actionLines = lines.filter((line) => line.startsWith("《"));
 
       return [
         sectionTitle,
-        ...lines.flatMap((line) => formatBasicActionLine(line, options).split("\n")),
+        ...actionLines.flatMap((line) => formatBasicActionLine(line, options).split("\n")),
       ].join("\n");
     })
     .join("\n\n");
