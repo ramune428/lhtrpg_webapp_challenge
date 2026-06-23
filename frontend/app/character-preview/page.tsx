@@ -24,19 +24,19 @@ const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
 type OutputOptionItem = {
-  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands";
+  key: keyof ChatPaletteOptions | "combatBasics" | "skillCommands";
   label: string;
   alwaysOn?: boolean;
 };
 
-const outputOptionItems: OutputOptionItem[] = [
+const outputOptionItemsBeforeSkills: OutputOptionItem[] = [
   { key: "combatBasics", label: "戦闘の基本", alwaysOn: true },
   { key: "includeDamageCalculator", label: "被ダメージ計算用" },
   { key: "includeSkillChecks", label: "判定がある特技" },
   { key: "includeSkillSupportCalculations", label: "補助計算の特技" },
-  { key: "skillNames", label: "特技名", alwaysOn: true },
-  { key: "includeSkillInfo", label: "特技情報" },
-  { key: "includeSkillEffects", label: "特技効果" },
+];
+
+const outputOptionItemsAfterSkills: OutputOptionItem[] = [
   { key: "skillCommands", label: "特技コマンド", alwaysOn: true },
   { key: "includeBasicActions", label: "基本動作" },
   { key: "includeEquipmentEffects", label: "装備アイテム効果" },
@@ -230,6 +230,36 @@ export default function HomePage() {
     }
   };
 
+  const renderOutputOptionItem = (item: OutputOptionItem) => {
+    const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
+
+    return (
+      <label
+        key={item.key}
+        className={`flex min-h-12 items-center justify-between rounded-xl border px-3 text-sm ${
+          item.alwaysOn
+            ? "border-neutral-200 bg-neutral-100 text-neutral-500"
+            : "border-neutral-300 bg-white text-neutral-800"
+        }`}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <input
+            type="checkbox"
+            checked={checked}
+            disabled={item.alwaysOn}
+            onChange={(event) => {
+              if (!item.alwaysOn) {
+                updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
+              }
+            }}
+          />
+          <span className="truncate leading-none">{item.label}</span>
+        </span>
+        {item.alwaysOn && <span className="ml-3 shrink-0 text-xs leading-none">常に出力</span>}
+      </label>
+    );
+  };
+
   return (
     <main className="min-h-screen bg-white text-black">
       <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-8">
@@ -355,35 +385,18 @@ export default function HomePage() {
 
             <div className="grid items-stretch gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.05fr)]">
               <div className="grid content-start gap-2">
-                {outputOptionItems.map((item) => {
-                  const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
+                {outputOptionItemsBeforeSkills.map(renderOutputOptionItem)}
 
-                  return (
-                    <label
-                      key={item.key}
-                      className={`flex min-h-12 items-center justify-between rounded-xl border px-3 text-sm ${
-                        item.alwaysOn
-                          ? "border-neutral-200 bg-neutral-100 text-neutral-500"
-                          : "border-neutral-300 bg-white text-neutral-800"
-                      }`}
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={item.alwaysOn}
-                          onChange={(event) => {
-                            if (!item.alwaysOn) {
-                              updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
-                            }
-                          }}
-                        />
-                        <span className="truncate leading-none">{item.label}</span>
-                      </span>
-                      {item.alwaysOn && <span className="ml-3 shrink-0 text-xs leading-none">常に出力</span>}
-                    </label>
-                  );
-                })}
+                <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
+                  <h4 className="mb-2 font-semibold">特技</h4>
+                  <div className="grid gap-2 pl-3">
+                    {renderOutputOptionItem({ key: "combatBasics", label: "特技名", alwaysOn: true })}
+                    {renderOutputOptionItem({ key: "includeSkillInfo", label: "特技情報" })}
+                    {renderOutputOptionItem({ key: "includeSkillEffects", label: "特技効果" })}
+                  </div>
+                </section>
+
+                {outputOptionItemsAfterSkills.map(renderOutputOptionItem)}
               </div>
 
               <div className="flex h-full min-h-[640px] flex-col rounded-2xl border border-neutral-300 bg-white p-4">
