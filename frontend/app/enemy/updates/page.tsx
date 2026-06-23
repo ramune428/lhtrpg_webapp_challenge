@@ -8,14 +8,14 @@ type VersionItem = {
 };
 
 const currentVersion: VersionItem = {
-  version: "ver 2.0",
-  date: "2026/06",
+  version: "ver 2.1",
+  date: "2026/05",
   notes: [
-    "Webアプリ版として再構成",
-    `「${TOOL_CONFIG.enemy.toolLabel}」を公開`,
-    "「公式データについて」「使い方（詳細）」「計算式」「アップデート情報」ページを追加",
-    "ページ構成と導線を整理",
-    "UIを調整",
+    "一部のエネミーデータの計算式を修正",
+    "大種族が「ギミック」の場合、エネミーランクを「ノーマル」に固定",
+    "計算式ページの説明内容を更新",
+    "推奨値を常に表示するようにUIを変更",
+    "最大HPプレビューのUIを追加"
   ],
 };
 
@@ -24,10 +24,9 @@ const currentVersion: VersionItem = {
 // 下の「現行Webアプリ版」セクションをコメントアウト解除し、
 // item={currentVersionForHistory} を使う。
 
-/*
 const currentVersionForHistory: VersionItem = {
   version: "ver 2.0",
-  date: "2026/06",
+  date: "2026/05",
   notes: [
     "Webアプリ版として再構成",
     `${TOOL_CONFIG.enemy.toolLabel}をメインページとして公開`,
@@ -36,7 +35,6 @@ const currentVersionForHistory: VersionItem = {
     "UIを調整",
   ],
 };
-*/
 
 const notionVersionsForHistory: VersionItem[] = [
   {
@@ -70,9 +68,18 @@ export default function EnemyUpdatesPage() {
     <StaticPage
       current="enemy"
       title="アップデート情報"
-      lead={`${TOOL_CONFIG.enemy.toolLabel}の更新履歴をまとめています。`}
+      /*lead={`${TOOL_CONFIG.enemy.toolLabel}の更新履歴をまとめています。`}*/
       backHref={TOOL_CONFIG.enemy.href}
     >
+      <section>
+          <div className="mb-10 space-y-4">
+            <p className="text-sm leading-8 text-neutral-800">
+              {TOOL_CONFIG.enemy.toolLabel}の更新内容をまとめています。
+              機能追加、表示内容の調整、不具合修正など、これまでの変更履歴を確認できます。
+            </p>
+          </div>
+      </section>
+      
       <section>
         <h2 className="mb-4 text-2xl font-bold">最新バージョン</h2>
         <VersionCard item={currentVersion} />
@@ -86,7 +93,7 @@ export default function EnemyUpdatesPage() {
           </p>
         </div>
 
-        {/* <section className="space-y-6">
+        { <section className="space-y-6">
           <div>
             <h3 className="mb-2 text-xl font-semibold">現行Webアプリ版</h3>
             <p className="text-sm leading-8 text-neutral-700">
@@ -97,7 +104,7 @@ export default function EnemyUpdatesPage() {
           <div className="space-y-6">
             <VersionCard item={currentVersionForHistory} />
           </div>
-        </section> */}
+        </section> }
 
         <section className="space-y-6">
           <div>

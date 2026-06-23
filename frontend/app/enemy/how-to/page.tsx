@@ -20,21 +20,21 @@ type Step = {
 const HOW_TO_IMAGE_DIR = "/enemy/how-to";
 
 const HOW_TO_IMAGES = {
-  enemyOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-01-Overview.png`,
-  basicOperations: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-02-BasicOperations.png`,
-  enemyInfoTabOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-03-EnemyInfoTabOverview.png`,
-  enemyInfoForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-04-EnemyInfoForm.png`,
-  dropItemsForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-05-DropItemsForm.png`,
-  abilityValuesForm: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-06-AbilityValuesForm.png`,
-  skillOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-07-SkillTabOverview.png`,
-  skillExample: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-08-SkillExample.png`,
-  skillInput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-09-SkillInputForm.png`,
-  outputOverview: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-10-DataOutputTabOverview.png`,
-  enemyDataCheck: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-11-EnemyDataCheck.png`,
-  ccfoliaOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-12-CcfoliaOutput.png`,
-  xlsxJsonOutputButtons: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-13-XlsxJsonOutputButtons.png`,
-  xlsxOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-14-XlsxOutput.png`,
-  jsonOutput: `${HOW_TO_IMAGE_DIR}/EnemyHowTo-15-JsonOutput.png`,
+  enemyOverview: `${HOW_TO_IMAGE_DIR}/enemy-overview.png`,
+  basicOperations: `${HOW_TO_IMAGE_DIR}/basic-operations.png`,
+  enemyInfoTabOverview: `${HOW_TO_IMAGE_DIR}/enemy-info-tab-overview.png`,
+  enemyInfoForm: `${HOW_TO_IMAGE_DIR}/enemy-info-form.png`,
+  dropItemsForm: `${HOW_TO_IMAGE_DIR}/drop-items-form.png`,
+  abilityValuesForm: `${HOW_TO_IMAGE_DIR}/ability-values-form.png`,
+  skillOverview: `${HOW_TO_IMAGE_DIR}/skill-tab-overview.png`,
+  skillExample: `${HOW_TO_IMAGE_DIR}/skill-example.png`,
+  skillInput: `${HOW_TO_IMAGE_DIR}/skill-input-form.png`,
+  outputOverview: `${HOW_TO_IMAGE_DIR}/data-output-tab-overview.png`,
+  enemyDataCheck: `${HOW_TO_IMAGE_DIR}/enemy-data-check.png`,
+  ccfoliaOutput: `${HOW_TO_IMAGE_DIR}/ccfolia-output.png`,
+  xlsxJsonOutputButtons: `${HOW_TO_IMAGE_DIR}/xlsx-json-output-buttons.png`,
+  xlsxOutput: `${HOW_TO_IMAGE_DIR}/xlsx-output.png`,
+  jsonOutput: `${HOW_TO_IMAGE_DIR}/json-output.png`,
 } as const;
 
 const STEP_IMAGE_CLASS =
@@ -109,7 +109,6 @@ const steps: Step[] = [
       },
     ],
   },
-
   {
     number: "4",
     title: "エネミー情報の入力",
@@ -385,6 +384,7 @@ function StepImageFigure({
 
   return (
     <figure className={figureClassName}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image.src} alt={image.alt} className={imageClassName} />
       <figcaption className={captionClassName}>
         図{figureNumber}：{image.caption ?? image.alt}
@@ -406,9 +406,11 @@ function StepCard({
 
   return (
     <section className="rounded-2xl border border-neutral-300 p-6">
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="mb-3 text-2xl font-semibold">-{step.number}-</h2>
-        <h3 className="mb-4 text-lg font-semibold text-neutral-900">{step.title}</h3>
+      <div className="mb-4 flex items-baseline gap-3">
+        <span className="text-2xl font-semibold">-{step.number}-</span>
+        <h2 className="text-2xl font-semibold">
+          {step.title}
+        </h2>
       </div>
 
       <p className="mb-6 text-sm leading-8 text-neutral-800">{step.text}</p>
@@ -431,14 +433,21 @@ export default function EnemyHowToPage() {
     <StaticPage
       current="enemy"
       title="使い方（詳細）"
-      lead={`${TOOL_CONFIG.enemy.toolLabel}でエネミーデータを作成し、CCFOLIAに貼り付けるまでの流れを画像付きで説明します。`}
       backHref={TOOL_CONFIG.enemy.href}
     >
-      <div className="space-y-12">
-        {steps.map((step, stepIndex) => (
-          <StepCard key={step.number} step={step} stepIndex={stepIndex} />
-        ))}
-      </div>
+      <section>
+        <div className="mb-10 space-y-4">
+          <p className="text-sm leading-8 text-neutral-800">
+            {TOOL_CONFIG.enemy.toolLabel}でエネミーデータの作成やCCFOLIA用のキャラクター駒を作成するコマンドを生成するための手順を画像付きで説明します。
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {steps.map((step, stepIndex) => (
+            <StepCard key={step.number} step={step} stepIndex={stepIndex} />
+          ))}
+        </div>
+      </section>
     </StaticPage>
   );
 }

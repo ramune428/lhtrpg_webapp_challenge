@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend
 
-## Getting Started
+LHTRPG 駒作成ツールのフロントエンドです。
 
-First, run the development server:
+Next.js App Router、React、TypeScript、Tailwind CSS を使用しています。
+
+## 起動方法
+
+```bash
+npm install
+npm run dev
+```
+
+ブラウザで以下を開きます。
+
+```text
+http://localhost:3000
+```
+
+## 利用可能なコマンド
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開発サーバーを起動します。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+本番ビルドを実行します。
 
-## Learn More
+```bash
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+ビルド済みアプリを起動します。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+ESLint を実行します。
 
-## Deploy on Vercel
+## 主な構成
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+app/
+  Next.js App Router のページ・レイアウトです。
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+components/
+  ナビゲーション、リンクカード、静的ページ共通部品などを配置しています。
+
+utils/
+  キャラクター駒作成、エネミーデータ作成、JSON/XLSX入出力などのロジックを配置しています。
+
+public/
+  使い方ページなどで使用する画像を配置しています。
+```
+
+## キャラクター駒作成処理
+
+`utils/createPiece.ts` は、キャラクター駒作成処理の公開入口です。
+
+実装本体は `utils/createPiecePreview.ts` にあり、以下を行います。
+
+- キャラクターIDの検証
+- ログ・ホライズンTRPG冒険者窓口のJSON取得
+- CCFOLIA用キャラクター駒データの生成
+- チャットパレットの生成
+
+生成処理に失敗した場合は、元JSONを返さず、呼び出し元へエラーを投げます。画面側ではそのエラーを受けて失敗メッセージを表示します。
+
+## エネミーデータ/駒作成処理
+
+`utils/createEnemyPiece.ts` に、エネミー関連の主要ロジックがあります。
+
+- 推奨能力値計算
+- エネミーJSON生成
+- エネミーJSON読み込み
+- XLSX生成
+- XLSX読み込み
+- CCFOLIA用コマンド生成
+
+現状は機能が1ファイルに集中しているため、今後の保守性向上では責務別の分割を推奨します。
+
+## 開発時の確認項目
+
+修正後は最低限以下を実行してください。
+
+```bash
+npm run lint
+npm run build
+```
+
+画面上では以下を確認してください。
+
+- `/character` でキャラクター駒作成コマンドを生成できること
+- 生成失敗時に元JSONではなくエラーメッセージが表示されること
+- `/enemy` でCCFOLIA用コマンド、JSON、XLSXを出力できること

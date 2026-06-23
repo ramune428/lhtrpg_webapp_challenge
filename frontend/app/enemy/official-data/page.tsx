@@ -5,13 +5,13 @@ import { EXTERNAL_LINKS, TOOL_CONFIG } from "@/components/tool-config";
 const IMAGE_BASE_PATH = "/enemy/official-data";
 
 const officialDataImages = {
-  officialJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-01-OfficialJsonFile.png`,
-  jsonpText: `${IMAGE_BASE_PATH}/EnemyOfficialData-02-JsonpText.png`,
-  saveAsJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-03-SaveAsJsonFile.png`,
-  removeJsonpWrapper: `${IMAGE_BASE_PATH}/EnemyOfficialData-04-RemoveJsonpWrapper.png`,
-  cleanJsonFile: `${IMAGE_BASE_PATH}/EnemyOfficialData-05-CleanJsonFile.png`,
-  importButton: `${IMAGE_BASE_PATH}/EnemyOfficialData-06-ImportButton.png`,
-  jsonImportResult: `${IMAGE_BASE_PATH}/EnemyOfficialData-07-JsonImportResult.png`,
+  officialJsonFile: `${IMAGE_BASE_PATH}/official-json-file.png`,
+  jsonpText: `${IMAGE_BASE_PATH}/jsonp-text.png`,
+  saveAsJsonFile: `${IMAGE_BASE_PATH}/save-as-json-file.png`,
+  removeJsonpWrapper: `${IMAGE_BASE_PATH}/remove-jsonp-wrapper.png`,
+  cleanJsonFile: `${IMAGE_BASE_PATH}/clean-json-file.png`,
+  importButton: `${IMAGE_BASE_PATH}/import-button.png`,
+  jsonImportResult: `${IMAGE_BASE_PATH}/json-import-result.png`,
 } as const;
 
 type StepImage = {
@@ -61,22 +61,6 @@ function CodeBlock({ children }: { children: ReactNode }) {
   );
 }
 
-function IntroBlock() {
-  return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm leading-8 text-neutral-800">
-      <div className="space-y-3">
-        <p>
-          公式データベースである「
-          <TextLink href={EXTERNAL_LINKS.lhzDatabase}>
-            ログ・ホライズンTRPG冒険者窓口 -データベース-
-          </TextLink>
-          」から取得したエネミーデータを、{TOOL_CONFIG.enemy.toolLabel}で読み込むための手順をまとめています。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function StepImageFigure({ image }: { image: StepImage }) {
   return (
     <figure className="mx-auto my-4 overflow-hidden rounded-lg border border-neutral-200 bg-white">
@@ -98,28 +82,23 @@ function StepImageFigure({ image }: { image: StepImage }) {
 
 function StepList({ steps }: { steps: StepItem[] }) {
   return (
-    <ol className="space-y-4">
+    <ol className="space-y-12">
       {steps.map((step, index) => (
         <li
           key={step.title}
-          className="rounded-lg border border-neutral-200 bg-white px-4 py-4"
+          className="rounded-2xl border border-neutral-300 p-6"
         >
-          <div className="flex gap-3">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
-              {index + 1}
-            </div>
-            <div className="min-w-0 flex-1 space-y-3">
-              <h3 className="text-base font-semibold leading-7 text-neutral-900">
-                {step.title}
-              </h3>
-              <div className="space-y-2 text-sm leading-8 text-neutral-800">
-                {step.children}
-              </div>
-              {step.images?.map((image) => (
-                <StepImageFigure key={image.src} image={image} />
-              ))}
-            </div>
+          <h2 className="mb-4 text-2xl font-semibold">
+            -{index + 1}- {step.title}
+          </h2>
+
+          <div className="mb-6 space-y-2 text-sm leading-8 text-neutral-800">
+            {step.children}
           </div>
+
+          {step.images?.map((image) => (
+            <StepImageFigure key={image.src} image={image} />
+          ))}
         </li>
       ))}
     </ol>
@@ -229,7 +208,8 @@ function DownloadJsonSteps() {
                 <CodeBlock>{`jsonp({
   "name": "エネミー名",
   "rank": "ノーマル"
-});`}</CodeBlock>
+});`}
+                </CodeBlock>
               </div>
 
               <div className="space-y-2">
@@ -237,7 +217,8 @@ function DownloadJsonSteps() {
                 <CodeBlock>{`{
   "name": "エネミー名",
   "rank": "ノーマル"
-}`}</CodeBlock>
+}`}
+                </CodeBlock>
               </div>
             </div>
           ),
@@ -267,7 +248,7 @@ function UploadJsonSteps() {
           children: (
             <p>
               {TOOL_CONFIG.enemy.toolLabel}の［エネミー情報］欄で
-              ［入力ファイル読込］をクリックし、編集済みのJSONファイルを開きます。
+              [入力ファイル読込]をクリックし、編集済みのJSONファイルを開きます。
             </p>
           ),
         },
@@ -301,7 +282,20 @@ export default function EnemyOfficialDataPage() {
         {
           title: "概要",
           hideTitle: true,
-          paragraphs: [<IntroBlock key="intro-block" />],
+          paragraphs: [
+            <p
+              key="official-data-lead"
+              className="text-sm leading-8 text-neutral-800"
+            >
+              公式データベースである「
+              <TextLink href={EXTERNAL_LINKS.lhzDatabase}>
+                ログ・ホライズンTRPG冒険者窓口 -データベース-
+              </TextLink>
+              」から取得したエネミーデータを、
+              {TOOL_CONFIG.enemy.toolLabel}
+              で読み込むための手順をまとめています。ただし、公式データベースから取得したファイルは、そのままでは読み込めない場合があるため、読み込む前にJSON形式へ整える必要があります。
+            </p>,
+          ],
         },
         {
           title: "データベースからJSONファイルを保存",
@@ -309,9 +303,7 @@ export default function EnemyOfficialDataPage() {
         },
         {
           title: "JSONファイルの読み込み",
-          paragraphs: [
-            <UploadJsonSteps key="upload-json-steps" />,
-          ],
+          paragraphs: [<UploadJsonSteps key="upload-json-steps" />],
         },
       ]}
     />
