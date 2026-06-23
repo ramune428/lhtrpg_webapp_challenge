@@ -2,6 +2,15 @@
 
 ログ・ホライズンTRPG（LHTRPG）向けのCCFOLIA用駒作成Webアプリです。
 
+## 公開ページ
+
+* キャラクター駒作成ツール
+
+  * https://lhtrpg-tools.com/character
+* キャラクター駒作成ツール（テスト・確認用）
+
+  * https://lhtrpg-tools.com/character-preview
+
 現在は主に以下の2つのツールを提供しています。
 
 * キャラクター駒作成ツール
@@ -118,63 +127,3 @@ frontend/utils/enemy/rank.ts
 
   * エネミーデータ計算式
 * `/enemy/updates`
-
-  * エネミーデータ/駒作成ツールのアップデート情報
-
-## 主要ファイル
-
-```text
-frontend/app/page.tsx
-  キャラクター駒作成ツールのメイン画面です。
-
-frontend/app/enemy/page.tsx
-  エネミーデータ/駒作成ツールのメイン画面です。
-
-frontend/utils/createPiece.ts
-  キャラクター駒作成処理の公開入口です。
-
-frontend/utils/createPiecePreview.ts
-  キャラクターJSONの取得・変換・チャットパレット生成処理を実装しています。
-
-frontend/utils/createEnemyPiece.ts
-  エネミー能力値計算、JSON/XLSX入出力、CCFOLIA用出力の生成処理を実装しています。
-
-frontend/utils/enemy/calculate.ts
-  エネミーデータ/駒作成ツールの公開計算処理です。
-
-frontend/tests/enemy/formula.test.ts
-  エネミー計算式テストのテスト項目です。
-
-frontend/tests/enemy/formula-spec.mjs
-  エネミー計算式テストの期待値定義です。
-
-frontend/components/tool-config.ts
-  ツール名、ページリンク、外部リンクなどの共通設定を管理しています。
-
-frontend/components/static-page.tsx
-  使い方・計算式・アップデート情報などの静的ページ用共通コンポーネントです。
-```
-
-## 既知の制限・注意点
-
-* ログ・ホライズンTRPG冒険者窓口側で「外部ツールからのデータ参照」が許可されていないキャラクターは、JSONを取得できないため駒作成できません。
-* 古いキャラクターデータでは、JSON取得や一部項目の変換に失敗する場合があります。
-* エネミー計算式テストは、推奨能力値計算を中心に確認しています。JSON/XLSX入出力、CCFOLIA出力、ドロップ品ダイス、タグ生成、画面操作については、今後追加テストを整備する余地があります。
-
-## 開発時の推奨確認
-
-修正後は、最低限以下を確認してください。
-
-```bash
-cd frontend
-npm run test:enemy-formula
-npm run lint
-npm run build
-```
-
-加えて、ブラウザ上で以下を確認してください。
-
-* キャラクターURLまたはIDからCCFOLIA用コマンドを生成できること
-* 生成失敗時に元JSONではなくエラーメッセージが表示されること
-* エネミーデータ/駒作成ツールで、入力、JSON出力、XLSX出力、CCFOLIA用コマンド生成ができること
-* 大種族「ギミック」の場合、ランクがノーマルとして扱われ、ヘイト倍率が0になること
