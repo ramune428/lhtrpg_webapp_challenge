@@ -8,9 +8,11 @@ import {
 
 export { fetchCharacterJson, normalizeCharacterId };
 
-export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescriptions"> & {
+export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescriptions" | "includeBasicActions"> & {
   includeSkillInfo: boolean;
   includeSkillEffects: boolean;
+  includeBasicActionInfo: boolean;
+  includeBasicActionEffects: boolean;
 };
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
@@ -19,7 +21,8 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeSkillSupportCalculations: baseDefaultChatPaletteOptions.includeSkillSupportCalculations,
   includeSkillInfo: true,
   includeSkillEffects: true,
-  includeBasicActions: baseDefaultChatPaletteOptions.includeBasicActions,
+  includeBasicActionInfo: true,
+  includeBasicActionEffects: true,
   includeEquipmentEffects: baseDefaultChatPaletteOptions.includeEquipmentEffects,
   includeItemList: baseDefaultChatPaletteOptions.includeItemList,
   includeAbilityChecks: baseDefaultChatPaletteOptions.includeAbilityChecks,
@@ -29,6 +32,7 @@ export const defaultChatPaletteOptions: ChatPaletteOptions = {
 
 type AnyRecord = Record<string, unknown>;
 type SkillDisplayOptions = Pick<ChatPaletteOptions, "includeSkillInfo" | "includeSkillEffects">;
+type BasicActionDisplayOptions = Pick<ChatPaletteOptions, "includeBasicActionInfo" | "includeBasicActionEffects">;
 
 function asString(value: unknown): string {
   if (value === null || value === undefined) {
@@ -165,6 +169,56 @@ function rewriteSkillDisplayText(
     .join("\n");
 }
 
+function splitBasicActionInfoAndEffect(text: string): { info: string; effect: string } {
+  const effectIndex = text.search(/\s効果[:：]/);
+
+  if (effectIndex < 0) {
+    return { info: text.trim(), effect: "" };
+  }
+
+  return {
+    info: text.slice(0, effectIndex).trim(),
+    effect: text.slice(effectIndex).trim(),
+  };
+}
+
+function formatBasicActionLine(line: string, options: BasicActionDisplayOptions): string {
+  const infoStartIndex = line.indexOf(" SR:");
+
+  if (!line.startsWith("《") || infoStartIndex < 0) {
+    return line;
+  }
+
+  const name = line.slice(0, infoStartIndex).trim();
+  const { info, effect } = splitBasicActionInfoAndEffect(line.slice(infoStartIndex + 1));
+
+  return [
+    name,
+    options.includeBasicActionInfo ? info : "",
+    options.includeBasicActionEffects ? effect : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function rewriteBasicActionDisplayText(commands: string, options: BasicActionDisplayOptions): string {
+  return commands
+    .split("\n\n")
+    .map((paletteSection) => {
+      if (!paletteSection.startsWith("○基本動作\n")) {
+        return paletteSection;
+      }
+
+      const [sectionTitle = "○基本動作", ...lines] = paletteSection.split("\n");
+
+      return [
+        sectionTitle,
+        ...lines.flatMap((line) => formatBasicActionLine(line, options).split("\n")),
+      ].join("\n");
+    })
+    .join("\n\n");
+}
+
 export function createPieceFromJson(
   jsonDataValue: unknown,
   characterId: string,
@@ -174,10 +228,17 @@ export function createPieceFromJson(
     ...defaultChatPaletteOptions,
     ...options,
   };
-  const { includeSkillInfo, includeSkillEffects, ...baseOptionsWithoutSkillDetails } = mergedOptions;
+  const {
+    includeSkillInfo,
+    includeSkillEffects,
+    includeBasicActionInfo,
+    includeBasicActionEffects,
+    ...baseOptionsWithoutSkillDetails
+  } = mergedOptions;
   const baseOptions: Partial<BaseChatPaletteOptions> = {
     ...baseOptionsWithoutSkillDetails,
     includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
+    includeBasicActions: true,
   };
   const pieceText = createBasePieceFromJson(jsonDataValue, characterId, baseOptions);
   const piece = JSON.parse(pieceText) as AnyRecord;
@@ -187,14 +248,20 @@ export function createPieceFromJson(
     return pieceText;
   }
 
+  const skillRewrittenCommands = rewriteSkillDisplayText(asString(data.commands), jsonDataValue, {
+    includeSkillInfo,
+    includeSkillEffects,
+  });
+  const commands = rewriteBasicActionDisplayText(skillRewrittenCommands, {
+    includeBasicActionInfo,
+    includeBasicActionEffects,
+  });
+
   return JSON.stringify({
     ...piece,
     data: {
       ...data,
-      commands: rewriteSkillDisplayText(asString(data.commands), jsonDataValue, {
-        includeSkillInfo,
-        includeSkillEffects,
-      }),
+      commands,
     },
   });
 }
