@@ -11,6 +11,15 @@ type CommandSummary = {
   };
 };
 
+const IMAGE_BASE_PATH = "/character/command-details";
+
+const commandDetailsImages = {
+  basicInfo: `${IMAGE_BASE_PATH}/basic-info.png`,
+  status: `${IMAGE_BASE_PATH}/status.png`,
+  parameters: `${IMAGE_BASE_PATH}/parameters.png`,
+  chatPalette: `${IMAGE_BASE_PATH}/chat-palette.png`,
+} as const;
+
 const IMAGE_CLASS =
   "h-auto w-full rounded-xl border border-neutral-200 shadow-sm";
 const BODY_TEXT_CLASS = "text-sm leading-8 text-neutral-800";
@@ -30,7 +39,7 @@ const commandSummaries: CommandSummary[] = [
       "参考URL（キャラクター情報）",
     ],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-01-CharacterData.png",
+      src: commandDetailsImages.basicInfo,
       alt: "CCFOLIAのキャラクター編集画面の基本情報",
     },
   },
@@ -38,7 +47,7 @@ const commandSummaries: CommandSummary[] = [
     title: "ステータス",
     items: ["HP", "再生", "障壁", "疲労", "ヘイト", "因果力"],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-02-Status.png",
+      src: commandDetailsImages.status,
       alt: "CCFOLIAのキャラクター編集画面のステータス",
     },
   },
@@ -55,7 +64,7 @@ const commandSummaries: CommandSummary[] = [
       "各能力値",
     ],
     image: {
-      src: "/character/command-details/CharacterCommandDetails-03-Parameters.png",
+      src: commandDetailsImages.parameters,
       alt: "CCFOLIAのキャラクター編集画面のパラメータ",
     },
   },
@@ -293,7 +302,7 @@ function ChatPaletteDetails() {
       <div className="mb-8 flex justify-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/character/command-details/CharacterCommandDetails-04-ChatPalette.png"
+          src={commandDetailsImages.chatPalette}
           alt="CCFOLIAのキャラクター編集画面のチャットパレット"
           className={`${IMAGE_CLASS} max-w-[720px]`}
         />
