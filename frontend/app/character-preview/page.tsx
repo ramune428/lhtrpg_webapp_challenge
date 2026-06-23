@@ -23,10 +23,17 @@ const BODY_LINK_CLASS = "text-sm font-medium text-neutral-700 underline underlin
 const FORM_BUTTON_CLASS =
   "rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60";
 
+type BasicActionOptionKey =
+  | "includeBasicActionNames"
+  | "includeBasicActionInfo"
+  | "includeBasicActionEffects"
+  | "includeBasicActionCommands";
+
 type OutputOptionItem = {
-  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands" | "basicActionNames" | "basicActionCommands";
+  key: keyof ChatPaletteOptions | "combatBasics" | "skillNames" | "skillCommands";
   label: string;
   alwaysOn?: boolean;
+  onChange?: (checked: boolean) => void;
 };
 
 const outputOptionItemsBeforeSkills: OutputOptionItem[] = [
@@ -44,6 +51,13 @@ const outputOptionItemsAfterBasicActions: OutputOptionItem[] = [
   { key: "includeTreasureTables", label: "財宝表" },
 ];
 
+const basicActionOptionKeys: BasicActionOptionKey[] = [
+  "includeBasicActionNames",
+  "includeBasicActionInfo",
+  "includeBasicActionEffects",
+  "includeBasicActionCommands",
+];
+
 function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
   return {
     includeDamageCalculator: checked,
@@ -51,8 +65,11 @@ function createAllOptionalOptions(checked: boolean): ChatPaletteOptions {
     includeSkillSupportCalculations: checked,
     includeSkillInfo: checked,
     includeSkillEffects: checked,
+    includeBasicActions: checked,
+    includeBasicActionNames: checked,
     includeBasicActionInfo: checked,
     includeBasicActionEffects: checked,
+    includeBasicActionCommands: checked,
     includeEquipmentEffects: checked,
     includeItemList: checked,
     includeAbilityChecks: checked,
@@ -108,12 +125,40 @@ export default function HomePage() {
     }
   };
 
+  const updateBasicActionGroup = (checked: boolean) => {
+    const nextOptions: ChatPaletteOptions = {
+      ...options,
+      includeBasicActions: checked,
+      includeBasicActionNames: checked,
+      includeBasicActionInfo: checked,
+      includeBasicActionEffects: checked,
+      includeBasicActionCommands: checked,
+    };
+
+    setOptions(nextOptions);
+    refreshPreview(nextOptions);
+    if (chatPaletteReview) {
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
+    }
+  };
+
+  const updateBasicActionOption = (key: BasicActionOptionKey, checked: boolean) => {
+    const nextOptions: ChatPaletteOptions = { ...options, [key]: checked };
+    nextOptions.includeBasicActions = basicActionOptionKeys.some((optionKey) => nextOptions[optionKey]);
+
+    setOptions(nextOptions);
+    refreshPreview(nextOptions);
+    if (chatPaletteReview) {
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
+    }
+  };
+
   const handleSetAllOptionalOptions = (checked: boolean) => {
     const nextOptions = createAllOptionalOptions(checked);
     setOptions(nextOptions);
     refreshPreview(nextOptions);
     if (chatPaletteReview) {
-      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。");
+      setReviewStatusMessage("出力オプションを変更しました。必要に応じてレビューを更新してください。 ");
     }
   };
 
@@ -230,7 +275,7 @@ export default function HomePage() {
   };
 
   const renderOutputOptionItem = (item: OutputOptionItem) => {
-    const checked = item.alwaysOn ? true : options[item.key as keyof ChatPaletteOptions];
+    const checked = item.alwaysOn ? true : Boolean(options[item.key as keyof ChatPaletteOptions]);
 
     return (
       <label
@@ -248,7 +293,11 @@ export default function HomePage() {
             disabled={item.alwaysOn}
             onChange={(event) => {
               if (!item.alwaysOn) {
-                updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
+                if (item.onChange) {
+                  item.onChange(event.target.checked);
+                } else {
+                  updateOption(item.key as keyof ChatPaletteOptions, event.target.checked);
+                }
               }
             }}
           />
@@ -259,12 +308,25 @@ export default function HomePage() {
     );
   };
 
-  const renderOutputOptionGroupTitle = (label: string) => (
-    <label className="mb-2 flex items-center gap-3 font-semibold text-neutral-800">
-      <input type="checkbox" checked disabled />
-      <span>{label}</span>
-    </label>
-  );
+  const renderOutputOptionGroupTitle = (
+    label: string,
+    groupOptions: { checked?: boolean; disabled?: boolean; onChange?: (checked: boolean) => void } = {}
+  ) => {
+    const checked = groupOptions.checked ?? true;
+    const disabled = groupOptions.disabled ?? true;
+
+    return (
+      <label className="mb-2 flex items-center gap-3 font-semibold text-neutral-800">
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => groupOptions.onChange?.(event.target.checked)}
+        />
+        <span>{label}</span>
+      </label>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-white text-black">
@@ -404,12 +466,32 @@ export default function HomePage() {
                 </section>
 
                 <section className="rounded-xl border border-neutral-300 bg-white p-3 text-sm text-neutral-800">
-                  <h4 className="mb-2 font-semibold">基本動作</h4>
+                  {renderOutputOptionGroupTitle("基本動作", {
+                    checked: options.includeBasicActions,
+                    disabled: false,
+                    onChange: updateBasicActionGroup,
+                  })}
                   <div className="grid gap-2 pl-3">
-                    {renderOutputOptionItem({ key: "basicActionNames", label: "特技名", alwaysOn: true })}
-                    {renderOutputOptionItem({ key: "includeBasicActionInfo", label: "特技情報" })}
-                    {renderOutputOptionItem({ key: "includeBasicActionEffects", label: "特技効果" })}
-                    {renderOutputOptionItem({ key: "basicActionCommands", label: "特技コマンド", alwaysOn: true })}
+                    {renderOutputOptionItem({
+                      key: "includeBasicActionNames",
+                      label: "特技名",
+                      onChange: (checked) => updateBasicActionOption("includeBasicActionNames", checked),
+                    })}
+                    {renderOutputOptionItem({
+                      key: "includeBasicActionInfo",
+                      label: "特技情報",
+                      onChange: (checked) => updateBasicActionOption("includeBasicActionInfo", checked),
+                    })}
+                    {renderOutputOptionItem({
+                      key: "includeBasicActionEffects",
+                      label: "特技効果",
+                      onChange: (checked) => updateBasicActionOption("includeBasicActionEffects", checked),
+                    })}
+                    {renderOutputOptionItem({
+                      key: "includeBasicActionCommands",
+                      label: "特技コマンド",
+                      onChange: (checked) => updateBasicActionOption("includeBasicActionCommands", checked),
+                    })}
                   </div>
                 </section>
 
