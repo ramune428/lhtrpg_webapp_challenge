@@ -20,8 +20,8 @@ export type ChatPaletteOptions = Omit<BaseChatPaletteOptions, "includeSkillDescr
 
 export const defaultChatPaletteOptions: ChatPaletteOptions = {
   includeDamageCalculator: baseDefaultChatPaletteOptions.includeDamageCalculator,
-  includeSkillChecks: baseDefaultChatPaletteOptions.includeSkillChecks,
-  includeSkillSupportCalculations: baseDefaultChatPaletteOptions.includeSkillSupportCalculations,
+  includeSkillChecks: false,
+  includeSkillSupportCalculations: false,
   includeSkillInfo: true,
   includeSkillEffects: true,
   includeBasicActions: true,
@@ -276,21 +276,6 @@ function createSkillCheckCommandMap(jsonDataValue: unknown): Map<string, string>
   return result;
 }
 
-function extractChatPaletteSection(commands: string, sectionTitle: string): string | null {
-  const sectionHeader = `${sectionTitle}\n`;
-  const sectionStart = commands.indexOf(sectionHeader);
-
-  if (sectionStart < 0) {
-    return null;
-  }
-
-  const bodyStart = sectionStart + sectionHeader.length;
-  const nextSectionMatch = commands.slice(bodyStart).match(/\n\n○/);
-  const bodyEnd = nextSectionMatch?.index === undefined ? commands.length : bodyStart + nextSectionMatch.index;
-
-  return commands.slice(bodyStart, bodyEnd);
-}
-
 function replaceChatPaletteSection(
   commands: string,
   sectionTitle: string,
@@ -308,90 +293,6 @@ function replaceChatPaletteSection(
   const bodyEnd = nextSectionMatch?.index === undefined ? commands.length : bodyStart + nextSectionMatch.index;
 
   return `${commands.slice(0, bodyStart)}${replacer(commands.slice(bodyStart, bodyEnd))}${commands.slice(bodyEnd)}`;
-}
-
-function isSkillDetailLine(line: string): boolean {
-  const trimmed = line.trim();
-
-  return trimmed.startsWith("SR:") || trimmed.startsWith("効果:");
-}
-
-function createSkillCommandBlockMap(commands: string): Map<string, string[]> {
-  const skillSectionBody = extractChatPaletteSection(commands, "○特技");
-  const result = new Map<string, string[]>();
-
-  if (!skillSectionBody) {
-    return result;
-  }
-
-  let currentSkillName = "";
-  let currentLines: string[] = [];
-  const flush = () => {
-    if (currentSkillName && currentLines.length > 0) {
-      result.set(currentSkillName, currentLines);
-    }
-  };
-
-  for (const line of skillSectionBody.split("\n")) {
-    const trimmed = line.trim();
-
-    if (!trimmed || trimmed.startsWith("● ")) {
-      continue;
-    }
-
-    if (trimmed.startsWith("《")) {
-      flush();
-      currentSkillName = trimmed;
-      currentLines = [line];
-      continue;
-    }
-
-    if (!currentSkillName || isSkillDetailLine(line)) {
-      continue;
-    }
-
-    currentLines.push(line);
-  }
-
-  flush();
-  return result;
-}
-
-function addSkillCommandBlocksToSkillCheckSection(commands: string, jsonDataValue: unknown): string {
-  const skillCheckCommands = createSkillCheckCommandMap(jsonDataValue);
-
-  if (skillCheckCommands.size === 0) {
-    return commands;
-  }
-
-  const commandToSkillName = new Map(
-    Array.from(skillCheckCommands.entries()).map(([skillName, command]) => [command, skillName])
-  );
-  const skillCommandBlocks = createSkillCommandBlockMap(commands);
-
-  return replaceChatPaletteSection(commands, "○判定がある特技", (sectionBody) => {
-    return sectionBody
-      .split("\n")
-      .reduce<string[]>((result, line) => {
-        const skillName = commandToSkillName.get(line.trim());
-
-        if (!skillName) {
-          result.push(line);
-          return result;
-        }
-
-        const skillCommandBlock = skillCommandBlocks.get(skillName) ?? [skillName, line];
-        const lastLine = result[result.length - 1]?.trim();
-
-        if (lastLine && !lastLine.startsWith("● ")) {
-          result.push("");
-        }
-
-        result.push(...skillCommandBlock);
-        return result;
-      }, [])
-      .join("\n");
-  });
 }
 
 function addSkillCheckCommandsToSkillSection(commands: string, jsonDataValue: unknown): string {
@@ -542,11 +443,15 @@ export function createPieceFromJson(
     includeBasicActionInfo,
     includeBasicActionEffects,
     includeBasicActionCommands,
+    includeSkillChecks,
+    includeSkillSupportCalculations,
     ...baseOptionsWithoutSkillDetails
   } = mergedOptions;
   const hasBasicActionOutput = includeBasicActions && includeBasicActionNames;
   const baseOptions: Partial<BaseChatPaletteOptions> = {
     ...baseOptionsWithoutSkillDetails,
+    includeSkillChecks: false,
+    includeSkillSupportCalculations: false,
     includeSkillDescriptions: includeSkillInfo || includeSkillEffects,
     includeBasicActions: hasBasicActionOutput,
   };
@@ -563,8 +468,7 @@ export function createPieceFromJson(
     includeSkillEffects,
   });
   const skillCommandsWithChecks = addSkillCheckCommandsToSkillSection(skillRewrittenCommands, jsonDataValue);
-  const skillCheckSectionWithCommandBlocks = addSkillCommandBlocksToSkillCheckSection(skillCommandsWithChecks, jsonDataValue);
-  const commands = rewriteBasicActionDisplayText(skillCheckSectionWithCommandBlocks, {
+  const commands = rewriteBasicActionDisplayText(skillCommandsWithChecks, {
     includeBasicActionNames,
     includeBasicActionInfo,
     includeBasicActionEffects,
