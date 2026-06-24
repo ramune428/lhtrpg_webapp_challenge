@@ -843,6 +843,37 @@ export default function EnemyPage() {
           </section>
         ) : null}
 
+        <section className="mt-12 mb-12 rounded-2xl border border-neutral-300 p-6">
+            <h2 className="mb-4 text-2xl font-semibold">最新のアップデート情報</h2>
+
+            <div className="rounded-2xl border border-neutral-300 p-6">
+                <h3 className="mb-1 text-2xl font-semibold">ver 2.1</h3>
+                <p className="mb-4 text-sm text-neutral-500">2026/05</p>
+
+                <ul className="space-y-2 text-sm leading-8 text-neutral-800">
+                    <li>・一部のエネミーデータの計算式を修正</li>
+                    <li>・大種族が「ギミック」の場合、エネミーランクを「ノーマル」に固定</li>
+                    <li>・計算式ページの説明内容を更新</li>
+                    <li>・推奨値を常に表示するようにUIを変更</li>
+                    <li>・最大HPプレビューのUIを追加</li>
+                </ul>
+            </div>
+
+            <div className="mt-4 text-sm leading-8 text-neutral-800">
+                <p>
+                    過去のアップデート情報はこちら
+                    <br />
+                    →{" "}
+                    <Link
+                    href={ENEMY_PAGE_LINKS.updates.href}
+                    className="font-medium underline underline-offset-4"
+                    >
+                    アップデート情報
+                    </Link>
+                </p>
+            </div>
+        </section>
+
         <section className="mt-12 rounded-2xl border border-neutral-300 p-6 space-y-4 text-sm leading-8 text-neutral-800">
           <h2 className="text-2xl font-semibold text-neutral-950">お知らせ</h2>
 
